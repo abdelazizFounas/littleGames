@@ -82,6 +82,9 @@ services:
     environment:
       CADDY_SITE_ADDRESS: ${CADDY_SITE_ADDRESS:?set CADDY_SITE_ADDRESS in .env, see .env.example}
       CADDY_CONSOLE_ADDRESS: ${CADDY_CONSOLE_ADDRESS:?set CADDY_CONSOLE_ADDRESS in .env, see .env.example}
+      # Resolved by tools/scripts/resolve-web-upstream.sh, which `pnpm server:up`
+      # runs. The fallback only fits Docker Desktop outside WSL.
+      WEB_UPSTREAM: ${WEB_UPSTREAM:-host.docker.internal:5173}
     ports:
       - '80:80'
       - '443:443'

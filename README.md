@@ -121,8 +121,12 @@ pnpm server:up
 pnpm dev
 ```
 
-The client is then on `http://localhost:5173`. Click **Play as guest** and the
-home screen greets you by name.
+The app is then on **`http://localhost`**. Click **Play as guest** and the home
+screen greets you by name.
+
+Vite prints its own `http://localhost:5173` address on start-up. Use
+`http://localhost` instead: that is the origin the client is configured for, and
+the only one where the app and the API share a scheme, host and port.
 
 `.env` is git-ignored, and no secret is ever hard-coded anywhere else.
 
@@ -130,8 +134,9 @@ Once the stack is healthy:
 
 | Endpoint | Default local address |
 |---|---|
-| Client API and realtime socket | `http://localhost` (proxied to Nakama `:7350`) |
-| Nakama developer console | `http://localhost:8080` (proxied to Nakama `:7351`) |
+| Web client | `http://localhost` |
+| Client API and realtime socket | `http://localhost/v2/*`, `http://localhost/ws` |
+| Nakama developer console | `http://localhost:8080` |
 
 Log in to the console with `NAKAMA_CONSOLE_USERNAME` and
 `NAKAMA_CONSOLE_PASSWORD` from your `.env`.
@@ -196,6 +201,18 @@ sides need: it is declared once as `NAKAMA_SOCKET_SERVER_KEY` and injected into
 the bundle at build time, so the client and the server cannot drift apart. It is
 public by design and authorises nothing beyond opening a session.
 
-In development the client is served by Vite, which proxies `/v2` and `/ws` to
-Caddy. Development is therefore same-origin exactly as production is, and no
-CORS rule has to exist purely for the dev server.
+Caddy is the single entry point and serves the client and the API on one
+origin: it routes `/v2/*`, `/ws` and `/healthcheck` to Nakama, and everything
+else to the web client. Development is therefore same-origin exactly as
+production is, so no CORS rule has to exist purely for development, and deep
+links such as `/profile` survive a reload through the client's SPA fallback.
+
+In development the client behind Caddy is the Vite dev server, running on the
+host. Reaching a host process from inside a container is platform-dependent —
+under Docker Desktop, `host.docker.internal` and `host-gateway` both point at
+the Windows or macOS host rather than at the WSL2 distribution a Linux shell
+runs in, so neither can see the dev server. `pnpm server:up` therefore resolves
+the address with `tools/scripts/resolve-web-upstream.sh`, which reads the
+interface holding the default route and works on WSL2, native Linux and macOS
+alike. It is resolved at start-up rather than stored, because a WSL2 restart
+changes it.

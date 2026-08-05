@@ -16,7 +16,7 @@
     "lint": "oxlint --type-aware",
     "test": "vitest run",
     "test:watch": "vitest",
-    "server:up": "docker compose --env-file .env -f server/docker/docker-compose.yml up --build",
+    "server:up": "WEB_UPSTREAM=$(tools/scripts/resolve-web-upstream.sh) docker compose --env-file .env -f server/docker/docker-compose.yml up --build",
     "server:down": "docker compose --env-file .env -f server/docker/docker-compose.yml down",
     "server:logs": "docker compose --env-file .env -f server/docker/docker-compose.yml logs -f nakama"
   },

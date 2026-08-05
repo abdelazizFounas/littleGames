@@ -1,16 +1,23 @@
-# Client API and realtime socket.
+# Single public entry point: the web client and the API share one origin.
 #
-# Caddy negotiates WebSocket upgrades through reverse_proxy without any extra
-# directive, so the Nakama socket works over this route as-is.
+# Sharing an origin is what keeps deep links, cookies and the realtime socket
+# free of cross-origin rules, and it means development and production differ
+# only in what serves the client.
 #
 # On a real hostname Caddy provisions and renews TLS certificates on its own.
 # Locally the address is plain http, so no certificate is issued.
 {$CADDY_SITE_ADDRESS} {
-	reverse_proxy nakama:7350
+	# Nakama's REST API, realtime socket and health probe. Caddy negotiates the
+	# WebSocket upgrade through reverse_proxy with no extra directive.
+	@nakama path /v2/* /ws /healthcheck
+	reverse_proxy @nakama nakama:7350
+
+	# Everything else is the web client. Unmatched paths reach its SPA fallback,
+	# so client-side routes such as /profile survive a reload.
+	reverse_proxy {$WEB_UPSTREAM}
 }
 
-# Nakama developer console, served on its own address so that no path rewriting
-# is needed.
+# Nakama developer console, on its own address so no path rewriting is needed.
 {$CADDY_CONSOLE_ADDRESS} {
 	reverse_proxy nakama:7351
 }

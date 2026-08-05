@@ -9,10 +9,11 @@ export default defineConfig(({ mode }) => {
   // reuse server-side values without re-declaring them.
   const env = loadEnv(mode, repositoryRoot, '');
 
-  // Where the dev server forwards API and socket traffic. Pointing it at Caddy
-  // rather than at Nakama directly means development goes through the same
-  // proxy as production.
-  const apiProxyTarget = env['DEV_API_PROXY_TARGET'] ?? 'http://localhost';
+  // Caddy is the only entry point, and it serves the client and the API on one
+  // origin. The port the browser reaches the app on is therefore the same one
+  // it reaches Nakama on.
+  const parsedPublicPort = Number(env['VITE_NAKAMA_PORT']);
+  const publicPort = Number.isInteger(parsedPublicPort) ? parsedPublicPort : 80;
 
   return {
     plugins: [react()],
@@ -26,12 +27,15 @@ export default defineConfig(({ mode }) => {
       'import.meta.env.VITE_NAKAMA_SERVER_KEY': JSON.stringify(env['NAKAMA_SOCKET_SERVER_KEY']),
     },
     server: {
-      // Same-origin in development, exactly as in production, so no CORS rule
-      // has to exist purely for the dev server.
-      proxy: {
-        '/v2': { target: apiProxyTarget, changeOrigin: true },
-        '/ws': { target: apiProxyTarget, changeOrigin: true, ws: true },
-      },
+      // Bind every interface, so Caddy can reach this dev server from its
+      // container. There is no proxy configured here on purpose: Caddy already
+      // routes the API, and duplicating that routing would give development two
+      // sets of rules that can disagree.
+      host: true,
+      // The page is served through Caddy, so the hot-reload socket must be sent
+      // there too. Left alone it would target this server's own port and never
+      // connect.
+      hmr: { clientPort: publicPort },
     },
   };
 });
