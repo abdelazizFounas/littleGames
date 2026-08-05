@@ -7,10 +7,9 @@ authoritative match logic in Go.
 The whole repository — code, identifiers, comments, UI strings, commit
 messages — is written in English.
 
-> **Status: phase 2 (catalogue and lobby).** The stack boots, Nakama loads a
-> compiled Go runtime module, you can sign in as a guest, name yourself and
-> upgrade the account with an email, and the game catalogue is served from
-> Nakama's storage engine. No gameplay yet.
+> **Status: phase 3 (match handler).** Two clients can join the same
+> authoritative match and exchange typed messages over a 30 Hz server loop. The
+> Pong rules and rendering come next.
 
 ## Architecture in one paragraph
 
@@ -64,6 +63,7 @@ the one that will be pinned when it is.
 | Package | Version | Source |
 |---|---|---|
 | vitest | `4.1.10` | `npm view vitest version` |
+| @bufbuild/protobuf | `2.13.0` | `npm view @bufbuild/protobuf version` |
 | oxlint | `1.77.0` | `npm view oxlint version` |
 | oxlint-tsgolint | `7.0.2001` | `npm view oxlint-tsgolint version` |
 | ts-proto | `2.12.0` | `npm view ts-proto version` |
@@ -176,12 +176,61 @@ pnpm server:logs | grep "LittleGames runtime module loaded"
 That line is the phase 0 proof: it can only appear if the plugin's ABI matches
 the server binary.
 
+## The match protocol
+
+`packages/core/proto` holds the only definition of what travels over a match
+socket. Go and TypeScript are both generated from it, so the two sides cannot
+drift apart; editing generated output is always wrong.
+
+```sh
+pnpm proto     # regenerate after editing a .proto
+```
+
+Generated files are committed, so a clone builds and runs without protoc, buf
+or a Go toolchain. The generator itself needs none of those either: protoc-gen-go
+is built inside the same pluginbuilder image the server module is compiled with,
+which keeps it on the exact protobuf version Nakama is built against.
+
+One `.proto` produces three artefacts, and the split is deliberate:
+
+| Output | Contents | Why |
+|---|---|---|
+| `packages/core/src/protocol` | types only, zero imports | keeps core free of runtime dependencies, so game logic can be tested in Node without a protobuf runtime |
+| `packages/net/src/protocol` | types plus the wire codec | the codec needs a protobuf runtime, which belongs next to the socket |
+| `server/nakama/protocol` | Go types and codec | the authoritative side |
+
+### Checking two clients really talk
+
+Unit tests cannot cover this: what matters is that two separate sockets agree
+with a server holding the only authoritative copy. With the stack up:
+
+```sh
+set -a && . ./.env && set +a
+pnpm --filter @littlegames/net verify:match
+```
+
+It signs in two players, puts them in one match, sends input from one and reads
+the server's echo from the other, measures the tick rate, and checks that a
+third player is turned away.
+
+### A race worth knowing about
+
+`match.find` lists open matches and creates one when it finds none. Nakama
+flushes match labels to the index that listing searches on an interval —
+`match.label_update_interval_ms`, tuned down from its 1000 ms default in
+`nakama.yml`. Two players who ask inside the same window each get their own
+match, because neither can see the other's yet.
+
+Human clicks are never that close, but the race is real. Nakama's matchmaker is
+the race-free primitive and is what random opponent matching will use rather
+than this function.
+
 ## Repository layout
 
 ```
 packages/
   core/            Shared contracts and protocol. Zero runtime dependencies.
-  net/             Nakama client, session lifecycle, account access.
+  net/             Nakama client, session lifecycle, accounts, match sockets.
   ui/              React shell: routing, authentication, profile, catalogue.
 server/
   nakama/          Go runtime module (match handlers, RPCs, hooks)
