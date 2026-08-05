@@ -5,7 +5,9 @@ import { PongStage } from '../features/game/pong-stage';
 import { useSession } from '../session/use-session';
 
 function Frame({ children }: { readonly children: ReactNode }): ReactNode {
-  return <section className="panel">{children}</section>;
+  // Wider than the rest of the shell: the field wants room, and a 26rem column
+  // would letterbox it down to a postage stamp.
+  return <section className="panel panel--wide">{children}</section>;
 }
 
 export function GameLobbyRoute(): ReactNode {

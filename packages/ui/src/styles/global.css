@@ -358,8 +358,19 @@ body {
 
 /* --- Game stage --------------------------------------------------------- */
 
+.panel--wide {
+  max-width: 64rem;
+}
+
 .stage {
   margin-top: 1.5rem;
+}
+
+.stage__frame {
+  background: #101319;
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+  overflow: hidden;
 }
 
 .stage__surface {
@@ -367,16 +378,43 @@ body {
   /* The field is 4:3 in logical units; matching it here means the renderer
      letterboxes nothing on a well-sized screen. */
   aspect-ratio: 4 / 3;
-  border: 1px solid var(--border);
-  border-radius: 0.75rem;
-  overflow: hidden;
-  background: #101319;
   /* Stops a vertical drag on the field from scrolling the page under it. */
   touch-action: none;
+}
+
+.stage__frame:fullscreen {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 0;
+}
+
+/* In fullscreen the surface takes the whole screen and the renderer
+   letterboxes inside it, so the field keeps its shape on any display. */
+.stage__frame:fullscreen .stage__surface {
+  width: 100%;
+  height: 100%;
+  aspect-ratio: auto;
 }
 
 .stage__surface canvas {
   display: block;
   width: 100%;
   height: 100%;
+}
+
+.stage__bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem 1rem;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 1rem;
+}
+
+.stage__hint {
+  flex: 1;
+  min-width: 14rem;
+  margin: 0;
 }

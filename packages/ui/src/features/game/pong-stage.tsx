@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import { describeError } from '../../lib/describe-error';
 import { useSession } from '../../session/use-session';
 import { startPongSession, type SessionStatus } from './pong-session';
@@ -12,8 +12,10 @@ import { startPongSession, type SessionStatus } from './pong-session';
  */
 export function PongStage({ userId }: { readonly userId: string }): ReactNode {
   const { joinMatch } = useSession();
+  const frameRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [status, setStatus] = useState<SessionStatus>({ kind: 'connecting' });
+  const [isFullscreen, setIsFullscreen] = useState(false);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -53,20 +55,55 @@ export function PongStage({ userId }: { readonly userId: string }): ReactNode {
     };
   }, [joinMatch, userId]);
 
+  // Tracked from the document rather than from the click, so the button stays
+  // honest when fullscreen is left with Escape.
+  useEffect(() => {
+    const onChange = (): void => {
+      setIsFullscreen(document.fullscreenElement !== null);
+    };
+    document.addEventListener('fullscreenchange', onChange);
+    return () => {
+      document.removeEventListener('fullscreenchange', onChange);
+    };
+  }, []);
+
+  const toggleFullscreen = useCallback((): void => {
+    const frame = frameRef.current;
+    if (frame === null) {
+      return;
+    }
+    if (document.fullscreenElement === null) {
+      // iOS Safari on iPhone still refuses this on anything but a video, so the
+      // rejection is swallowed rather than shown as a fault.
+      void frame.requestFullscreen().catch(() => undefined);
+    } else {
+      void document.exitFullscreen().catch(() => undefined);
+    }
+  }, []);
+
   return (
     <div className="stage">
-      <div ref={containerRef} className="stage__surface" />
-      {status.kind === 'connecting' && <p className="hint">Joining a match…</p>}
-      {status.kind === 'playing' && (
-        <p className="hint">
-          You are the {status.side} paddle. Arrow keys or W and S, or drag on the field.
-        </p>
-      )}
-      {status.kind === 'failed' && (
-        <p role="alert" className="error">
-          {status.message}
-        </p>
-      )}
+      <div ref={frameRef} className="stage__frame">
+        <div ref={containerRef} className="stage__surface" />
+      </div>
+
+      <div className="stage__bar">
+        {status.kind === 'connecting' && <p className="hint stage__hint">Joining a match…</p>}
+        {status.kind === 'playing' && (
+          <p className="hint stage__hint">
+            You are the <strong>{status.side}</strong> paddle. Arrow keys or W and S, or drag on the
+            field.
+          </p>
+        )}
+        {status.kind === 'failed' && (
+          <p role="alert" className="error stage__hint">
+            {status.message}
+          </p>
+        )}
+        <button type="button" className="button" onClick={toggleFullscreen}>
+          {isFullscreen ? 'Exit fullscreen' : 'Fullscreen'}
+        </button>
+      </div>
     </div>
   );
 }

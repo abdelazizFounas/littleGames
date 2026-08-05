@@ -87,7 +87,10 @@ export function createPongPixiRenderer(): GameRenderer<PongState> {
     }
 
     ball.clear();
-    ball.circle(0, 0, BALL_RADIUS).fill(FOREGROUND);
+    // Square, as the original was. The rules treat it as a circle of the same
+    // radius, which is the more forgiving of the two and keeps the corners from
+    // clipping a paddle the ball only just reached.
+    ball.rect(-BALL_RADIUS, -BALL_RADIUS, BALL_RADIUS * 2, BALL_RADIUS * 2).fill(FOREGROUND);
 
     leftScore.anchor.set(0.5);
     rightScore.anchor.set(0.5);

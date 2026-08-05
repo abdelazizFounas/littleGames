@@ -98,7 +98,7 @@ export async function startPongSession(
   const buffer = createSnapshotBuffer<AuthoritativeFrame>({ delayMs: INTERPOLATION_DELAY_MS });
   const history = createInputHistory<PongCommand>();
 
-  let side: Side = 'left';
+  let announcedSide: Side | null = null;
   let predictedY = FIELD_HEIGHT / 2;
   let running = true;
   let frame = 0;
@@ -116,7 +116,11 @@ export async function startPongSession(
 
   await renderer.mount(container);
   resizeToContainer();
-  window.addEventListener('resize', resizeToContainer);
+  // Watching the element rather than the window catches every reason it can
+  // change size — entering fullscreen, rotating a phone, the layout reflowing —
+  // with one listener instead of one per cause.
+  const resizeObserver = new ResizeObserver(resizeToContainer);
+  resizeObserver.observe(container);
   input.start();
 
   let connection: MatchConnection;
@@ -127,9 +131,16 @@ export async function startPongSession(
         if (next === null) {
           return;
         }
-        side = next.side;
         buffer.push(next, performance.now());
         history.acknowledge(next.acknowledgedSeq);
+
+        // Which seat we took is only known once the server says so. Reporting
+        // at join time instead meant announcing a default, which was wrong for
+        // whichever player took the other side.
+        if (announcedSide !== next.side) {
+          announcedSide = next.side;
+          onStatus({ kind: 'playing', side: next.side });
+        }
       },
       onDisconnect: () => {
         onStatus({ kind: 'failed', message: 'The connection to the match was lost.' });
@@ -140,12 +151,10 @@ export async function startPongSession(
     });
   } catch (cause) {
     input.stop();
-    window.removeEventListener('resize', resizeToContainer);
+    resizeObserver.disconnect();
     renderer.destroy();
     throw cause;
   }
-
-  onStatus({ kind: 'playing', side });
 
   const tick = (now: number): void => {
     if (!running) {
@@ -206,7 +215,7 @@ export async function startPongSession(
       running = false;
       cancelAnimationFrame(frame);
       input.stop();
-      window.removeEventListener('resize', resizeToContainer);
+      resizeObserver.disconnect();
       void connection.leave();
       renderer.destroy();
     },
