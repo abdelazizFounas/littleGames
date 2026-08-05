@@ -40,3 +40,7 @@ console:
 match:
   input_queue_size: 128
   call_queue_size: 128
+  # How often match labels are flushed to the index that MatchList searches.
+  # Nakama defaults to 1000 ms, which means a match just created is invisible
+  # to the next player for up to a second and they open a second one instead.
+  label_update_interval_ms: 250

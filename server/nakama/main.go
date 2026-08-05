@@ -9,9 +9,12 @@ package main
 import (
 	"context"
 	"database/sql"
+	"fmt"
 
 	"github.com/heroiclabs/nakama-common/runtime"
 	"littlegames.local/nakama/catalog"
+	"littlegames.local/nakama/match"
+	"littlegames.local/nakama/rpc"
 )
 
 // InitModule is the entry point Nakama calls once, at server startup, after
@@ -31,6 +34,21 @@ func InitModule(
 	}
 
 	if err := catalog.RegisterGuards(initializer); err != nil {
+		return err
+	}
+
+	if err := initializer.RegisterMatch(match.PongName, func(
+		_ context.Context,
+		_ runtime.Logger,
+		_ *sql.DB,
+		_ runtime.NakamaModule,
+	) (runtime.Match, error) {
+		return &match.PongMatch{}, nil
+	}); err != nil {
+		return fmt.Errorf("register the %s match handler: %w", match.PongName, err)
+	}
+
+	if err := rpc.Register(initializer); err != nil {
 		return err
 	}
 
