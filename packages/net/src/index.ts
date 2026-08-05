@@ -52,6 +52,7 @@ export type {
 export type { Invitation } from './match';
 export {
   autoLobby,
+  checkLobby,
   createInvitation,
   createLobby,
   findMatch,

@@ -17,6 +17,8 @@ const (
 	CreateLobbyID = "lobby.create"
 	// ListLobbiesID lists the lobbies still waiting for an opponent.
 	ListLobbiesID = "lobby.list"
+	// CheckLobbyID says whether a password would be accepted, without joining.
+	CheckLobbyID = "lobby.check"
 )
 
 const lobbyListLimit = 50
@@ -170,6 +172,7 @@ func registerLobbies(initializer runtime.Initializer) error {
 		AutoLobbyID:   autoLobby,
 		CreateLobbyID: createLobby,
 		ListLobbiesID: listLobbies,
+		CheckLobbyID:  checkLobby,
 		MyMatchesID:   myMatches,
 	} {
 		if err := initializer.RegisterRpc(id, fn); err != nil {
@@ -265,4 +268,44 @@ func myMatches(
 		return "", runtime.NewError("could not encode the response", codeInternal)
 	}
 	return string(response), nil
+}
+
+type checkLobbyRequest struct {
+	MatchID  string `json:"matchId"`
+	Password string `json:"password"`
+}
+
+// checkLobby reports whether the caller would be let in.
+//
+// So that a wrong password is refused on the screen the player is already on,
+// instead of after a game screen has been built for a match they cannot enter.
+// It is a courtesy and not the lock: the door itself is still checked on the
+// way in, because anything that answers a question can be skipped by not
+// asking it.
+func checkLobby(
+	ctx context.Context,
+	logger runtime.Logger,
+	_ *sql.DB,
+	nk runtime.NakamaModule,
+	payload string,
+) (string, error) {
+	var request checkLobbyRequest
+	if err := json.Unmarshal([]byte(payload), &request); err != nil {
+		return "", runtime.NewError("that request is not readable", codeInvalidArgument)
+	}
+	if request.MatchID == "" {
+		return "", runtime.NewError("no lobby named", codeInvalidArgument)
+	}
+
+	answer, err := nk.MatchSignal(ctx, request.MatchID, request.Password)
+	if err != nil {
+		logger.Info("Could not reach lobby %s: %v", request.MatchID, err)
+		return "", runtime.NewError("that lobby is no longer there", codeNotFound)
+	}
+
+	if answer != match.SignalOK {
+		return "", runtime.NewError("that password is not right", codePermissionDenied)
+	}
+
+	return `{"ok":true}`, nil
 }

@@ -253,6 +253,22 @@ export async function listLobbies(client: Client, session: Session): Promise<Lob
   });
 }
 
+/**
+ * Asks whether a password would be accepted, without joining.
+ *
+ * So a wrong one is refused on the screen the player is already on, rather than
+ * after a game screen has been built for a match they cannot enter. Throws with
+ * the server's own words when it would not be.
+ */
+export async function checkLobby(
+  client: Client,
+  session: Session,
+  matchId: string,
+  password: string,
+): Promise<void> {
+  await client.rpc(session, 'lobby.check', { matchId, password });
+}
+
 /** A match this player belongs to and can go back into. */
 export interface ResumableMatch {
   readonly matchId: string;

@@ -336,6 +336,12 @@ password is checked there, on the way in, and never in the browser — a check i
 the browser is a suggestion. It is held in the match's own state, never in its
 label: a label is public, and a lock that publishes its key is not one.
 
+A wrong password is refused on the lobby list, before the game screen is
+reached at all: the match answers a signal saying whether the password would be
+accepted. That is a courtesy and not the lock — the door is still checked when
+the socket joins, because anything that answers a question can be skipped by
+not asking it.
+
 Locked lobbies are listed but never handed to Quick game. Someone who asked for
 a quick game did not ask for a door they have no key to.
 

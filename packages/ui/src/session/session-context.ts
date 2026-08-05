@@ -60,6 +60,8 @@ export interface SessionContextValue {
   readonly listOpenLobbies: () => Promise<LobbySummary[]>;
   /** Matches this player walked away from and can return to. */
   readonly listMyMatches: () => Promise<ResumableMatch[]>;
+  /** Rejects a wrong password before the game screen is ever reached. */
+  readonly checkLobby: (matchId: string, password: string) => Promise<void>;
   /** Opens a match and returns a shareable code that leads to it. */
   readonly createInvitation: (matchId?: string) => Promise<Invitation>;
   /** Turns a code back into the match it points at. */

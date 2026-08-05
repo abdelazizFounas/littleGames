@@ -15,7 +15,7 @@ type Panel = 'none' | 'create' | 'list';
  * a stranger's game, or back in one that is already over.
  */
 export function GameActions({ gameId }: { readonly gameId: string }): ReactNode {
-  const { findOpenLobby, openLobby, listOpenLobbies } = useSession();
+  const { findOpenLobby, openLobby, listOpenLobbies, checkLobby } = useSession();
   const navigate = useNavigate();
   const action = useAsyncAction('That did not work.');
   const [panel, setPanel] = useState<Panel>('none');
@@ -141,9 +141,13 @@ export function GameActions({ gameId }: { readonly gameId: string }): ReactNode 
               className="form"
               onSubmit={(event) => {
                 event.preventDefault();
-                // Checked by the server when the socket joins, never here: a
-                // check in the browser is a suggestion.
-                enter(challenged.matchId, entry);
+                // Asked here so a wrong password is answered on this screen.
+                // The door is still checked when the socket joins; this only
+                // saves building a game nobody is getting into.
+                action.run(async () => {
+                  await checkLobby(challenged.matchId, entry);
+                  enter(challenged.matchId, entry);
+                });
               }}
             >
               <label className="field">
@@ -158,8 +162,8 @@ export function GameActions({ gameId }: { readonly gameId: string }): ReactNode 
                   }}
                 />
               </label>
-              <button type="submit" className="button">
-                Enter
+              <button type="submit" className="button" disabled={action.pending}>
+                {action.pending ? 'Checking…' : 'Enter'}
               </button>
             </form>
           )}

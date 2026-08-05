@@ -372,6 +372,21 @@ func (m *PongMatch) MatchTerminate(
 	return state
 }
 
+// SignalOK and SignalRefused are what a signal answers with.
+const (
+	SignalOK      = "ok"
+	SignalRefused = "refused"
+)
+
+// MatchSignal answers questions about the match without joining it.
+//
+// Used to check a password before a player is sent to the game screen. The
+// password only exists in this state, so nothing outside the match can compare
+// it, and answering here means a wrong one is refused where the player is
+// rather than after a screen has been built for a game they cannot enter.
+//
+// This is a courtesy, not the lock. The real check is still on the way in,
+// because anything that answers a question can be skipped by not asking.
 func (m *PongMatch) MatchSignal(
 	_ context.Context,
 	_ runtime.Logger,
@@ -380,9 +395,22 @@ func (m *PongMatch) MatchSignal(
 	_ runtime.MatchDispatcher,
 	_ int64,
 	state interface{},
-	_ string,
+	data string,
 ) (interface{}, string) {
-	return state, ""
+	current, ok := state.(*matchState)
+	if !ok {
+		return state, SignalRefused
+	}
+
+	if current.sim.Phase == pong.PhaseFinished || len(current.players) >= Capacity {
+		return current, SignalRefused
+	}
+
+	if current.password != "" && data != current.password {
+		return current, SignalRefused
+	}
+
+	return current, SignalOK
 }
 
 // applyInputs folds this tick's client messages into the state.

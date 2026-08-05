@@ -29,8 +29,9 @@ const InviteCollection = "invites"
 
 // gRPC NOT_FOUND and INVALID_ARGUMENT, which Nakama maps to 404 and 400.
 const (
-	codeNotFound        = 5
-	codeInvalidArgument = 3
+	codeNotFound         = 5
+	codeInvalidArgument  = 3
+	codePermissionDenied = 7
 )
 
 // inviteAlphabet deliberately omits characters that are read wrong when a code

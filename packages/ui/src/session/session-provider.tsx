@@ -4,6 +4,7 @@ import {
   createBrowserKeyValueStore,
   createInvitation as createInvitationOnServer,
   autoLobby,
+  checkLobby as checkLobbyOnServer,
   createLobby,
   createNakamaClient,
   fetchGameCatalog,
@@ -187,6 +188,16 @@ export function SessionProvider({ children }: { readonly children: ReactNode }):
     return listLobbies(client, internal.session);
   }, [client, internal]);
 
+  const checkLobby = useCallback(
+    async (matchId: string, password: string): Promise<void> => {
+      if (internal.status !== 'signed-in') {
+        throw new Error('Sign in first.');
+      }
+      await checkLobbyOnServer(client, internal.session, matchId, password);
+    },
+    [client, internal],
+  );
+
   const listMyMatches = useCallback(async (): Promise<ResumableMatch[]> => {
     if (internal.status !== 'signed-in') {
       throw new Error('Sign in to see your games.');
@@ -265,9 +276,11 @@ export function SessionProvider({ children }: { readonly children: ReactNode }):
       openLobby,
       listOpenLobbies,
       listMyMatches,
+      checkLobby,
     }),
     [
       changeDisplayName,
+      checkLobby,
       createInvitation,
       findOpenLobby,
       joinMatch,
