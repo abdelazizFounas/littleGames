@@ -260,17 +260,6 @@ body {
   border: 1px solid var(--border);
   background: var(--surface-sunken);
   color: var(--text);
-  text-decoration: none;
-}
-
-.game-card:hover,
-.game-card:focus-visible {
-  border-color: var(--accent);
-}
-
-.game-card:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
 }
 
 .game-card__name {
@@ -508,16 +497,22 @@ body {
 
 /* --- Lobbies ------------------------------------------------------------ */
 
-.game-card {
-  display: block;
-}
-
 .game-actions {
   margin-top: 1rem;
 }
 
 .game-actions .actions {
   margin-top: 0;
+  gap: 0.75rem;
+}
+
+/* Quick game takes its own line, and the other two share the next one evenly.
+   `flex: 1 1 0` rather than a width so they stay equal whatever their labels
+   say, and `min-width: 0` lets them shrink below their text on a narrow
+   phone instead of overflowing. */
+.game-actions .actions .button:not(.button--primary) {
+  flex: 1 1 0;
+  min-width: 0;
 }
 
 .lobby-list {
