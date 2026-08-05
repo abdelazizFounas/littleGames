@@ -142,12 +142,15 @@ export function SessionProvider({ children }: { readonly children: ReactNode }):
     [client, config, internal],
   );
 
-  const createInvitation = useCallback(async (): Promise<Invitation> => {
-    if (internal.status !== 'signed-in') {
-      throw new Error('Sign in before inviting anyone.');
-    }
-    return createInvitationOnServer(client, internal.session);
-  }, [client, internal]);
+  const createInvitation = useCallback(
+    async (matchId?: string): Promise<Invitation> => {
+      if (internal.status !== 'signed-in') {
+        throw new Error('Sign in before inviting anyone.');
+      }
+      return createInvitationOnServer(client, internal.session, matchId);
+    },
+    [client, internal],
+  );
 
   const resolveInvitation = useCallback(
     async (code: string): Promise<string> => {

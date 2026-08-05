@@ -128,8 +128,12 @@ export interface Invitation {
  * The code is drawn server-side from a cryptographic source: a predictable one
  * would let anyone walk into a private match by guessing the next.
  */
-export async function createInvitation(client: Client, session: Session): Promise<Invitation> {
-  const response = await client.rpc(session, 'invite.create', {});
+export async function createInvitation(
+  client: Client,
+  session: Session,
+  matchId?: string,
+): Promise<Invitation> {
+  const response = await client.rpc(session, 'invite.create', matchId === undefined ? {} : { matchId });
   const payload: unknown = response.payload;
 
   if (

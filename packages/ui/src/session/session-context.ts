@@ -45,7 +45,7 @@ export interface SessionContextValue {
    */
   readonly joinMatch: (listeners: MatchListeners, matchId?: string) => Promise<MatchConnection>;
   /** Opens a match and returns a shareable code that leads to it. */
-  readonly createInvitation: () => Promise<Invitation>;
+  readonly createInvitation: (matchId?: string) => Promise<Invitation>;
   /** Turns a code back into the match it points at. */
   readonly resolveInvitation: (code: string) => Promise<string>;
 }

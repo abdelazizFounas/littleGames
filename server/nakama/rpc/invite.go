@@ -55,6 +55,13 @@ type createInviteResponse struct {
 	ExpiresAt int64  `json:"expiresAt"`
 }
 
+type createInviteRequest struct {
+	// Match the caller is already in. An invitation that opened a fresh match
+	// instead would leave the two players sitting in different ones, each
+	// waiting for an opponent who is next door.
+	MatchID string `json:"matchId"`
+}
+
 type resolveInviteRequest struct {
 	Code string `json:"code"`
 }
@@ -87,14 +94,30 @@ func createInvite(
 	logger runtime.Logger,
 	_ *sql.DB,
 	nk runtime.NakamaModule,
-	_ string,
+	payload string,
 ) (string, error) {
 	userID, _ := ctx.Value(runtime.RUNTIME_CTX_USER_ID).(string)
 
-	matchID, err := nk.MatchCreate(ctx, match.PongName, nil)
-	if err != nil {
-		logger.Error("Failed to create a match for an invitation: %v", err)
-		return "", runtime.NewError("could not open a match", codeInternal)
+	var request createInviteRequest
+	if payload != "" {
+		if err := json.Unmarshal([]byte(payload), &request); err != nil {
+			return "", runtime.NewError("that request is not readable", codeInvalidArgument)
+		}
+	}
+
+	matchID := request.MatchID
+	if matchID == "" {
+		// No match named: the caller is inviting before sitting down, so open
+		// one for them to be joined in.
+		created, err := nk.MatchCreate(ctx, match.PongName, nil)
+		if err != nil {
+			logger.Error("Failed to create a match for an invitation: %v", err)
+			return "", runtime.NewError("could not open a match", codeInternal)
+		}
+		matchID = created
+	} else if _, err := nk.MatchGet(ctx, matchID); err != nil {
+		// A match that has ended between sitting down and pressing invite.
+		return "", runtime.NewError("that match is no longer running", codeNotFound)
 	}
 
 	code, err := newInviteCode()

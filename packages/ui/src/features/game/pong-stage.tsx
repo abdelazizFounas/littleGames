@@ -13,10 +13,13 @@ import { startPongSession, type SessionStatus } from './pong-session';
 export function PongStage({
   userId,
   matchId,
+  onJoined,
 }: {
   readonly userId: string;
   /** Set when arriving from an invitation; otherwise any match with room. */
   readonly matchId?: string | undefined;
+  /** Called with the match actually joined, so it can be invited into. */
+  readonly onJoined: (matchId: string) => void;
 }): ReactNode {
   const { joinMatch } = useSession();
   const frameRef = useRef<HTMLDivElement>(null);
@@ -36,8 +39,12 @@ export function PongStage({
     const run = async (): Promise<void> => {
       try {
         const session = await startPongSession(container, userId, matchId, joinMatch, (next) => {
-          if (!cancelled) {
-            setStatus(next);
+          if (cancelled) {
+            return;
+          }
+          setStatus(next);
+          if (next.kind === 'playing') {
+            onJoined(next.matchId);
           }
         });
         if (cancelled) {
@@ -60,7 +67,7 @@ export function PongStage({
       cancelled = true;
       started?.stop();
     };
-  }, [joinMatch, matchId, userId]);
+  }, [joinMatch, matchId, onJoined, userId]);
 
   // Tracked from the document rather than from the click, so the button stays
   // honest when fullscreen is left with Escape.

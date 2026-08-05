@@ -7,7 +7,7 @@ function linkFor(code: string): string {
   return new URL(`/join/${code}`, window.location.origin).toString();
 }
 
-export function InvitePanel(): ReactNode {
+export function InvitePanel({ matchId }: { readonly matchId: string | null }): ReactNode {
   const { createInvitation } = useSession();
   const action = useAsyncAction('Could not create an invitation.');
   const [code, setCode] = useState<string | null>(null);
@@ -16,7 +16,7 @@ export function InvitePanel(): ReactNode {
   const invite = (): void => {
     setShared(null);
     action.run(async () => {
-      setCode((await createInvitation()).code);
+      setCode((await createInvitation(matchId ?? undefined)).code);
     });
   };
 

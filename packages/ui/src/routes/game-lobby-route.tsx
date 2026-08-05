@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import { useCallback, useState, type ReactNode } from 'react';
 import { Link, Navigate, useParams, useSearchParams } from 'react-router';
 import { useCatalog } from '../features/catalog/use-catalog';
 import { InvitePanel } from '../features/game/invite-panel';
@@ -14,6 +14,10 @@ function Frame({ children }: { readonly children: ReactNode }): ReactNode {
 export function GameLobbyRoute(): ReactNode {
   const { gameId } = useParams();
   const [searchParams] = useSearchParams();
+  const [joinedMatchId, setJoinedMatchId] = useState<string | null>(null);
+  const onJoined = useCallback((id: string) => {
+    setJoinedMatchId(id);
+  }, []);
   const { state } = useSession();
   const catalog = useCatalog();
 
@@ -80,9 +84,13 @@ export function GameLobbyRoute(): ReactNode {
         </div>
       </dl>
 
-      <PongStage userId={state.profile.userId} matchId={searchParams.get('match') ?? undefined} />
+      <PongStage
+        userId={state.profile.userId}
+        matchId={searchParams.get('match') ?? undefined}
+        onJoined={onJoined}
+      />
 
-      <InvitePanel />
+      <InvitePanel matchId={joinedMatchId} />
 
       <Link className="link-button" to="/">
         Back to the games

@@ -17,7 +17,7 @@ const INPUT_INTERVAL_MS = 1000 / TICK_RATE;
 
 export type SessionStatus =
   | { readonly kind: 'connecting' }
-  | { readonly kind: 'playing'; readonly side: Side }
+  | { readonly kind: 'playing'; readonly side: Side; readonly matchId: string }
   | { readonly kind: 'failed'; readonly message: string };
 
 export interface PongSession {
@@ -129,6 +129,7 @@ export async function startPongSession(
   input.start();
 
   let connection: MatchConnection;
+  let joinedMatchId = '';
   try {
     connection = await joinMatch({
       onSnapshot: (snapshot) => {
@@ -144,7 +145,9 @@ export async function startPongSession(
         // whichever player took the other side.
         if (announcedSide !== next.side) {
           announcedSide = next.side;
-          onStatus({ kind: 'playing', side: next.side });
+          // The match is reported alongside the side so an invitation can be
+          // minted for the match actually being played, rather than a new one.
+          onStatus({ kind: 'playing', side: next.side, matchId: joinedMatchId });
         }
       },
       onDisconnect: () => {
@@ -160,6 +163,8 @@ export async function startPongSession(
     renderer.destroy();
     throw cause;
   }
+
+  joinedMatchId = connection.matchId;
 
   const tick = (now: number): void => {
     if (!running) {
