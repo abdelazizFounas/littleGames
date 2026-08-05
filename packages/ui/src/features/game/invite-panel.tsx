@@ -60,6 +60,10 @@ export function InvitePanel({ matchId }: { readonly matchId: string | null }): R
   return (
     <div className="invite">
       <p className="hint">Send this to whoever you want to play. It works for 30 minutes.</p>
+      <p className="hint">
+        Testing on your own? A second tab in this browser is the same account, and a match needs
+        two. Open the link in a private window or another browser.
+      </p>
       <p className="invite__code">{code}</p>
       <div className="actions">
         <button

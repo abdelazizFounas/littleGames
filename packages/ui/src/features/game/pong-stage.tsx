@@ -33,20 +33,28 @@ export function PongStage({
       return undefined;
     }
 
+    const abort = new AbortController();
     let cancelled = false;
     let started: { stop: () => void } | null = null;
 
     const run = async (): Promise<void> => {
       try {
-        const session = await startPongSession(container, userId, matchId, joinMatch, (next) => {
-          if (cancelled) {
-            return;
-          }
-          setStatus(next);
-          if (next.kind === 'playing') {
-            onJoined(next.matchId);
-          }
-        });
+        const session = await startPongSession(
+          container,
+          userId,
+          matchId,
+          joinMatch,
+          (next) => {
+            if (cancelled) {
+              return;
+            }
+            setStatus(next);
+            if (next.kind === 'playing') {
+              onJoined(next.matchId);
+            }
+          },
+          abort.signal,
+        );
         if (cancelled) {
           // The screen was left while the match was still being joined; without
           // this the seat would stay occupied by nobody.
@@ -55,6 +63,7 @@ export function PongStage({
         }
         started = session;
       } catch (cause) {
+        // A session abandoned before it began is not a failure worth showing.
         if (!cancelled) {
           setStatus({ kind: 'failed', message: describeError(cause, 'Could not start the match.') });
         }
@@ -65,6 +74,7 @@ export function PongStage({
 
     return () => {
       cancelled = true;
+      abort.abort();
       started?.stop();
     };
   }, [joinMatch, matchId, onJoined, userId]);

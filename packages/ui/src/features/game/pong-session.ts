@@ -90,6 +90,7 @@ export async function startPongSession(
   matchId: string | undefined,
   joinMatch: (listeners: MatchListeners, matchId?: string) => Promise<MatchConnection>,
   onStatus: (status: SessionStatus) => void,
+  signal: AbortSignal,
 ): Promise<PongSession> {
   // Loaded only now, so the catalogue and the lobby never carry a rendering
   // engine they have no use for.
@@ -127,6 +128,17 @@ export async function startPongSession(
   const resizeObserver = new ResizeObserver(resizeToContainer);
   resizeObserver.observe(container);
   input.start();
+
+  // Loading the engine takes long enough for the screen to have been left, or
+  // for a development double-mount to have discarded this session already.
+  // Taking a seat now would give the match a socket that is about to vanish,
+  // and whichever of the two claimed the seat last would take it away with it.
+  if (signal.aborted) {
+    input.stop();
+    resizeObserver.disconnect();
+    renderer.destroy();
+    throw new Error('The match was left before it started.');
+  }
 
   let connection: MatchConnection;
   let joinedMatchId = '';
