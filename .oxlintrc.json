@@ -17,7 +17,8 @@
     "eslint/no-unused-vars": "error",
     "typescript/consistent-type-imports": "error",
     "typescript/no-explicit-any": "error",
-    "typescript/no-non-null-assertion": "error"
+    "typescript/no-non-null-assertion": "error",
+    "import/no-unassigned-import": ["error", { "allow": ["**/*.css"] }]
   },
   "ignorePatterns": ["dist", "node_modules", "**/*.d.ts"]
 }

@@ -1,0 +1,35 @@
+import type { PlayerProfile } from '@littlegames/net';
+import { createContext } from 'react';
+
+/**
+ * Whether anyone is signed in, and who.
+ *
+ * `loading` is a distinct state rather than an absence of session: on a return
+ * visit the stored session is restored asynchronously, and rendering the
+ * signed-out screen during that window would flash a sign-in button at players
+ * who are already signed in.
+ *
+ * The session itself is deliberately absent. It stays inside the provider, so
+ * no screen can start talking to the server on its own and bypass the session
+ * bookkeeping.
+ */
+export type SessionState =
+  | { readonly status: 'loading' }
+  | { readonly status: 'signed-out' }
+  | { readonly status: 'signed-in'; readonly profile: PlayerProfile };
+
+/**
+ * Members are function properties rather than methods on purpose: components
+ * destructure them off the context, so they must be safe to detach from it.
+ */
+export interface SessionContextValue {
+  readonly state: SessionState;
+  readonly signInAsGuest: () => Promise<void>;
+  readonly signInWithEmail: (email: string, password: string) => Promise<void>;
+  /** Attaches an email to the current guest account, keeping its history. */
+  readonly upgradeToEmailAccount: (email: string, password: string) => Promise<void>;
+  readonly changeDisplayName: (displayName: string) => Promise<void>;
+  readonly signOutPlayer: () => Promise<void>;
+}
+
+export const SessionContext = createContext<SessionContextValue | null>(null);

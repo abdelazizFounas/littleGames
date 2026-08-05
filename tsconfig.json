@@ -1,4 +1,8 @@
 {
   "files": [],
-  "references": [{ "path": "./packages/core" }, { "path": "./packages/net" }]
+  "references": [
+    { "path": "./packages/core" },
+    { "path": "./packages/net" },
+    { "path": "./packages/ui" }
+  ]
 }

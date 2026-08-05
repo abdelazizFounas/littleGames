@@ -1,0 +1,152 @@
+import {
+  authenticateEmail,
+  authenticateGuest,
+  createBrowserKeyValueStore,
+  createNakamaClient,
+  fetchPlayerProfile,
+  linkEmail,
+  persistSession,
+  restoreSession,
+  signOut,
+  updateDisplayName,
+  type PlayerProfile,
+  type PlayerSession,
+} from '@littlegames/net';
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { readNakamaConfig } from './nakama-config';
+import { SessionContext, type SessionContextValue, type SessionState } from './session-context';
+
+/** Provider-private state: unlike the exposed one, it holds the session. */
+type InternalState =
+  | { readonly status: 'loading' }
+  | { readonly status: 'signed-out' }
+  | { readonly status: 'signed-in'; readonly session: PlayerSession; readonly profile: PlayerProfile };
+
+export function SessionProvider({ children }: { readonly children: ReactNode }): ReactNode {
+  // Both are built once and never rebuilt: a new client would drop in-flight
+  // requests, and a new store would hand out a new device id, orphaning the
+  // guest account bound to the previous one.
+  const [client] = useState(() => createNakamaClient(readNakamaConfig()));
+  const [store] = useState(() => createBrowserKeyValueStore());
+  const [internal, setInternal] = useState<InternalState>({ status: 'loading' });
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const restore = async (): Promise<void> => {
+      try {
+        const session = await restoreSession(client, store);
+        if (cancelled) {
+          return;
+        }
+        if (session === null) {
+          setInternal({ status: 'signed-out' });
+          return;
+        }
+        const profile = await fetchPlayerProfile(client, session);
+        persistSession(store, session);
+        if (!cancelled) {
+          setInternal({ status: 'signed-in', session, profile });
+        }
+      } catch {
+        // A server that cannot confirm the stored session leaves the player at
+        // the sign-in screen rather than stuck on a spinner forever.
+        if (!cancelled) {
+          setInternal({ status: 'signed-out' });
+        }
+      }
+    };
+
+    void restore();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [client, store]);
+
+  /**
+   * Loads the profile for a session and makes it current.
+   *
+   * Persisting here rather than in each caller is what keeps the stored tokens
+   * in step: the client renews them in place, so the session object may hold
+   * fresher tokens than storage after any server call.
+   */
+  const adopt = useCallback(
+    async (session: PlayerSession): Promise<void> => {
+      const profile = await fetchPlayerProfile(client, session);
+      persistSession(store, session);
+      setInternal({ status: 'signed-in', session, profile });
+    },
+    [client, store],
+  );
+
+  const signInAsGuest = useCallback(async (): Promise<void> => {
+    await adopt(await authenticateGuest(client, store));
+  }, [adopt, client, store]);
+
+  const signInWithEmail = useCallback(
+    async (email: string, password: string): Promise<void> => {
+      await adopt(await authenticateEmail(client, store, email, password));
+    },
+    [adopt, client, store],
+  );
+
+  const upgradeToEmailAccount = useCallback(
+    async (email: string, password: string): Promise<void> => {
+      if (internal.status !== 'signed-in') {
+        throw new Error('Sign in before adding an email address.');
+      }
+      await linkEmail(client, store, internal.session, email, password);
+      await adopt(internal.session);
+    },
+    [adopt, client, internal, store],
+  );
+
+  const changeDisplayName = useCallback(
+    async (displayName: string): Promise<void> => {
+      if (internal.status !== 'signed-in') {
+        throw new Error('Sign in before changing your name.');
+      }
+      await updateDisplayName(client, internal.session, displayName);
+      await adopt(internal.session);
+    },
+    [adopt, client, internal],
+  );
+
+  const signOutPlayer = useCallback(async (): Promise<void> => {
+    if (internal.status !== 'signed-in') {
+      return;
+    }
+    await signOut(client, store, internal.session);
+    setInternal({ status: 'signed-out' });
+  }, [client, internal, store]);
+
+  const state = useMemo<SessionState>(
+    () =>
+      internal.status === 'signed-in'
+        ? { status: 'signed-in', profile: internal.profile }
+        : { status: internal.status },
+    [internal],
+  );
+
+  const value = useMemo<SessionContextValue>(
+    () => ({
+      state,
+      signInAsGuest,
+      signInWithEmail,
+      upgradeToEmailAccount,
+      changeDisplayName,
+      signOutPlayer,
+    }),
+    [
+      changeDisplayName,
+      signInAsGuest,
+      signInWithEmail,
+      signOutPlayer,
+      state,
+      upgradeToEmailAccount,
+    ],
+  );
+
+  return <SessionContext value={value}>{children}</SessionContext>;
+}
