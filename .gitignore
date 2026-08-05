@@ -1,0 +1,23 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+*.tsbuildinfo
+
+# Compiled Nakama Go plugin (reproducible build artifact)
+server/nakama/build/
+*.so
+
+# Local environment
+.env
+.env.local
+
+# Editors and OS
+.DS_Store
+.idea/
+.vscode/*
+!.vscode/extensions.json
+
+# Test output
+coverage/
