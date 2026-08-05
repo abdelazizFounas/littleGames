@@ -1,4 +1,4 @@
-import type { PlayerProfile } from '@littlegames/net';
+import type { GameSummary, PlayerProfile } from '@littlegames/net';
 import { createContext } from 'react';
 
 /**
@@ -30,6 +30,8 @@ export interface SessionContextValue {
   readonly upgradeToEmailAccount: (email: string, password: string) => Promise<void>;
   readonly changeDisplayName: (displayName: string) => Promise<void>;
   readonly signOutPlayer: () => Promise<void>;
+  /** Loads the playable games. Requires a signed-in player. */
+  readonly loadCatalog: () => Promise<GameSummary[]>;
 }
 
 export const SessionContext = createContext<SessionContextValue | null>(null);

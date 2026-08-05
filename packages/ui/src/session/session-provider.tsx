@@ -3,12 +3,14 @@ import {
   authenticateGuest,
   createBrowserKeyValueStore,
   createNakamaClient,
+  fetchGameCatalog,
   fetchPlayerProfile,
   linkEmail,
   persistSession,
   restoreSession,
   signOut,
   updateDisplayName,
+  type GameSummary,
   type PlayerProfile,
   type PlayerSession,
 } from '@littlegames/net';
@@ -113,6 +115,13 @@ export function SessionProvider({ children }: { readonly children: ReactNode }):
     [adopt, client, internal],
   );
 
+  const loadCatalog = useCallback(async (): Promise<GameSummary[]> => {
+    if (internal.status !== 'signed-in') {
+      throw new Error('Sign in before browsing the catalogue.');
+    }
+    return fetchGameCatalog(client, internal.session);
+  }, [client, internal]);
+
   const signOutPlayer = useCallback(async (): Promise<void> => {
     if (internal.status !== 'signed-in') {
       return;
@@ -137,9 +146,11 @@ export function SessionProvider({ children }: { readonly children: ReactNode }):
       upgradeToEmailAccount,
       changeDisplayName,
       signOutPlayer,
+      loadCatalog,
     }),
     [
       changeDisplayName,
+      loadCatalog,
       signInAsGuest,
       signInWithEmail,
       signOutPlayer,

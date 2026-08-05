@@ -1,0 +1,82 @@
+import type { ReactNode } from 'react';
+import { Link, Navigate, useParams } from 'react-router';
+import { useCatalog } from '../features/catalog/use-catalog';
+import { useSession } from '../session/use-session';
+
+function Frame({ children }: { readonly children: ReactNode }): ReactNode {
+  return <section className="panel">{children}</section>;
+}
+
+export function GameLobbyRoute(): ReactNode {
+  const { gameId } = useParams();
+  const { state } = useSession();
+  const catalog = useCatalog();
+
+  if (state.status === 'loading') {
+    return (
+      <Frame>
+        <p className="lede">Loading…</p>
+      </Frame>
+    );
+  }
+
+  if (state.status === 'signed-out') {
+    return <Navigate to="/" replace />;
+  }
+
+  if (catalog.status === 'loading') {
+    return (
+      <Frame>
+        <p className="lede">Loading…</p>
+      </Frame>
+    );
+  }
+
+  if (catalog.status === 'failed') {
+    return (
+      <Frame>
+        <p role="alert" className="error">
+          {catalog.error}
+        </p>
+      </Frame>
+    );
+  }
+
+  const game = catalog.data.find((candidate) => candidate.id === gameId);
+
+  if (game === undefined) {
+    // A stale bookmark or a mistyped id lands here. It has to say so rather
+    // than render an empty screen.
+    return (
+      <Frame>
+        <p className="eyebrow">Unknown game</p>
+        <h1>We could not find that game</h1>
+        <p className="hint">It may have been renamed or removed from the catalogue.</p>
+        <Link className="button" to="/">
+          Back to the games
+        </Link>
+      </Frame>
+    );
+  }
+
+  return (
+    <Frame>
+      <p className="eyebrow">{game.tagline}</p>
+      <h1>{game.name}</h1>
+      <p className="hint">{game.description}</p>
+      <dl className="facts">
+        <div>
+          <dt>Players</dt>
+          <dd>
+            {game.minPlayers === game.maxPlayers
+              ? game.minPlayers
+              : `${String(game.minPlayers)}–${String(game.maxPlayers)}`}
+          </dd>
+        </div>
+      </dl>
+      <Link className="link-button" to="/">
+        Back to the games
+      </Link>
+    </Frame>
+  );
+}
