@@ -7,9 +7,10 @@ authoritative match logic in Go.
 The whole repository — code, identifiers, comments, UI strings, commit
 messages — is written in English.
 
-> **Status: phase 1 (authentication and shell).** The stack boots, Nakama loads
-> a compiled Go runtime module, and you can sign in as a guest, pick a display
-> name and upgrade the account with an email. No gameplay yet.
+> **Status: phase 2 (catalogue and lobby).** The stack boots, Nakama loads a
+> compiled Go runtime module, you can sign in as a guest, name yourself and
+> upgrade the account with an email, and the game catalogue is served from
+> Nakama's storage engine. No gameplay yet.
 
 ## Architecture in one paragraph
 
@@ -181,7 +182,7 @@ the server binary.
 packages/
   core/            Shared contracts and protocol. Zero runtime dependencies.
   net/             Nakama client, session lifecycle, account access.
-  ui/              React shell: routing, authentication, profile.
+  ui/              React shell: routing, authentication, profile, catalogue.
 server/
   nakama/          Go runtime module (match handlers, RPCs, hooks)
   docker/          Compose stack, plugin build, Caddy and Nakama config
@@ -193,6 +194,26 @@ placeholder.
 `net` is the only package that imports the Nakama SDK. It re-exports what the
 shell needs, so no screen talks to the backend directly and swapping the
 backend stays a change to one package.
+
+## The game catalogue
+
+The list of games lives in Nakama's storage engine, in the `catalog`
+collection, so it can be edited from the Nakama console without a
+redeployment. The server seeds only the entries that are missing, which means
+an edited entry survives every restart.
+
+Clients read it and never write it. Two separate locks enforce that, because
+either one alone is insufficient:
+
+- A `before` hook rejects any client write or delete in the collection.
+- The client scopes its listing to the server-owned entries.
+
+The reason for the second lock is not obvious. Storage objects are namespaced
+by owner, so a client write to `catalog` does not overwrite the server's entry —
+it creates one owned by that player. A player may mark their own object
+public-read, and an unscoped listing returns everything the caller may read, so
+without the scoping one player could put an entry into everybody else's game
+list.
 
 ## Configuration
 
