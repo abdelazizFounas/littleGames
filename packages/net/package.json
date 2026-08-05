@@ -8,9 +8,11 @@
     ".": "./src/index.ts"
   },
   "scripts": {
-    "typecheck": "tsc --build"
+    "typecheck": "tsc --build",
+    "verify:match": "node scripts/verify-match.ts"
   },
   "dependencies": {
+    "@bufbuild/protobuf": "2.13.0",
     "@heroiclabs/nakama-js": "2.8.0",
     "@littlegames/core": "workspace:*"
   }

@@ -41,3 +41,6 @@ export {
   toPlayerProfile,
   updateDisplayName,
 } from './account';
+
+export type { MatchConnection, MatchListeners } from './match';
+export { findMatch, joinMatch } from './match';
