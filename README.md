@@ -7,10 +7,9 @@ authoritative match logic in Go.
 The whole repository — code, identifiers, comments, UI strings, commit
 messages — is written in English.
 
-> **Status: phase 4 (Pong rules).** The rules exist as pure TypeScript and as a
-> Go port that runs the authoritative match, both held to the same conformance
-> vectors. A full match plays to its end in a unit test with no browser.
-> Rendering comes next.
+> **Status: phase 5 (playable).** Pong is playable by two people in a browser,
+> drawn with PixiJS, with the opponent interpolated and your own paddle
+> predicted ahead of the server. Keyboard and touch both work.
 
 ## Architecture in one paragraph
 
@@ -275,6 +274,36 @@ nothing. A unit test plays a full match against it, to the winning score, with
 no browser and no network. If that keeps passing, nothing in the rules reaches
 for a canvas, and a second engine can be added later without touching them.
 
+## How the picture is built
+
+The server is the only authority, and it is always a round trip in the past.
+Two different techniques close that gap, and they pull in opposite directions:
+
+- **Your own paddle is predicted.** Inputs are applied locally the moment they
+  happen, using the very same paddle rule the server runs, and are replayed on
+  top of each authoritative state until the server acknowledges them. Waiting
+  for the round trip instead would make the paddle answer a key visibly late,
+  which is the one lag a player feels immediately.
+- **The ball and the opponent are interpolated, 100 ms behind.** Drawing the
+  newest snapshot the instant it lands means moving only when one lands, so
+  network jitter becomes visible stutter. Holding a small delay means there is
+  almost always a later snapshot to move towards.
+
+When nothing arrives in time the picture freezes on the newest state rather
+than extrapolating. Inventing motion the server never sent has to be visibly
+undone the moment it turns out wrong.
+
+React is not part of any of this. The loop is plain TypeScript on
+`requestAnimationFrame`; React places a `div` on the page and is told only
+about events worth a re-render, such as connecting or failing. Input is sampled
+on the server's cadence rather than the display's, so a 144 Hz screen does not
+send five times what a 60 Hz one does.
+
+`packages/games/pong/renderer-pixi` is the only place allowed to know PixiJS
+exists, and it is reached through a dynamic `import()`. The catalogue and lobby
+never carry a rendering engine: the built entry chunk contains no PixiJS at
+all, and the engine arrives in its own chunks when a match starts.
+
 ## Repository layout
 
 ```
@@ -282,6 +311,7 @@ packages/
   core/            Shared contracts and protocol. Zero runtime dependencies.
   net/             Nakama client, session lifecycle, accounts, match sockets.
   games/pong/logic Pong rules and physics. Pure TypeScript, the reference.
+  games/pong/renderer-pixi  PixiJS drawing. The only package importing Pixi.
   renderer-headless A renderer that draws nothing, for headless matches.
   ui/              React shell: routing, authentication, profile, catalogue.
 server/
