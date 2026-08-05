@@ -1,0 +1,8401 @@
+{
+  "generatedBy": "packages/games/pong/logic/scripts/write-vectors.ts",
+  "tickRate": 30,
+  "checkpointEvery": 30,
+  "scenarios": [
+    {
+      "name": "rally",
+      "description": "Both players chase the ball, so rallies run long and the ball accelerates.",
+      "inputs": [
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "uu",
+        "dd",
+        "uu",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "uu",
+        "dd",
+        "uu",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "uu",
+        "dd",
+        "uu",
+        "uu",
+        "uu",
+        "uu",
+        "uu",
+        "uu",
+        "uu",
+        "uu",
+        "uu",
+        "uu",
+        "uu",
+        "uu",
+        "uu",
+        "uu",
+        "uu",
+        "uu",
+        "uu",
+        "uu",
+        "uu",
+        "uu",
+        "uu",
+        "uu",
+        "uu",
+        "uu",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "dd",
+        "uu",
+        "dd",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "uu",
+        "uu",
+        "uu",
+        "uu",
+        "uu",
+        "uu",
+        "uu",
+        "uu",
+        "uu",
+        "uu",
+        "uu",
+        "uu",
+        "uu",
+        "uu",
+        "uu",
+        "uu",
+        "uu",
+        "uu",
+        "uu",
+        "uu",
+        "uu",
+        "uu",
+        "uu",
+        "uu",
+        "uu",
+        "uu",
+        "uu",
+        "uu",
+        "uu",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "dd",
+        "uu",
+        "dd",
+        "dd",
+        "uu",
+        "dd",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "dd",
+        "uu",
+        "dd",
+        "dd",
+        "uu",
+        "dd",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "dd",
+        "uu",
+        "dd",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "dd",
+        "uu",
+        "dd",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "uu",
+        "dd",
+        "uu",
+        "uu",
+        "uu",
+        "dd",
+        "uu",
+        "uu",
+        "dd",
+        "uu",
+        "uu",
+        "dd",
+        "uu",
+        "uu",
+        "dd",
+        "uu",
+        "uu",
+        "uu",
+        "dd",
+        "uu",
+        "uu",
+        "dd",
+        "uu",
+        "uu",
+        "dd",
+        "uu",
+        "uu",
+        "uu",
+        "dd",
+        "uu",
+        "uu",
+        "dd",
+        "uu",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "uu",
+        "dd",
+        "uu",
+        "uu",
+        "uu",
+        "dd",
+        "uu",
+        "uu",
+        "uu",
+        "uu",
+        "uu",
+        "uu",
+        "uu",
+        "uu",
+        "uu",
+        "uu",
+        "uu",
+        "uu",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "dd",
+        "dd",
+        "uu",
+        "dd",
+        "dd",
+        "uu",
+        "dd",
+        "dd",
+        "dd",
+        "dd",
+        "uu",
+        "dd",
+        "dd",
+        "dd",
+        "dd",
+        "uu",
+        "dd",
+        "dd",
+        "dd",
+        "dd",
+        "uu",
+        "dd",
+        "dd",
+        "dd",
+        "dd",
+        "dd",
+        "uu",
+        "dd",
+        "dd",
+        "dd",
+        "dd",
+        "uu",
+        "dd",
+        "dd",
+        "dd",
+        "uu",
+        "dd",
+        "dd",
+        "uu",
+        "dd",
+        "dd",
+        "uu",
+        "dd",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "dd",
+        "uu",
+        "dd",
+        "dd",
+        "uu",
+        "dd",
+        "dd",
+        "uu",
+        "dd",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "dd",
+        "uu",
+        "dd",
+        "dd",
+        "uu",
+        "dd",
+        "dd",
+        "uu",
+        "dd",
+        "dd",
+        "uu",
+        "dd",
+        "dd",
+        "uu",
+        "dd",
+        "dd",
+        "uu",
+        "dd",
+        "dd",
+        "uu",
+        "dd",
+        "dd",
+        "uu",
+        "dd",
+        "dd",
+        "dd",
+        "dd",
+        "dd",
+        "dd",
+        "dd",
+        "dd",
+        "dd",
+        "dd",
+        "dd",
+        "dd",
+        "dd",
+        "dd",
+        "dd",
+        "dd",
+        "dd",
+        "dd",
+        "dd",
+        "dd",
+        "dd",
+        "dd",
+        "dd",
+        "dd",
+        "dd",
+        "dd",
+        "dd",
+        "dd",
+        "dd",
+        "dd",
+        "dd",
+        "dd",
+        "dd",
+        "dd",
+        "dd",
+        "dd",
+        "dd",
+        "dd",
+        "dd",
+        "dd",
+        "dd",
+        "dd",
+        "dd",
+        "dd",
+        "dd",
+        "dd",
+        "dd",
+        "dd",
+        "dd",
+        "dd",
+        "uu",
+        "uu",
+        "uu",
+        "uu",
+        "uu",
+        "uu",
+        "uu",
+        "uu",
+        "uu",
+        "uu",
+        "uu",
+        "uu",
+        "uu",
+        "uu",
+        "uu",
+        "uu",
+        "uu",
+        "uu",
+        "uu",
+        "uu",
+        "uu",
+        "uu",
+        "uu",
+        "uu",
+        "uu",
+        "uu",
+        "uu",
+        "uu",
+        "uu",
+        "uu",
+        "uu",
+        "uu",
+        "uu",
+        "uu",
+        "uu",
+        "dd",
+        "dd",
+        "dd",
+        "dd",
+        "dd",
+        "dd",
+        "dd",
+        "dd",
+        "dd",
+        "dd",
+        "dd",
+        "dd",
+        "dd",
+        "dd",
+        "dd",
+        "dd",
+        "dd",
+        "dd",
+        "dd",
+        "dd",
+        "dd",
+        "dd",
+        "dd",
+        "dd",
+        "uu",
+        "uu",
+        "uu",
+        "uu",
+        "uu",
+        "uu",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "dd",
+        "uu",
+        "dd",
+        "dd",
+        "uu",
+        "dd",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "dd",
+        "uu",
+        "dd",
+        "dd",
+        "uu",
+        "dd",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "dd",
+        "uu",
+        "dd",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "dd",
+        "uu",
+        "uu",
+        "dd",
+        "uu",
+        "dd"
+      ],
+      "checkpoints": [
+        {
+          "tick": 0,
+          "state": {
+            "phase": "countdown",
+            "phaseTicks": 90,
+            "left": {
+              "y": 300
+            },
+            "right": {
+              "y": 300
+            },
+            "ball": {
+              "x": 400,
+              "y": 300,
+              "vx": 0,
+              "vy": 0,
+              "speed": 330
+            },
+            "score": {
+              "left": 0,
+              "right": 0
+            },
+            "pointsPlayed": 0,
+            "serveTowards": "right",
+            "winner": null
+          }
+        },
+        {
+          "tick": 30,
+          "state": {
+            "phase": "countdown",
+            "phaseTicks": 60,
+            "left": {
+              "y": 300
+            },
+            "right": {
+              "y": 300
+            },
+            "ball": {
+              "x": 400,
+              "y": 300,
+              "vx": 0,
+              "vy": 0,
+              "speed": 330
+            },
+            "score": {
+              "left": 0,
+              "right": 0
+            },
+            "pointsPlayed": 0,
+            "serveTowards": "right",
+            "winner": null
+          }
+        },
+        {
+          "tick": 60,
+          "state": {
+            "phase": "countdown",
+            "phaseTicks": 30,
+            "left": {
+              "y": 300
+            },
+            "right": {
+              "y": 300
+            },
+            "ball": {
+              "x": 400,
+              "y": 300,
+              "vx": 0,
+              "vy": 0,
+              "speed": 330
+            },
+            "score": {
+              "left": 0,
+              "right": 0
+            },
+            "pointsPlayed": 0,
+            "serveTowards": "right",
+            "winner": null
+          }
+        },
+        {
+          "tick": 90,
+          "state": {
+            "phase": "playing",
+            "phaseTicks": 0,
+            "left": {
+              "y": 300
+            },
+            "right": {
+              "y": 300
+            },
+            "ball": {
+              "x": 400,
+              "y": 300,
+              "vx": 330,
+              "vy": 0,
+              "speed": 330
+            },
+            "score": {
+              "left": 0,
+              "right": 0
+            },
+            "pointsPlayed": 0,
+            "serveTowards": "right",
+            "winner": null
+          }
+        },
+        {
+          "tick": 120,
+          "state": {
+            "phase": "playing",
+            "phaseTicks": 0,
+            "left": {
+              "y": 300
+            },
+            "right": {
+              "y": 300
+            },
+            "ball": {
+              "x": 730,
+              "y": 300,
+              "vx": 330,
+              "vy": 0,
+              "speed": 330
+            },
+            "score": {
+              "left": 0,
+              "right": 0
+            },
+            "pointsPlayed": 0,
+            "serveTowards": "right",
+            "winner": null
+          }
+        },
+        {
+          "tick": 150,
+          "state": {
+            "phase": "playing",
+            "phaseTicks": 0,
+            "left": {
+              "y": 300
+            },
+            "right": {
+              "y": 300
+            },
+            "ball": {
+              "x": 424.6000000000008,
+              "y": 300,
+              "vx": -346.5,
+              "vy": 0,
+              "speed": 346.5
+            },
+            "score": {
+              "left": 0,
+              "right": 0
+            },
+            "pointsPlayed": 0,
+            "serveTowards": "right",
+            "winner": null
+          }
+        },
+        {
+          "tick": 180,
+          "state": {
+            "phase": "playing",
+            "phaseTicks": 0,
+            "left": {
+              "y": 300
+            },
+            "right": {
+              "y": 300
+            },
+            "ball": {
+              "x": 78.10000000000055,
+              "y": 300,
+              "vx": -346.5,
+              "vy": 0,
+              "speed": 346.5
+            },
+            "score": {
+              "left": 0,
+              "right": 0
+            },
+            "pointsPlayed": 0,
+            "serveTowards": "right",
+            "winner": null
+          }
+        },
+        {
+          "tick": 210,
+          "state": {
+            "phase": "playing",
+            "phaseTicks": 0,
+            "left": {
+              "y": 216
+            },
+            "right": {
+              "y": 216
+            },
+            "ball": {
+              "x": 370.40404236706485,
+              "y": 223.59675000000027,
+              "vx": 353.7822692967385,
+              "vy": -84.89250000000001,
+              "speed": 363.825
+            },
+            "score": {
+              "left": 0,
+              "right": 0
+            },
+            "pointsPlayed": 0,
+            "serveTowards": "right",
+            "winner": null
+          }
+        },
+        {
+          "tick": 240,
+          "state": {
+            "phase": "playing",
+            "phaseTicks": 0,
+            "left": {
+              "y": 132
+            },
+            "right": {
+              "y": 132
+            },
+            "ball": {
+              "x": 724.1863116638041,
+              "y": 138.70425000000057,
+              "vx": 353.7822692967385,
+              "vy": -84.89250000000001,
+              "speed": 363.825
+            },
+            "score": {
+              "left": 0,
+              "right": 0
+            },
+            "pointsPlayed": 0,
+            "serveTowards": "right",
+            "winner": null
+          }
+        },
+        {
+          "tick": 270,
+          "state": {
+            "phase": "playing",
+            "phaseTicks": 0,
+            "left": {
+              "y": 48
+            },
+            "right": {
+              "y": 48
+            },
+            "ball": {
+              "x": 416.29689391629086,
+              "y": 39.763102406254106,
+              "vx": -368.55900675967786,
+              "vy": -100.50210843749619,
+              "speed": 382.01625
+            },
+            "score": {
+              "left": 0,
+              "right": 0
+            },
+            "pointsPlayed": 0,
+            "serveTowards": "right",
+            "winner": null
+          }
+        },
+        {
+          "tick": 300,
+          "state": {
+            "phase": "playing",
+            "phaseTicks": 0,
+            "left": {
+              "y": 76
+            },
+            "right": {
+              "y": 76
+            },
+            "ball": {
+              "x": 52,
+              "y": 76.73900603124206,
+              "vx": 401.08663606449437,
+              "vy": 4.940465473693279,
+              "speed": 401.11706250000003
+            },
+            "score": {
+              "left": 0,
+              "right": 0
+            },
+            "pointsPlayed": 0,
+            "serveTowards": "right",
+            "winner": null
+          }
+        },
+        {
+          "tick": 330,
+          "state": {
+            "phase": "playing",
+            "phaseTicks": 0,
+            "left": {
+              "y": 76
+            },
+            "right": {
+              "y": 76
+            },
+            "ball": {
+              "x": 453.0866360644941,
+              "y": 81.67947150493542,
+              "vx": 401.08663606449437,
+              "vy": 4.940465473693279,
+              "speed": 401.11706250000003
+            },
+            "score": {
+              "left": 0,
+              "right": 0
+            },
+            "pointsPlayed": 0,
+            "serveTowards": "right",
+            "winner": null
+          }
+        },
+        {
+          "tick": 360,
+          "state": {
+            "phase": "playing",
+            "phaseTicks": 0,
+            "left": {
+              "y": 76
+            },
+            "right": {
+              "y": 76
+            },
+            "ball": {
+              "x": 650.0071643538218,
+              "y": 78.04285000374091,
+              "vx": -419.9692956264794,
+              "vy": -31.81847870439745,
+              "speed": 421.17291562500003
+            },
+            "score": {
+              "left": 0,
+              "right": 0
+            },
+            "pointsPlayed": 0,
+            "serveTowards": "right",
+            "winner": null
+          }
+        },
+        {
+          "tick": 390,
+          "state": {
+            "phase": "playing",
+            "phaseTicks": 0,
+            "left": {
+              "y": 48
+            },
+            "right": {
+              "y": 48
+            },
+            "ball": {
+              "x": 230.03786872734287,
+              "y": 46.224371299343375,
+              "vx": -419.9692956264794,
+              "vy": -31.81847870439745,
+              "speed": 421.17291562500003
+            },
+            "score": {
+              "left": 0,
+              "right": 0
+            },
+            "pointsPlayed": 0,
+            "serveTowards": "right",
+            "winner": null
+          }
+        },
+        {
+          "tick": 420,
+          "state": {
+            "phase": "playing",
+            "phaseTicks": 0,
+            "left": {
+              "y": 48
+            },
+            "right": {
+              "y": 48
+            },
+            "ball": {
+              "x": 294.0203205175006,
+              "y": 48.56720774321161,
+              "vx": 427.0946832661775,
+              "vy": 114.71218518349889,
+              "speed": 442.23156140625
+            },
+            "score": {
+              "left": 0,
+              "right": 0
+            },
+            "pointsPlayed": 0,
+            "serveTowards": "right",
+            "winner": null
+          }
+        },
+        {
+          "tick": 450,
+          "state": {
+            "phase": "playing",
+            "phaseTicks": 0,
+            "left": {
+              "y": 160
+            },
+            "right": {
+              "y": 160
+            },
+            "ball": {
+              "x": 721.1150037836778,
+              "y": 163.27939292671036,
+              "vx": 427.0946832661775,
+              "vy": 114.71218518349889,
+              "speed": 442.23156140625
+            },
+            "score": {
+              "left": 0,
+              "right": 0
+            },
+            "pointsPlayed": 0,
+            "serveTowards": "right",
+            "winner": null
+          }
+        },
+        {
+          "tick": 480,
+          "state": {
+            "phase": "playing",
+            "phaseTicks": 0,
+            "left": {
+              "y": 244
+            },
+            "right": {
+              "y": 244
+            },
+            "ball": {
+              "x": 321.86045876751314,
+              "y": 249.85293004008102,
+              "vx": -456.57807989195084,
+              "vy": 84.56363367979047,
+              "speed": 464.34313947656256
+            },
+            "score": {
+              "left": 0,
+              "right": 0
+            },
+            "pointsPlayed": 0,
+            "serveTowards": "right",
+            "winner": null
+          }
+        },
+        {
+          "tick": 510,
+          "state": {
+            "phase": "playing",
+            "phaseTicks": 0,
+            "left": {
+              "y": 300
+            },
+            "right": {
+              "y": 300
+            },
+            "ball": {
+              "x": 247.01465395664388,
+              "y": 302.51245616614045,
+              "vx": 487.5366348916095,
+              "vy": 4.803364795464212,
+              "speed": 487.5602964503907
+            },
+            "score": {
+              "left": 0,
+              "right": 0
+            },
+            "pointsPlayed": 0,
+            "serveTowards": "right",
+            "winner": null
+          }
+        },
+        {
+          "tick": 540,
+          "state": {
+            "phase": "playing",
+            "phaseTicks": 0,
+            "left": {
+              "y": 300
+            },
+            "right": {
+              "y": 300
+            },
+            "ball": {
+              "x": 734.5512888482527,
+              "y": 307.31582096160383,
+              "vx": 487.5366348916095,
+              "vy": 4.803364795464212,
+              "speed": 487.5602964503907
+            },
+            "score": {
+              "left": 0,
+              "right": 0
+            },
+            "pointsPlayed": 0,
+            "serveTowards": "right",
+            "winner": null
+          }
+        },
+        {
+          "tick": 570,
+          "state": {
+            "phase": "playing",
+            "phaseTicks": 0,
+            "left": {
+              "y": 244
+            },
+            "right": {
+              "y": 244
+            },
+            "ball": {
+              "x": 256.06048821755724,
+              "y": 253.666114436665,
+              "vx": -508.90294322321733,
+              "vy": -55.665329673917945,
+              "speed": 511.93831127291025
+            },
+            "score": {
+              "left": 0,
+              "right": 0
+            },
+            "pointsPlayed": 0,
+            "serveTowards": "right",
+            "winner": null
+          }
+        },
+        {
+          "tick": 600,
+          "state": {
+            "phase": "playing",
+            "phaseTicks": 0,
+            "left": {
+              "y": 216
+            },
+            "right": {
+              "y": 216
+            },
+            "ball": {
+              "x": 356.59451632323334,
+              "y": 227.2318806044363,
+              "vx": 537.5197346880587,
+              "vy": -4.081042894465875,
+              "speed": 537.5352268365558
+            },
+            "score": {
+              "left": 0,
+              "right": 0
+            },
+            "pointsPlayed": 0,
+            "serveTowards": "right",
+            "winner": null
+          }
+        },
+        {
+          "tick": 630,
+          "state": {
+            "phase": "playing",
+            "phaseTicks": 0,
+            "left": {
+              "y": 244
+            },
+            "right": {
+              "y": 244
+            },
+            "ball": {
+              "x": 598.9159266633733,
+              "y": 244.90691909545927,
+              "vx": -559.0652750123508,
+              "vy": 77.50426230111773,
+              "speed": 564.4119881783836
+            },
+            "score": {
+              "left": 0,
+              "right": 0
+            },
+            "pointsPlayed": 0,
+            "serveTowards": "right",
+            "winner": null
+          }
+        },
+        {
+          "tick": 660,
+          "state": {
+            "phase": "playing",
+            "phaseTicks": 0,
+            "left": {
+              "y": 328
+            },
+            "right": {
+              "y": 328
+            },
+            "ball": {
+              "x": 52,
+              "y": 322.4111813965765,
+              "vx": 590.0560400254852,
+              "vy": -55.201933841715174,
+              "speed": 592.6325875873027
+            },
+            "score": {
+              "left": 0,
+              "right": 0
+            },
+            "pointsPlayed": 0,
+            "serveTowards": "right",
+            "winner": null
+          }
+        },
+        {
+          "tick": 690,
+          "state": {
+            "phase": "playing",
+            "phaseTicks": 0,
+            "left": {
+              "y": 272
+            },
+            "right": {
+              "y": 272
+            },
+            "ball": {
+              "x": 642.0560400254849,
+              "y": 267.2092475548612,
+              "vx": 590.0560400254852,
+              "vy": -55.201933841715174,
+              "speed": 592.6325875873027
+            },
+            "score": {
+              "left": 0,
+              "right": 0
+            },
+            "pointsPlayed": 0,
+            "serveTowards": "right",
+            "winner": null
+          }
+        },
+        {
+          "tick": 720,
+          "state": {
+            "phase": "playing",
+            "phaseTicks": 0,
+            "left": {
+              "y": 132
+            },
+            "right": {
+              "y": 132
+            },
+            "ball": {
+              "x": 267.82952365043747,
+              "y": 124.82017483494958,
+              "vx": -600.2130954369535,
+              "vy": -164.1858574394603,
+              "speed": 622.2642169666678
+            },
+            "score": {
+              "left": 0,
+              "right": 0
+            },
+            "pointsPlayed": 0,
+            "serveTowards": "right",
+            "winner": null
+          }
+        },
+        {
+          "tick": 750,
+          "state": {
+            "phase": "playing",
+            "phaseTicks": 0,
+            "left": {
+              "y": 76
+            },
+            "right": {
+              "y": 76
+            },
+            "ball": {
+              "x": 465.41139193675843,
+              "y": 82.67920079671823,
+              "vx": 652.7548293738289,
+              "vy": 28.516590036164224,
+              "speed": 653.3774278150013
+            },
+            "score": {
+              "left": 0,
+              "right": 0
+            },
+            "pointsPlayed": 0,
+            "serveTowards": "right",
+            "winner": null
+          }
+        },
+        {
+          "tick": 780,
+          "state": {
+            "phase": "playing",
+            "phaseTicks": 0,
+            "left": {
+              "y": 132
+            },
+            "right": {
+              "y": 132
+            },
+            "ball": {
+              "x": 360.61243103735114,
+              "y": 127.6688020715586,
+              "vx": -683.6251216987924,
+              "vy": 57.586609869122114,
+              "speed": 686.0462992057513
+            },
+            "score": {
+              "left": 0,
+              "right": 0
+            },
+            "pointsPlayed": 0,
+            "serveTowards": "right",
+            "winner": null
+          }
+        },
+        {
+          "tick": 810,
+          "state": {
+            "phase": "playing",
+            "phaseTicks": 0,
+            "left": {
+              "y": 132
+            },
+            "right": {
+              "y": 132
+            },
+            "ball": {
+              "x": 434.5933924577805,
+              "y": 119.59798324899438,
+              "vx": 717.3626108583389,
+              "vy": -65.52106892779025,
+              "speed": 720.3486141660389
+            },
+            "score": {
+              "left": 0,
+              "right": 0
+            },
+            "pointsPlayed": 0,
+            "serveTowards": "right",
+            "winner": null
+          }
+        },
+        {
+          "tick": 840,
+          "state": {
+            "phase": "playing",
+            "phaseTicks": 0,
+            "left": {
+              "y": 48
+            },
+            "right": {
+              "y": 48
+            },
+            "ball": {
+              "x": 357.3769868438412,
+              "y": 27.682876386991676,
+              "vx": -732.4181496677969,
+              "vy": 188.8206765056573,
+              "speed": 756.3660448743409
+            },
+            "score": {
+              "left": 0,
+              "right": 0
+            },
+            "pointsPlayed": 0,
+            "serveTowards": "right",
+            "winner": null
+          }
+        },
+        {
+          "tick": 870,
+          "state": {
+            "phase": "playing",
+            "phaseTicks": 0,
+            "left": {
+              "y": 244
+            },
+            "right": {
+              "y": 244
+            },
+            "ball": {
+              "x": 477.5937248988795,
+              "y": 255.8062282693678,
+              "vx": 751.0477498215523,
+              "vy": 258.17833893516143,
+              "speed": 794.184347118058
+            },
+            "score": {
+              "left": 0,
+              "right": 0
+            },
+            "pointsPlayed": 0,
+            "serveTowards": "right",
+            "winner": null
+          }
+        },
+        {
+          "tick": 900,
+          "state": {
+            "phase": "playing",
+            "phaseTicks": 0,
+            "left": {
+              "y": 412
+            },
+            "right": {
+              "y": 412
+            },
+            "ball": {
+              "x": 225.15824362826243,
+              "y": 425.040589264362,
+              "vx": -825.5396153237957,
+              "vy": 117.74047902963359,
+              "speed": 833.893564473961
+            },
+            "score": {
+              "left": 0,
+              "right": 0
+            },
+            "pointsPlayed": 0,
+            "serveTowards": "right",
+            "winner": null
+          }
+        },
+        {
+          "tick": 930,
+          "state": {
+            "phase": "playing",
+            "phaseTicks": 0,
+            "left": {
+              "y": 440
+            },
+            "right": {
+              "y": 440
+            },
+            "ball": {
+              "x": 723.0782337279128,
+              "y": 435.88081856108784,
+              "vx": 875.3194352972777,
+              "vy": -21.69462931763688,
+              "speed": 875.5882426976591
+            },
+            "score": {
+              "left": 0,
+              "right": 0
+            },
+            "pointsPlayed": 0,
+            "serveTowards": "right",
+            "winner": null
+          }
+        },
+        {
+          "tick": 960,
+          "state": {
+            "phase": "playing",
+            "phaseTicks": 0,
+            "left": {
+              "y": 552
+            },
+            "right": {
+              "y": 552
+            },
+            "ball": {
+              "x": 200.96104026620364,
+              "y": 562.6737233977464,
+              "vx": 893.7662415972219,
+              "vy": 105.7445288474844,
+              "speed": 900
+            },
+            "score": {
+              "left": 0,
+              "right": 0
+            },
+            "pointsPlayed": 0,
+            "serveTowards": "right",
+            "winner": null
+          }
+        },
+        {
+          "tick": 990,
+          "state": {
+            "phase": "playing",
+            "phaseTicks": 0,
+            "left": {
+              "y": 552
+            },
+            "right": {
+              "y": 552
+            },
+            "ball": {
+              "x": 418.254234980064,
+              "y": 567.3058208258379,
+              "vx": -899.3066318725535,
+              "vy": 35.32112498270294,
+              "speed": 900
+            },
+            "score": {
+              "left": 0,
+              "right": 0
+            },
+            "pointsPlayed": 0,
+            "serveTowards": "right",
+            "winner": null
+          }
+        },
+        {
+          "tick": 1020,
+          "state": {
+            "phase": "playing",
+            "phaseTicks": 0,
+            "left": {
+              "y": 370
+            },
+            "right": {
+              "y": 370
+            },
+            "ball": {
+              "x": 490.63025923536406,
+              "y": 341.1894043090791,
+              "vx": 774.0533986506429,
+              "vy": -459.1746247751383,
+              "speed": 900
+            },
+            "score": {
+              "left": 0,
+              "right": 0
+            },
+            "pointsPlayed": 0,
+            "serveTowards": "right",
+            "winner": null
+          }
+        },
+        {
+          "tick": 1050,
+          "state": {
+            "phase": "playing",
+            "phaseTicks": 0,
+            "left": {
+              "y": 174
+            },
+            "right": {
+              "y": 174
+            },
+            "ball": {
+              "x": 318.2322422685643,
+              "y": 246.55684344230318,
+              "vx": -644.6516365971528,
+              "vy": 628.0320592395044,
+              "speed": 900
+            },
+            "score": {
+              "left": 0,
+              "right": 0
+            },
+            "pointsPlayed": 0,
+            "serveTowards": "right",
+            "winner": null
+          }
+        },
+        {
+          "tick": 1080,
+          "state": {
+            "phase": "pointScored",
+            "phaseTicks": 16,
+            "left": {
+              "y": 314
+            },
+            "right": {
+              "y": 314
+            },
+            "ball": {
+              "x": 400,
+              "y": 300,
+              "vx": 0,
+              "vy": 0,
+              "speed": 330
+            },
+            "score": {
+              "left": 0,
+              "right": 1
+            },
+            "pointsPlayed": 1,
+            "serveTowards": "left",
+            "winner": null
+          }
+        },
+        {
+          "tick": 1110,
+          "state": {
+            "phase": "playing",
+            "phaseTicks": 0,
+            "left": {
+              "y": 342
+            },
+            "right": {
+              "y": 342
+            },
+            "ball": {
+              "x": 255.7405462369968,
+              "y": 353.9000000000003,
+              "vx": -309.12740092072073,
+              "vy": 115.49999999999999,
+              "speed": 330
+            },
+            "score": {
+              "left": 0,
+              "right": 1
+            },
+            "pointsPlayed": 1,
+            "serveTowards": "left",
+            "winner": null
+          }
+        },
+        {
+          "tick": 1140,
+          "state": {
+            "phase": "playing",
+            "phaseTicks": 0,
+            "left": {
+              "y": 426
+            },
+            "right": {
+              "y": 426
+            },
+            "ball": {
+              "x": 167.11419523130056,
+              "y": 440.33250000000226,
+              "vx": 345.3425856939016,
+              "vy": 28.297500000004465,
+              "speed": 346.5
+            },
+            "score": {
+              "left": 0,
+              "right": 1
+            },
+            "pointsPlayed": 1,
+            "serveTowards": "left",
+            "winner": null
+          }
+        },
+        {
+          "tick": 1170,
+          "state": {
+            "phase": "playing",
+            "phaseTicks": 0,
+            "left": {
+              "y": 454
+            },
+            "right": {
+              "y": 454
+            },
+            "ball": {
+              "x": 512.4567809252017,
+              "y": 468.6300000000067,
+              "vx": 345.3425856939016,
+              "vy": 28.297500000004465,
+              "speed": 346.5
+            },
+            "score": {
+              "left": 0,
+              "right": 1
+            },
+            "pointsPlayed": 1,
+            "serveTowards": "left",
+            "winner": null
+          }
+        },
+        {
+          "tick": 1200,
+          "state": {
+            "phase": "playing",
+            "phaseTicks": 0,
+            "left": {
+              "y": 482
+            },
+            "right": {
+              "y": 482
+            },
+            "ball": {
+              "x": 639.7227836057617,
+              "y": 474.6824815312777,
+              "vx": -360.92405464745985,
+              "vy": -45.85256156244048,
+              "speed": 363.825
+            },
+            "score": {
+              "left": 0,
+              "right": 1
+            },
+            "pointsPlayed": 1,
+            "serveTowards": "left",
+            "winner": null
+          }
+        },
+        {
+          "tick": 1200,
+          "state": {
+            "phase": "playing",
+            "phaseTicks": 0,
+            "left": {
+              "y": 482
+            },
+            "right": {
+              "y": 482
+            },
+            "ball": {
+              "x": 639.7227836057617,
+              "y": 474.6824815312777,
+              "vx": -360.92405464745985,
+              "vy": -45.85256156244048,
+              "speed": 363.825
+            },
+            "score": {
+              "left": 0,
+              "right": 1
+            },
+            "pointsPlayed": 1,
+            "serveTowards": "left",
+            "winner": null
+          }
+        }
+      ]
+    },
+    {
+      "name": "shutout",
+      "description": "The left player never moves, so the right player runs the match to its end.",
+      "inputs": [
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-u",
+        "-d",
+        "-u",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-u",
+        "-d",
+        "-u",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-d",
+        "-d",
+        "-d",
+        "-d",
+        "-d",
+        "-d",
+        "-d",
+        "-d",
+        "-d",
+        "-d",
+        "-d",
+        "-d",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-d",
+        "-u",
+        "-d",
+        "-d",
+        "-u",
+        "-d",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-d",
+        "-u",
+        "-d",
+        "-d",
+        "-u",
+        "-d",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-d",
+        "-u",
+        "-d",
+        "-d",
+        "-u",
+        "-d",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-u",
+        "-d",
+        "-u",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-u",
+        "-d",
+        "-u",
+        "-u",
+        "-d",
+        "-u",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-u",
+        "-d",
+        "-u",
+        "-u",
+        "-d",
+        "-u",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-u",
+        "-d",
+        "-u",
+        "-u",
+        "-d",
+        "-u",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-d",
+        "-d",
+        "-d",
+        "-d",
+        "-d",
+        "-d",
+        "-d",
+        "-d",
+        "-d",
+        "-d",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-d",
+        "-d",
+        "-u",
+        "-d",
+        "-d",
+        "-d",
+        "-u",
+        "-d",
+        "-d",
+        "-d",
+        "-u",
+        "-d",
+        "-d",
+        "-d",
+        "-u",
+        "-d",
+        "-d",
+        "-u",
+        "-d",
+        "-d",
+        "-d",
+        "-u",
+        "-d",
+        "-d",
+        "-d",
+        "-u",
+        "-d",
+        "-d",
+        "-d",
+        "-u",
+        "-d",
+        "-d",
+        "-u",
+        "-d",
+        "-d",
+        "-d",
+        "-d",
+        "-d",
+        "-d",
+        "-d",
+        "-d",
+        "-d",
+        "-d",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-u",
+        "-u",
+        "-d",
+        "-u",
+        "-u",
+        "-u",
+        "-d",
+        "-u",
+        "-u",
+        "-u",
+        "-d",
+        "-u",
+        "-u",
+        "-u",
+        "-d",
+        "-u",
+        "-u",
+        "-d",
+        "-u",
+        "-u",
+        "-u",
+        "-d",
+        "-u",
+        "-u",
+        "-u",
+        "-d",
+        "-u",
+        "-u",
+        "-u",
+        "-d",
+        "-u",
+        "-u",
+        "-u",
+        "-d",
+        "-u",
+        "-u",
+        "-d",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-d",
+        "-d",
+        "-d",
+        "-d",
+        "-d",
+        "-d",
+        "-d",
+        "-d",
+        "-d",
+        "-d",
+        "-d",
+        "-d",
+        "-d",
+        "-d",
+        "-d",
+        "-d",
+        "-d",
+        "-d",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-d",
+        "-d",
+        "-d",
+        "-d",
+        "-d",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-d",
+        "-d",
+        "-d",
+        "-d",
+        "-d",
+        "-d",
+        "-d",
+        "-d",
+        "-d",
+        "-d",
+        "-d",
+        "-d",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-d",
+        "-u",
+        "-d",
+        "-d",
+        "-u",
+        "-d",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-d",
+        "-u",
+        "-d",
+        "-d",
+        "-u",
+        "-d",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-d",
+        "-u",
+        "-d",
+        "-d",
+        "-u",
+        "-d",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-d",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-u",
+        "-d",
+        "-u",
+        "-u",
+        "-d",
+        "-u",
+        "-u",
+        "-d",
+        "-u",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-u",
+        "-d",
+        "-u",
+        "-u",
+        "-d",
+        "-u",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-u",
+        "-d",
+        "-u",
+        "-u",
+        "-d",
+        "-u",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-u",
+        "-d",
+        "-d",
+        "-d",
+        "-d",
+        "-d",
+        "-d",
+        "-d",
+        "-d",
+        "-d",
+        "-d",
+        "-d",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-u",
+        "-d",
+        "-d",
+        "-u",
+        "-d",
+        "-d",
+        "-d",
+        "-u",
+        "-d",
+        "-d",
+        "-d",
+        "-u",
+        "-d",
+        "-d",
+        "-d",
+        "-u",
+        "-d",
+        "-d",
+        "-u",
+        "-d",
+        "-d",
+        "-d",
+        "-u",
+        "-d",
+        "-d",
+        "-d",
+        "-u",
+        "-d",
+        "-d",
+        "-d",
+        "-u",
+        "-d",
+        "-d",
+        "-d",
+        "-u",
+        "-d",
+        "-d",
+        "-u",
+        "-d",
+        "-d",
+        "-d",
+        "-d",
+        "-d",
+        "-d",
+        "-d",
+        "-d",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u",
+        "-u"
+      ],
+      "checkpoints": [
+        {
+          "tick": 0,
+          "state": {
+            "phase": "countdown",
+            "phaseTicks": 90,
+            "left": {
+              "y": 300
+            },
+            "right": {
+              "y": 300
+            },
+            "ball": {
+              "x": 400,
+              "y": 300,
+              "vx": 0,
+              "vy": 0,
+              "speed": 330
+            },
+            "score": {
+              "left": 0,
+              "right": 0
+            },
+            "pointsPlayed": 0,
+            "serveTowards": "right",
+            "winner": null
+          }
+        },
+        {
+          "tick": 30,
+          "state": {
+            "phase": "countdown",
+            "phaseTicks": 60,
+            "left": {
+              "y": 300
+            },
+            "right": {
+              "y": 300
+            },
+            "ball": {
+              "x": 400,
+              "y": 300,
+              "vx": 0,
+              "vy": 0,
+              "speed": 330
+            },
+            "score": {
+              "left": 0,
+              "right": 0
+            },
+            "pointsPlayed": 0,
+            "serveTowards": "right",
+            "winner": null
+          }
+        },
+        {
+          "tick": 60,
+          "state": {
+            "phase": "countdown",
+            "phaseTicks": 30,
+            "left": {
+              "y": 300
+            },
+            "right": {
+              "y": 300
+            },
+            "ball": {
+              "x": 400,
+              "y": 300,
+              "vx": 0,
+              "vy": 0,
+              "speed": 330
+            },
+            "score": {
+              "left": 0,
+              "right": 0
+            },
+            "pointsPlayed": 0,
+            "serveTowards": "right",
+            "winner": null
+          }
+        },
+        {
+          "tick": 90,
+          "state": {
+            "phase": "playing",
+            "phaseTicks": 0,
+            "left": {
+              "y": 300
+            },
+            "right": {
+              "y": 300
+            },
+            "ball": {
+              "x": 400,
+              "y": 300,
+              "vx": 330,
+              "vy": 0,
+              "speed": 330
+            },
+            "score": {
+              "left": 0,
+              "right": 0
+            },
+            "pointsPlayed": 0,
+            "serveTowards": "right",
+            "winner": null
+          }
+        },
+        {
+          "tick": 120,
+          "state": {
+            "phase": "playing",
+            "phaseTicks": 0,
+            "left": {
+              "y": 300
+            },
+            "right": {
+              "y": 300
+            },
+            "ball": {
+              "x": 730,
+              "y": 300,
+              "vx": 330,
+              "vy": 0,
+              "speed": 330
+            },
+            "score": {
+              "left": 0,
+              "right": 0
+            },
+            "pointsPlayed": 0,
+            "serveTowards": "right",
+            "winner": null
+          }
+        },
+        {
+          "tick": 150,
+          "state": {
+            "phase": "playing",
+            "phaseTicks": 0,
+            "left": {
+              "y": 300
+            },
+            "right": {
+              "y": 300
+            },
+            "ball": {
+              "x": 424.6000000000008,
+              "y": 300,
+              "vx": -346.5,
+              "vy": 0,
+              "speed": 346.5
+            },
+            "score": {
+              "left": 0,
+              "right": 0
+            },
+            "pointsPlayed": 0,
+            "serveTowards": "right",
+            "winner": null
+          }
+        },
+        {
+          "tick": 180,
+          "state": {
+            "phase": "playing",
+            "phaseTicks": 0,
+            "left": {
+              "y": 300
+            },
+            "right": {
+              "y": 300
+            },
+            "ball": {
+              "x": 78.10000000000055,
+              "y": 300,
+              "vx": -346.5,
+              "vy": 0,
+              "speed": 346.5
+            },
+            "score": {
+              "left": 0,
+              "right": 0
+            },
+            "pointsPlayed": 0,
+            "serveTowards": "right",
+            "winner": null
+          }
+        },
+        {
+          "tick": 210,
+          "state": {
+            "phase": "playing",
+            "phaseTicks": 0,
+            "left": {
+              "y": 300
+            },
+            "right": {
+              "y": 300
+            },
+            "ball": {
+              "x": 379.44249999999994,
+              "y": 300,
+              "vx": 363.825,
+              "vy": 0,
+              "speed": 363.825
+            },
+            "score": {
+              "left": 0,
+              "right": 0
+            },
+            "pointsPlayed": 0,
+            "serveTowards": "right",
+            "winner": null
+          }
+        },
+        {
+          "tick": 240,
+          "state": {
+            "phase": "playing",
+            "phaseTicks": 0,
+            "left": {
+              "y": 300
+            },
+            "right": {
+              "y": 300
+            },
+            "ball": {
+              "x": 743.267500000001,
+              "y": 300,
+              "vx": 363.825,
+              "vy": 0,
+              "speed": 363.825
+            },
+            "score": {
+              "left": 0,
+              "right": 0
+            },
+            "pointsPlayed": 0,
+            "serveTowards": "right",
+            "winner": null
+          }
+        },
+        {
+          "tick": 270,
+          "state": {
+            "phase": "playing",
+            "phaseTicks": 0,
+            "left": {
+              "y": 300
+            },
+            "right": {
+              "y": 216
+            },
+            "ball": {
+              "x": 388.91099666381103,
+              "y": 213.83411250000037,
+              "vx": -371.4713827615754,
+              "vy": -89.13712500000001,
+              "speed": 382.01625
+            },
+            "score": {
+              "left": 0,
+              "right": 0
+            },
+            "pointsPlayed": 0,
+            "serveTowards": "right",
+            "winner": null
+          }
+        },
+        {
+          "tick": 300,
+          "state": {
+            "phase": "playing",
+            "phaseTicks": 0,
+            "left": {
+              "y": 300
+            },
+            "right": {
+              "y": 132
+            },
+            "ball": {
+              "x": 17.43961390223557,
+              "y": 124.69698750000035,
+              "vx": -371.4713827615754,
+              "vy": -89.13712500000001,
+              "speed": 382.01625
+            },
+            "score": {
+              "left": 0,
+              "right": 0
+            },
+            "pointsPlayed": 0,
+            "serveTowards": "right",
+            "winner": null
+          }
+        },
+        {
+          "tick": 330,
+          "state": {
+            "phase": "pointScored",
+            "phaseTicks": 3,
+            "left": {
+              "y": 300
+            },
+            "right": {
+              "y": 300
+            },
+            "ball": {
+              "x": 400,
+              "y": 300,
+              "vx": 0,
+              "vy": 0,
+              "speed": 330
+            },
+            "score": {
+              "left": 0,
+              "right": 1
+            },
+            "pointsPlayed": 1,
+            "serveTowards": "left",
+            "winner": null
+          }
+        },
+        {
+          "tick": 360,
+          "state": {
+            "phase": "playing",
+            "phaseTicks": 0,
+            "left": {
+              "y": 300
+            },
+            "right": {
+              "y": 412
+            },
+            "ball": {
+              "x": 121.785339171351,
+              "y": 403.9500000000006,
+              "vx": -309.12740092072073,
+              "vy": 115.49999999999999,
+              "speed": 330
+            },
+            "score": {
+              "left": 0,
+              "right": 1
+            },
+            "pointsPlayed": 1,
+            "serveTowards": "left",
+            "winner": null
+          }
+        },
+        {
+          "tick": 390,
+          "state": {
+            "phase": "pointScored",
+            "phaseTicks": 13,
+            "left": {
+              "y": 300
+            },
+            "right": {
+              "y": 300
+            },
+            "ball": {
+              "x": 400,
+              "y": 300,
+              "vx": 0,
+              "vy": 0,
+              "speed": 330
+            },
+            "score": {
+              "left": 0,
+              "right": 2
+            },
+            "pointsPlayed": 2,
+            "serveTowards": "left",
+            "winner": null
+          }
+        },
+        {
+          "tick": 420,
+          "state": {
+            "phase": "playing",
+            "phaseTicks": 0,
+            "left": {
+              "y": 300
+            },
+            "right": {
+              "y": 244
+            },
+            "ball": {
+              "x": 224.8278061449247,
+              "y": 234.54999999999978,
+              "vx": -309.12740092072073,
+              "vy": -115.49999999999999,
+              "speed": 330
+            },
+            "score": {
+              "left": 0,
+              "right": 2
+            },
+            "pointsPlayed": 2,
+            "serveTowards": "left",
+            "winner": null
+          }
+        },
+        {
+          "tick": 450,
+          "state": {
+            "phase": "pointScored",
+            "phaseTicks": 23,
+            "left": {
+              "y": 300
+            },
+            "right": {
+              "y": 244
+            },
+            "ball": {
+              "x": 400,
+              "y": 300,
+              "vx": 0,
+              "vy": 0,
+              "speed": 330
+            },
+            "score": {
+              "left": 0,
+              "right": 3
+            },
+            "pointsPlayed": 3,
+            "serveTowards": "left",
+            "winner": null
+          }
+        },
+        {
+          "tick": 480,
+          "state": {
+            "phase": "playing",
+            "phaseTicks": 0,
+            "left": {
+              "y": 300
+            },
+            "right": {
+              "y": 328
+            },
+            "ball": {
+              "x": 338.3999999999999,
+              "y": 346.20000000000016,
+              "vx": -264,
+              "vy": 198,
+              "speed": 330
+            },
+            "score": {
+              "left": 0,
+              "right": 3
+            },
+            "pointsPlayed": 3,
+            "serveTowards": "left",
+            "winner": null
+          }
+        },
+        {
+          "tick": 510,
+          "state": {
+            "phase": "playing",
+            "phaseTicks": 0,
+            "left": {
+              "y": 300
+            },
+            "right": {
+              "y": 524
+            },
+            "ball": {
+              "x": 74.39999999999968,
+              "y": 544.2000000000008,
+              "vx": -264,
+              "vy": 198,
+              "speed": 330
+            },
+            "score": {
+              "left": 0,
+              "right": 3
+            },
+            "pointsPlayed": 3,
+            "serveTowards": "left",
+            "winner": null
+          }
+        },
+        {
+          "tick": 540,
+          "state": {
+            "phase": "pointScored",
+            "phaseTicks": 10,
+            "left": {
+              "y": 300
+            },
+            "right": {
+              "y": 300
+            },
+            "ball": {
+              "x": 400,
+              "y": 300,
+              "vx": 0,
+              "vy": 0,
+              "speed": 330
+            },
+            "score": {
+              "left": 0,
+              "right": 4
+            },
+            "pointsPlayed": 4,
+            "serveTowards": "left",
+            "winner": null
+          }
+        },
+        {
+          "tick": 570,
+          "state": {
+            "phase": "playing",
+            "phaseTicks": 0,
+            "left": {
+              "y": 300
+            },
+            "right": {
+              "y": 188
+            },
+            "ball": {
+              "x": 223.99999999999977,
+              "y": 167.99999999999994,
+              "vx": -264,
+              "vy": -198,
+              "speed": 330
+            },
+            "score": {
+              "left": 0,
+              "right": 4
+            },
+            "pointsPlayed": 4,
+            "serveTowards": "left",
+            "winner": null
+          }
+        },
+        {
+          "tick": 600,
+          "state": {
+            "phase": "pointScored",
+            "phaseTicks": 27,
+            "left": {
+              "y": 300
+            },
+            "right": {
+              "y": 90
+            },
+            "ball": {
+              "x": 400,
+              "y": 300,
+              "vx": 0,
+              "vy": 0,
+              "speed": 330
+            },
+            "score": {
+              "left": 0,
+              "right": 5
+            },
+            "pointsPlayed": 5,
+            "serveTowards": "left",
+            "winner": null
+          }
+        },
+        {
+          "tick": 630,
+          "state": {
+            "phase": "playing",
+            "phaseTicks": 0,
+            "left": {
+              "y": 300
+            },
+            "right": {
+              "y": 314
+            },
+            "ball": {
+              "x": 367.666735395262,
+              "y": 306.59999999999997,
+              "vx": -323.3326460473795,
+              "vy": 66,
+              "speed": 330
+            },
+            "score": {
+              "left": 0,
+              "right": 5
+            },
+            "pointsPlayed": 5,
+            "serveTowards": "left",
+            "winner": null
+          }
+        },
+        {
+          "tick": 660,
+          "state": {
+            "phase": "playing",
+            "phaseTicks": 0,
+            "left": {
+              "y": 300
+            },
+            "right": {
+              "y": 370
+            },
+            "ball": {
+              "x": 44.33408934788234,
+              "y": 372.5999999999996,
+              "vx": -323.3326460473795,
+              "vy": 66,
+              "speed": 330
+            },
+            "score": {
+              "left": 0,
+              "right": 5
+            },
+            "pointsPlayed": 5,
+            "serveTowards": "left",
+            "winner": null
+          }
+        },
+        {
+          "tick": 690,
+          "state": {
+            "phase": "pointScored",
+            "phaseTicks": 5,
+            "left": {
+              "y": 300
+            },
+            "right": {
+              "y": 314
+            },
+            "ball": {
+              "x": 400,
+              "y": 300,
+              "vx": 0,
+              "vy": 0,
+              "speed": 330
+            },
+            "score": {
+              "left": 0,
+              "right": 6
+            },
+            "pointsPlayed": 6,
+            "serveTowards": "left",
+            "winner": null
+          }
+        },
+        {
+          "tick": 720,
+          "state": {
+            "phase": "playing",
+            "phaseTicks": 0,
+            "left": {
+              "y": 300
+            },
+            "right": {
+              "y": 258
+            },
+            "ball": {
+              "x": 130.55612829385018,
+              "y": 245.00000000000028,
+              "vx": -323.3326460473795,
+              "vy": -66,
+              "speed": 330
+            },
+            "score": {
+              "left": 0,
+              "right": 6
+            },
+            "pointsPlayed": 6,
+            "serveTowards": "left",
+            "winner": null
+          }
+        },
+        {
+          "tick": 750,
+          "state": {
+            "phase": "pointScored",
+            "phaseTicks": 13,
+            "left": {
+              "y": 300
+            },
+            "right": {
+              "y": 314
+            },
+            "ball": {
+              "x": 400,
+              "y": 300,
+              "vx": 0,
+              "vy": 0,
+              "speed": 330
+            },
+            "score": {
+              "left": 0,
+              "right": 7
+            },
+            "pointsPlayed": 7,
+            "serveTowards": "left",
+            "winner": null
+          }
+        },
+        {
+          "tick": 780,
+          "state": {
+            "phase": "playing",
+            "phaseTicks": 0,
+            "left": {
+              "y": 300
+            },
+            "right": {
+              "y": 314
+            },
+            "ball": {
+              "x": 213,
+              "y": 300,
+              "vx": -330,
+              "vy": 0,
+              "speed": 330
+            },
+            "score": {
+              "left": 0,
+              "right": 7
+            },
+            "pointsPlayed": 7,
+            "serveTowards": "left",
+            "winner": null
+          }
+        },
+        {
+          "tick": 810,
+          "state": {
+            "phase": "playing",
+            "phaseTicks": 0,
+            "left": {
+              "y": 300
+            },
+            "right": {
+              "y": 314
+            },
+            "ball": {
+              "x": 225.25000000000009,
+              "y": 300,
+              "vx": 346.5,
+              "vy": 0,
+              "speed": 346.5
+            },
+            "score": {
+              "left": 0,
+              "right": 7
+            },
+            "pointsPlayed": 7,
+            "serveTowards": "left",
+            "winner": null
+          }
+        },
+        {
+          "tick": 840,
+          "state": {
+            "phase": "playing",
+            "phaseTicks": 0,
+            "left": {
+              "y": 300
+            },
+            "right": {
+              "y": 314
+            },
+            "ball": {
+              "x": 571.7500000000001,
+              "y": 300,
+              "vx": 346.5,
+              "vy": 0,
+              "speed": 346.5
+            },
+            "score": {
+              "left": 0,
+              "right": 7
+            },
+            "pointsPlayed": 7,
+            "serveTowards": "left",
+            "winner": null
+          }
+        },
+        {
+          "tick": 870,
+          "state": {
+            "phase": "playing",
+            "phaseTicks": 0,
+            "left": {
+              "y": 300
+            },
+            "right": {
+              "y": 258
+            },
+            "ball": {
+              "x": 582.9016076615217,
+              "y": 260.38350000000014,
+              "vx": -353.7822692967385,
+              "vy": -84.89250000000001,
+              "speed": 363.825
+            },
+            "score": {
+              "left": 0,
+              "right": 7
+            },
+            "pointsPlayed": 7,
+            "serveTowards": "left",
+            "winner": null
+          }
+        },
+        {
+          "tick": 900,
+          "state": {
+            "phase": "playing",
+            "phaseTicks": 0,
+            "left": {
+              "y": 300
+            },
+            "right": {
+              "y": 174
+            },
+            "ball": {
+              "x": 229.11933836478246,
+              "y": 175.49100000000044,
+              "vx": -353.7822692967385,
+              "vy": -84.89250000000001,
+              "speed": 363.825
+            },
+            "score": {
+              "left": 0,
+              "right": 7
+            },
+            "pointsPlayed": 7,
+            "serveTowards": "left",
+            "winner": null
+          }
+        },
+        {
+          "tick": 930,
+          "state": {
+            "phase": "pointScored",
+            "phaseTicks": 21,
+            "left": {
+              "y": 300
+            },
+            "right": {
+              "y": 258
+            },
+            "ball": {
+              "x": 400,
+              "y": 300,
+              "vx": 0,
+              "vy": 0,
+              "speed": 330
+            },
+            "score": {
+              "left": 0,
+              "right": 8
+            },
+            "pointsPlayed": 8,
+            "serveTowards": "left",
+            "winner": null
+          }
+        },
+        {
+          "tick": 960,
+          "state": {
+            "phase": "playing",
+            "phaseTicks": 0,
+            "left": {
+              "y": 300
+            },
+            "right": {
+              "y": 342
+            },
+            "ball": {
+              "x": 307.26177972378366,
+              "y": 334.6500000000002,
+              "vx": -309.12740092072073,
+              "vy": 115.49999999999999,
+              "speed": 330
+            },
+            "score": {
+              "left": 0,
+              "right": 8
+            },
+            "pointsPlayed": 8,
+            "serveTowards": "left",
+            "winner": null
+          }
+        },
+        {
+          "tick": 990,
+          "state": {
+            "phase": "playing",
+            "phaseTicks": 0,
+            "left": {
+              "y": 300
+            },
+            "right": {
+              "y": 454
+            },
+            "ball": {
+              "x": -1.8656211969372833,
+              "y": 450.1500000000009,
+              "vx": -309.12740092072073,
+              "vy": 115.49999999999999,
+              "speed": 330
+            },
+            "score": {
+              "left": 0,
+              "right": 8
+            },
+            "pointsPlayed": 8,
+            "serveTowards": "left",
+            "winner": null
+          }
+        },
+        {
+          "tick": 1020,
+          "state": {
+            "phase": "pointScored",
+            "phaseTicks": 1,
+            "left": {
+              "y": 300
+            },
+            "right": {
+              "y": 314
+            },
+            "ball": {
+              "x": 400,
+              "y": 300,
+              "vx": 0,
+              "vy": 0,
+              "speed": 330
+            },
+            "score": {
+              "left": 0,
+              "right": 9
+            },
+            "pointsPlayed": 9,
+            "serveTowards": "left",
+            "winner": null
+          }
+        },
+        {
+          "tick": 1050,
+          "state": {
+            "phase": "playing",
+            "phaseTicks": 0,
+            "left": {
+              "y": 300
+            },
+            "right": {
+              "y": 202
+            },
+            "ball": {
+              "x": 101.17684577663628,
+              "y": 188.34999999999985,
+              "vx": -309.12740092072073,
+              "vy": -115.49999999999999,
+              "speed": 330
+            },
+            "score": {
+              "left": 0,
+              "right": 9
+            },
+            "pointsPlayed": 9,
+            "serveTowards": "left",
+            "winner": null
+          }
+        },
+        {
+          "tick": 1080,
+          "state": {
+            "phase": "pointScored",
+            "phaseTicks": 11,
+            "left": {
+              "y": 300
+            },
+            "right": {
+              "y": 314
+            },
+            "ball": {
+              "x": 400,
+              "y": 300,
+              "vx": 0,
+              "vy": 0,
+              "speed": 330
+            },
+            "score": {
+              "left": 0,
+              "right": 10
+            },
+            "pointsPlayed": 10,
+            "serveTowards": "left",
+            "winner": null
+          }
+        },
+        {
+          "tick": 1110,
+          "state": {
+            "phase": "playing",
+            "phaseTicks": 0,
+            "left": {
+              "y": 300
+            },
+            "right": {
+              "y": 426
+            },
+            "ball": {
+              "x": 232.79999999999978,
+              "y": 425.40000000000043,
+              "vx": -264,
+              "vy": 198,
+              "speed": 330
+            },
+            "score": {
+              "left": 0,
+              "right": 10
+            },
+            "pointsPlayed": 10,
+            "serveTowards": "left",
+            "winner": null
+          }
+        },
+        {
+          "tick": 1140,
+          "state": {
+            "phase": "finished",
+            "phaseTicks": 0,
+            "left": {
+              "y": 300
+            },
+            "right": {
+              "y": 552
+            },
+            "ball": {
+              "x": 400,
+              "y": 300,
+              "vx": 0,
+              "vy": 0,
+              "speed": 330
+            },
+            "score": {
+              "left": 0,
+              "right": 11
+            },
+            "pointsPlayed": 11,
+            "serveTowards": "left",
+            "winner": "right"
+          }
+        },
+        {
+          "tick": 1170,
+          "state": {
+            "phase": "finished",
+            "phaseTicks": 0,
+            "left": {
+              "y": 300
+            },
+            "right": {
+              "y": 552
+            },
+            "ball": {
+              "x": 400,
+              "y": 300,
+              "vx": 0,
+              "vy": 0,
+              "speed": 330
+            },
+            "score": {
+              "left": 0,
+              "right": 11
+            },
+            "pointsPlayed": 11,
+            "serveTowards": "left",
+            "winner": "right"
+          }
+        },
+        {
+          "tick": 1200,
+          "state": {
+            "phase": "finished",
+            "phaseTicks": 0,
+            "left": {
+              "y": 300
+            },
+            "right": {
+              "y": 552
+            },
+            "ball": {
+              "x": 400,
+              "y": 300,
+              "vx": 0,
+              "vy": 0,
+              "speed": 330
+            },
+            "score": {
+              "left": 0,
+              "right": 11
+            },
+            "pointsPlayed": 11,
+            "serveTowards": "left",
+            "winner": "right"
+          }
+        },
+        {
+          "tick": 1230,
+          "state": {
+            "phase": "finished",
+            "phaseTicks": 0,
+            "left": {
+              "y": 300
+            },
+            "right": {
+              "y": 552
+            },
+            "ball": {
+              "x": 400,
+              "y": 300,
+              "vx": 0,
+              "vy": 0,
+              "speed": 330
+            },
+            "score": {
+              "left": 0,
+              "right": 11
+            },
+            "pointsPlayed": 11,
+            "serveTowards": "left",
+            "winner": "right"
+          }
+        },
+        {
+          "tick": 1260,
+          "state": {
+            "phase": "finished",
+            "phaseTicks": 0,
+            "left": {
+              "y": 300
+            },
+            "right": {
+              "y": 552
+            },
+            "ball": {
+              "x": 400,
+              "y": 300,
+              "vx": 0,
+              "vy": 0,
+              "speed": 330
+            },
+            "score": {
+              "left": 0,
+              "right": 11
+            },
+            "pointsPlayed": 11,
+            "serveTowards": "left",
+            "winner": "right"
+          }
+        },
+        {
+          "tick": 1290,
+          "state": {
+            "phase": "finished",
+            "phaseTicks": 0,
+            "left": {
+              "y": 300
+            },
+            "right": {
+              "y": 552
+            },
+            "ball": {
+              "x": 400,
+              "y": 300,
+              "vx": 0,
+              "vy": 0,
+              "speed": 330
+            },
+            "score": {
+              "left": 0,
+              "right": 11
+            },
+            "pointsPlayed": 11,
+            "serveTowards": "left",
+            "winner": "right"
+          }
+        },
+        {
+          "tick": 1320,
+          "state": {
+            "phase": "finished",
+            "phaseTicks": 0,
+            "left": {
+              "y": 300
+            },
+            "right": {
+              "y": 552
+            },
+            "ball": {
+              "x": 400,
+              "y": 300,
+              "vx": 0,
+              "vy": 0,
+              "speed": 330
+            },
+            "score": {
+              "left": 0,
+              "right": 11
+            },
+            "pointsPlayed": 11,
+            "serveTowards": "left",
+            "winner": "right"
+          }
+        },
+        {
+          "tick": 1350,
+          "state": {
+            "phase": "finished",
+            "phaseTicks": 0,
+            "left": {
+              "y": 300
+            },
+            "right": {
+              "y": 552
+            },
+            "ball": {
+              "x": 400,
+              "y": 300,
+              "vx": 0,
+              "vy": 0,
+              "speed": 330
+            },
+            "score": {
+              "left": 0,
+              "right": 11
+            },
+            "pointsPlayed": 11,
+            "serveTowards": "left",
+            "winner": "right"
+          }
+        },
+        {
+          "tick": 1380,
+          "state": {
+            "phase": "finished",
+            "phaseTicks": 0,
+            "left": {
+              "y": 300
+            },
+            "right": {
+              "y": 552
+            },
+            "ball": {
+              "x": 400,
+              "y": 300,
+              "vx": 0,
+              "vy": 0,
+              "speed": 330
+            },
+            "score": {
+              "left": 0,
+              "right": 11
+            },
+            "pointsPlayed": 11,
+            "serveTowards": "left",
+            "winner": "right"
+          }
+        },
+        {
+          "tick": 1410,
+          "state": {
+            "phase": "finished",
+            "phaseTicks": 0,
+            "left": {
+              "y": 300
+            },
+            "right": {
+              "y": 552
+            },
+            "ball": {
+              "x": 400,
+              "y": 300,
+              "vx": 0,
+              "vy": 0,
+              "speed": 330
+            },
+            "score": {
+              "left": 0,
+              "right": 11
+            },
+            "pointsPlayed": 11,
+            "serveTowards": "left",
+            "winner": "right"
+          }
+        },
+        {
+          "tick": 1440,
+          "state": {
+            "phase": "finished",
+            "phaseTicks": 0,
+            "left": {
+              "y": 300
+            },
+            "right": {
+              "y": 552
+            },
+            "ball": {
+              "x": 400,
+              "y": 300,
+              "vx": 0,
+              "vy": 0,
+              "speed": 330
+            },
+            "score": {
+              "left": 0,
+              "right": 11
+            },
+            "pointsPlayed": 11,
+            "serveTowards": "left",
+            "winner": "right"
+          }
+        },
+        {
+          "tick": 1470,
+          "state": {
+            "phase": "finished",
+            "phaseTicks": 0,
+            "left": {
+              "y": 300
+            },
+            "right": {
+              "y": 552
+            },
+            "ball": {
+              "x": 400,
+              "y": 300,
+              "vx": 0,
+              "vy": 0,
+              "speed": 330
+            },
+            "score": {
+              "left": 0,
+              "right": 11
+            },
+            "pointsPlayed": 11,
+            "serveTowards": "left",
+            "winner": "right"
+          }
+        },
+        {
+          "tick": 1500,
+          "state": {
+            "phase": "finished",
+            "phaseTicks": 0,
+            "left": {
+              "y": 300
+            },
+            "right": {
+              "y": 552
+            },
+            "ball": {
+              "x": 400,
+              "y": 300,
+              "vx": 0,
+              "vy": 0,
+              "speed": 330
+            },
+            "score": {
+              "left": 0,
+              "right": 11
+            },
+            "pointsPlayed": 11,
+            "serveTowards": "left",
+            "winner": "right"
+          }
+        },
+        {
+          "tick": 1530,
+          "state": {
+            "phase": "finished",
+            "phaseTicks": 0,
+            "left": {
+              "y": 300
+            },
+            "right": {
+              "y": 552
+            },
+            "ball": {
+              "x": 400,
+              "y": 300,
+              "vx": 0,
+              "vy": 0,
+              "speed": 330
+            },
+            "score": {
+              "left": 0,
+              "right": 11
+            },
+            "pointsPlayed": 11,
+            "serveTowards": "left",
+            "winner": "right"
+          }
+        },
+        {
+          "tick": 1560,
+          "state": {
+            "phase": "finished",
+            "phaseTicks": 0,
+            "left": {
+              "y": 300
+            },
+            "right": {
+              "y": 552
+            },
+            "ball": {
+              "x": 400,
+              "y": 300,
+              "vx": 0,
+              "vy": 0,
+              "speed": 330
+            },
+            "score": {
+              "left": 0,
+              "right": 11
+            },
+            "pointsPlayed": 11,
+            "serveTowards": "left",
+            "winner": "right"
+          }
+        },
+        {
+          "tick": 1590,
+          "state": {
+            "phase": "finished",
+            "phaseTicks": 0,
+            "left": {
+              "y": 300
+            },
+            "right": {
+              "y": 552
+            },
+            "ball": {
+              "x": 400,
+              "y": 300,
+              "vx": 0,
+              "vy": 0,
+              "speed": 330
+            },
+            "score": {
+              "left": 0,
+              "right": 11
+            },
+            "pointsPlayed": 11,
+            "serveTowards": "left",
+            "winner": "right"
+          }
+        },
+        {
+          "tick": 1620,
+          "state": {
+            "phase": "finished",
+            "phaseTicks": 0,
+            "left": {
+              "y": 300
+            },
+            "right": {
+              "y": 552
+            },
+            "ball": {
+              "x": 400,
+              "y": 300,
+              "vx": 0,
+              "vy": 0,
+              "speed": 330
+            },
+            "score": {
+              "left": 0,
+              "right": 11
+            },
+            "pointsPlayed": 11,
+            "serveTowards": "left",
+            "winner": "right"
+          }
+        },
+        {
+          "tick": 1650,
+          "state": {
+            "phase": "finished",
+            "phaseTicks": 0,
+            "left": {
+              "y": 300
+            },
+            "right": {
+              "y": 552
+            },
+            "ball": {
+              "x": 400,
+              "y": 300,
+              "vx": 0,
+              "vy": 0,
+              "speed": 330
+            },
+            "score": {
+              "left": 0,
+              "right": 11
+            },
+            "pointsPlayed": 11,
+            "serveTowards": "left",
+            "winner": "right"
+          }
+        },
+        {
+          "tick": 1680,
+          "state": {
+            "phase": "finished",
+            "phaseTicks": 0,
+            "left": {
+              "y": 300
+            },
+            "right": {
+              "y": 552
+            },
+            "ball": {
+              "x": 400,
+              "y": 300,
+              "vx": 0,
+              "vy": 0,
+              "speed": 330
+            },
+            "score": {
+              "left": 0,
+              "right": 11
+            },
+            "pointsPlayed": 11,
+            "serveTowards": "left",
+            "winner": "right"
+          }
+        },
+        {
+          "tick": 1710,
+          "state": {
+            "phase": "finished",
+            "phaseTicks": 0,
+            "left": {
+              "y": 300
+            },
+            "right": {
+              "y": 552
+            },
+            "ball": {
+              "x": 400,
+              "y": 300,
+              "vx": 0,
+              "vy": 0,
+              "speed": 330
+            },
+            "score": {
+              "left": 0,
+              "right": 11
+            },
+            "pointsPlayed": 11,
+            "serveTowards": "left",
+            "winner": "right"
+          }
+        },
+        {
+          "tick": 1740,
+          "state": {
+            "phase": "finished",
+            "phaseTicks": 0,
+            "left": {
+              "y": 300
+            },
+            "right": {
+              "y": 552
+            },
+            "ball": {
+              "x": 400,
+              "y": 300,
+              "vx": 0,
+              "vy": 0,
+              "speed": 330
+            },
+            "score": {
+              "left": 0,
+              "right": 11
+            },
+            "pointsPlayed": 11,
+            "serveTowards": "left",
+            "winner": "right"
+          }
+        },
+        {
+          "tick": 1770,
+          "state": {
+            "phase": "finished",
+            "phaseTicks": 0,
+            "left": {
+              "y": 300
+            },
+            "right": {
+              "y": 552
+            },
+            "ball": {
+              "x": 400,
+              "y": 300,
+              "vx": 0,
+              "vy": 0,
+              "speed": 330
+            },
+            "score": {
+              "left": 0,
+              "right": 11
+            },
+            "pointsPlayed": 11,
+            "serveTowards": "left",
+            "winner": "right"
+          }
+        },
+        {
+          "tick": 1800,
+          "state": {
+            "phase": "finished",
+            "phaseTicks": 0,
+            "left": {
+              "y": 300
+            },
+            "right": {
+              "y": 552
+            },
+            "ball": {
+              "x": 400,
+              "y": 300,
+              "vx": 0,
+              "vy": 0,
+              "speed": 330
+            },
+            "score": {
+              "left": 0,
+              "right": 11
+            },
+            "pointsPlayed": 11,
+            "serveTowards": "left",
+            "winner": "right"
+          }
+        },
+        {
+          "tick": 1830,
+          "state": {
+            "phase": "finished",
+            "phaseTicks": 0,
+            "left": {
+              "y": 300
+            },
+            "right": {
+              "y": 552
+            },
+            "ball": {
+              "x": 400,
+              "y": 300,
+              "vx": 0,
+              "vy": 0,
+              "speed": 330
+            },
+            "score": {
+              "left": 0,
+              "right": 11
+            },
+            "pointsPlayed": 11,
+            "serveTowards": "left",
+            "winner": "right"
+          }
+        },
+        {
+          "tick": 1860,
+          "state": {
+            "phase": "finished",
+            "phaseTicks": 0,
+            "left": {
+              "y": 300
+            },
+            "right": {
+              "y": 552
+            },
+            "ball": {
+              "x": 400,
+              "y": 300,
+              "vx": 0,
+              "vy": 0,
+              "speed": 330
+            },
+            "score": {
+              "left": 0,
+              "right": 11
+            },
+            "pointsPlayed": 11,
+            "serveTowards": "left",
+            "winner": "right"
+          }
+        },
+        {
+          "tick": 1890,
+          "state": {
+            "phase": "finished",
+            "phaseTicks": 0,
+            "left": {
+              "y": 300
+            },
+            "right": {
+              "y": 552
+            },
+            "ball": {
+              "x": 400,
+              "y": 300,
+              "vx": 0,
+              "vy": 0,
+              "speed": 330
+            },
+            "score": {
+              "left": 0,
+              "right": 11
+            },
+            "pointsPlayed": 11,
+            "serveTowards": "left",
+            "winner": "right"
+          }
+        },
+        {
+          "tick": 1920,
+          "state": {
+            "phase": "finished",
+            "phaseTicks": 0,
+            "left": {
+              "y": 300
+            },
+            "right": {
+              "y": 552
+            },
+            "ball": {
+              "x": 400,
+              "y": 300,
+              "vx": 0,
+              "vy": 0,
+              "speed": 330
+            },
+            "score": {
+              "left": 0,
+              "right": 11
+            },
+            "pointsPlayed": 11,
+            "serveTowards": "left",
+            "winner": "right"
+          }
+        },
+        {
+          "tick": 1950,
+          "state": {
+            "phase": "finished",
+            "phaseTicks": 0,
+            "left": {
+              "y": 300
+            },
+            "right": {
+              "y": 552
+            },
+            "ball": {
+              "x": 400,
+              "y": 300,
+              "vx": 0,
+              "vy": 0,
+              "speed": 330
+            },
+            "score": {
+              "left": 0,
+              "right": 11
+            },
+            "pointsPlayed": 11,
+            "serveTowards": "left",
+            "winner": "right"
+          }
+        },
+        {
+          "tick": 1980,
+          "state": {
+            "phase": "finished",
+            "phaseTicks": 0,
+            "left": {
+              "y": 300
+            },
+            "right": {
+              "y": 552
+            },
+            "ball": {
+              "x": 400,
+              "y": 300,
+              "vx": 0,
+              "vy": 0,
+              "speed": 330
+            },
+            "score": {
+              "left": 0,
+              "right": 11
+            },
+            "pointsPlayed": 11,
+            "serveTowards": "left",
+            "winner": "right"
+          }
+        },
+        {
+          "tick": 2010,
+          "state": {
+            "phase": "finished",
+            "phaseTicks": 0,
+            "left": {
+              "y": 300
+            },
+            "right": {
+              "y": 552
+            },
+            "ball": {
+              "x": 400,
+              "y": 300,
+              "vx": 0,
+              "vy": 0,
+              "speed": 330
+            },
+            "score": {
+              "left": 0,
+              "right": 11
+            },
+            "pointsPlayed": 11,
+            "serveTowards": "left",
+            "winner": "right"
+          }
+        },
+        {
+          "tick": 2040,
+          "state": {
+            "phase": "finished",
+            "phaseTicks": 0,
+            "left": {
+              "y": 300
+            },
+            "right": {
+              "y": 552
+            },
+            "ball": {
+              "x": 400,
+              "y": 300,
+              "vx": 0,
+              "vy": 0,
+              "speed": 330
+            },
+            "score": {
+              "left": 0,
+              "right": 11
+            },
+            "pointsPlayed": 11,
+            "serveTowards": "left",
+            "winner": "right"
+          }
+        },
+        {
+          "tick": 2070,
+          "state": {
+            "phase": "finished",
+            "phaseTicks": 0,
+            "left": {
+              "y": 300
+            },
+            "right": {
+              "y": 552
+            },
+            "ball": {
+              "x": 400,
+              "y": 300,
+              "vx": 0,
+              "vy": 0,
+              "speed": 330
+            },
+            "score": {
+              "left": 0,
+              "right": 11
+            },
+            "pointsPlayed": 11,
+            "serveTowards": "left",
+            "winner": "right"
+          }
+        },
+        {
+          "tick": 2100,
+          "state": {
+            "phase": "finished",
+            "phaseTicks": 0,
+            "left": {
+              "y": 300
+            },
+            "right": {
+              "y": 552
+            },
+            "ball": {
+              "x": 400,
+              "y": 300,
+              "vx": 0,
+              "vy": 0,
+              "speed": 330
+            },
+            "score": {
+              "left": 0,
+              "right": 11
+            },
+            "pointsPlayed": 11,
+            "serveTowards": "left",
+            "winner": "right"
+          }
+        },
+        {
+          "tick": 2130,
+          "state": {
+            "phase": "finished",
+            "phaseTicks": 0,
+            "left": {
+              "y": 300
+            },
+            "right": {
+              "y": 552
+            },
+            "ball": {
+              "x": 400,
+              "y": 300,
+              "vx": 0,
+              "vy": 0,
+              "speed": 330
+            },
+            "score": {
+              "left": 0,
+              "right": 11
+            },
+            "pointsPlayed": 11,
+            "serveTowards": "left",
+            "winner": "right"
+          }
+        },
+        {
+          "tick": 2160,
+          "state": {
+            "phase": "finished",
+            "phaseTicks": 0,
+            "left": {
+              "y": 300
+            },
+            "right": {
+              "y": 552
+            },
+            "ball": {
+              "x": 400,
+              "y": 300,
+              "vx": 0,
+              "vy": 0,
+              "speed": 330
+            },
+            "score": {
+              "left": 0,
+              "right": 11
+            },
+            "pointsPlayed": 11,
+            "serveTowards": "left",
+            "winner": "right"
+          }
+        },
+        {
+          "tick": 2190,
+          "state": {
+            "phase": "finished",
+            "phaseTicks": 0,
+            "left": {
+              "y": 300
+            },
+            "right": {
+              "y": 552
+            },
+            "ball": {
+              "x": 400,
+              "y": 300,
+              "vx": 0,
+              "vy": 0,
+              "speed": 330
+            },
+            "score": {
+              "left": 0,
+              "right": 11
+            },
+            "pointsPlayed": 11,
+            "serveTowards": "left",
+            "winner": "right"
+          }
+        },
+        {
+          "tick": 2220,
+          "state": {
+            "phase": "finished",
+            "phaseTicks": 0,
+            "left": {
+              "y": 300
+            },
+            "right": {
+              "y": 552
+            },
+            "ball": {
+              "x": 400,
+              "y": 300,
+              "vx": 0,
+              "vy": 0,
+              "speed": 330
+            },
+            "score": {
+              "left": 0,
+              "right": 11
+            },
+            "pointsPlayed": 11,
+            "serveTowards": "left",
+            "winner": "right"
+          }
+        },
+        {
+          "tick": 2250,
+          "state": {
+            "phase": "finished",
+            "phaseTicks": 0,
+            "left": {
+              "y": 300
+            },
+            "right": {
+              "y": 552
+            },
+            "ball": {
+              "x": 400,
+              "y": 300,
+              "vx": 0,
+              "vy": 0,
+              "speed": 330
+            },
+            "score": {
+              "left": 0,
+              "right": 11
+            },
+            "pointsPlayed": 11,
+            "serveTowards": "left",
+            "winner": "right"
+          }
+        },
+        {
+          "tick": 2280,
+          "state": {
+            "phase": "finished",
+            "phaseTicks": 0,
+            "left": {
+              "y": 300
+            },
+            "right": {
+              "y": 552
+            },
+            "ball": {
+              "x": 400,
+              "y": 300,
+              "vx": 0,
+              "vy": 0,
+              "speed": 330
+            },
+            "score": {
+              "left": 0,
+              "right": 11
+            },
+            "pointsPlayed": 11,
+            "serveTowards": "left",
+            "winner": "right"
+          }
+        },
+        {
+          "tick": 2310,
+          "state": {
+            "phase": "finished",
+            "phaseTicks": 0,
+            "left": {
+              "y": 300
+            },
+            "right": {
+              "y": 552
+            },
+            "ball": {
+              "x": 400,
+              "y": 300,
+              "vx": 0,
+              "vy": 0,
+              "speed": 330
+            },
+            "score": {
+              "left": 0,
+              "right": 11
+            },
+            "pointsPlayed": 11,
+            "serveTowards": "left",
+            "winner": "right"
+          }
+        },
+        {
+          "tick": 2340,
+          "state": {
+            "phase": "finished",
+            "phaseTicks": 0,
+            "left": {
+              "y": 300
+            },
+            "right": {
+              "y": 552
+            },
+            "ball": {
+              "x": 400,
+              "y": 300,
+              "vx": 0,
+              "vy": 0,
+              "speed": 330
+            },
+            "score": {
+              "left": 0,
+              "right": 11
+            },
+            "pointsPlayed": 11,
+            "serveTowards": "left",
+            "winner": "right"
+          }
+        },
+        {
+          "tick": 2370,
+          "state": {
+            "phase": "finished",
+            "phaseTicks": 0,
+            "left": {
+              "y": 300
+            },
+            "right": {
+              "y": 552
+            },
+            "ball": {
+              "x": 400,
+              "y": 300,
+              "vx": 0,
+              "vy": 0,
+              "speed": 330
+            },
+            "score": {
+              "left": 0,
+              "right": 11
+            },
+            "pointsPlayed": 11,
+            "serveTowards": "left",
+            "winner": "right"
+          }
+        },
+        {
+          "tick": 2400,
+          "state": {
+            "phase": "finished",
+            "phaseTicks": 0,
+            "left": {
+              "y": 300
+            },
+            "right": {
+              "y": 552
+            },
+            "ball": {
+              "x": 400,
+              "y": 300,
+              "vx": 0,
+              "vy": 0,
+              "speed": 330
+            },
+            "score": {
+              "left": 0,
+              "right": 11
+            },
+            "pointsPlayed": 11,
+            "serveTowards": "left",
+            "winner": "right"
+          }
+        },
+        {
+          "tick": 2430,
+          "state": {
+            "phase": "finished",
+            "phaseTicks": 0,
+            "left": {
+              "y": 300
+            },
+            "right": {
+              "y": 552
+            },
+            "ball": {
+              "x": 400,
+              "y": 300,
+              "vx": 0,
+              "vy": 0,
+              "speed": 330
+            },
+            "score": {
+              "left": 0,
+              "right": 11
+            },
+            "pointsPlayed": 11,
+            "serveTowards": "left",
+            "winner": "right"
+          }
+        },
+        {
+          "tick": 2460,
+          "state": {
+            "phase": "finished",
+            "phaseTicks": 0,
+            "left": {
+              "y": 300
+            },
+            "right": {
+              "y": 552
+            },
+            "ball": {
+              "x": 400,
+              "y": 300,
+              "vx": 0,
+              "vy": 0,
+              "speed": 330
+            },
+            "score": {
+              "left": 0,
+              "right": 11
+            },
+            "pointsPlayed": 11,
+            "serveTowards": "left",
+            "winner": "right"
+          }
+        },
+        {
+          "tick": 2490,
+          "state": {
+            "phase": "finished",
+            "phaseTicks": 0,
+            "left": {
+              "y": 300
+            },
+            "right": {
+              "y": 552
+            },
+            "ball": {
+              "x": 400,
+              "y": 300,
+              "vx": 0,
+              "vy": 0,
+              "speed": 330
+            },
+            "score": {
+              "left": 0,
+              "right": 11
+            },
+            "pointsPlayed": 11,
+            "serveTowards": "left",
+            "winner": "right"
+          }
+        },
+        {
+          "tick": 2520,
+          "state": {
+            "phase": "finished",
+            "phaseTicks": 0,
+            "left": {
+              "y": 300
+            },
+            "right": {
+              "y": 552
+            },
+            "ball": {
+              "x": 400,
+              "y": 300,
+              "vx": 0,
+              "vy": 0,
+              "speed": 330
+            },
+            "score": {
+              "left": 0,
+              "right": 11
+            },
+            "pointsPlayed": 11,
+            "serveTowards": "left",
+            "winner": "right"
+          }
+        },
+        {
+          "tick": 2550,
+          "state": {
+            "phase": "finished",
+            "phaseTicks": 0,
+            "left": {
+              "y": 300
+            },
+            "right": {
+              "y": 552
+            },
+            "ball": {
+              "x": 400,
+              "y": 300,
+              "vx": 0,
+              "vy": 0,
+              "speed": 330
+            },
+            "score": {
+              "left": 0,
+              "right": 11
+            },
+            "pointsPlayed": 11,
+            "serveTowards": "left",
+            "winner": "right"
+          }
+        },
+        {
+          "tick": 2580,
+          "state": {
+            "phase": "finished",
+            "phaseTicks": 0,
+            "left": {
+              "y": 300
+            },
+            "right": {
+              "y": 552
+            },
+            "ball": {
+              "x": 400,
+              "y": 300,
+              "vx": 0,
+              "vy": 0,
+              "speed": 330
+            },
+            "score": {
+              "left": 0,
+              "right": 11
+            },
+            "pointsPlayed": 11,
+            "serveTowards": "left",
+            "winner": "right"
+          }
+        },
+        {
+          "tick": 2610,
+          "state": {
+            "phase": "finished",
+            "phaseTicks": 0,
+            "left": {
+              "y": 300
+            },
+            "right": {
+              "y": 552
+            },
+            "ball": {
+              "x": 400,
+              "y": 300,
+              "vx": 0,
+              "vy": 0,
+              "speed": 330
+            },
+            "score": {
+              "left": 0,
+              "right": 11
+            },
+            "pointsPlayed": 11,
+            "serveTowards": "left",
+            "winner": "right"
+          }
+        },
+        {
+          "tick": 2640,
+          "state": {
+            "phase": "finished",
+            "phaseTicks": 0,
+            "left": {
+              "y": 300
+            },
+            "right": {
+              "y": 552
+            },
+            "ball": {
+              "x": 400,
+              "y": 300,
+              "vx": 0,
+              "vy": 0,
+              "speed": 330
+            },
+            "score": {
+              "left": 0,
+              "right": 11
+            },
+            "pointsPlayed": 11,
+            "serveTowards": "left",
+            "winner": "right"
+          }
+        },
+        {
+          "tick": 2670,
+          "state": {
+            "phase": "finished",
+            "phaseTicks": 0,
+            "left": {
+              "y": 300
+            },
+            "right": {
+              "y": 552
+            },
+            "ball": {
+              "x": 400,
+              "y": 300,
+              "vx": 0,
+              "vy": 0,
+              "speed": 330
+            },
+            "score": {
+              "left": 0,
+              "right": 11
+            },
+            "pointsPlayed": 11,
+            "serveTowards": "left",
+            "winner": "right"
+          }
+        },
+        {
+          "tick": 2700,
+          "state": {
+            "phase": "finished",
+            "phaseTicks": 0,
+            "left": {
+              "y": 300
+            },
+            "right": {
+              "y": 552
+            },
+            "ball": {
+              "x": 400,
+              "y": 300,
+              "vx": 0,
+              "vy": 0,
+              "speed": 330
+            },
+            "score": {
+              "left": 0,
+              "right": 11
+            },
+            "pointsPlayed": 11,
+            "serveTowards": "left",
+            "winner": "right"
+          }
+        },
+        {
+          "tick": 2730,
+          "state": {
+            "phase": "finished",
+            "phaseTicks": 0,
+            "left": {
+              "y": 300
+            },
+            "right": {
+              "y": 552
+            },
+            "ball": {
+              "x": 400,
+              "y": 300,
+              "vx": 0,
+              "vy": 0,
+              "speed": 330
+            },
+            "score": {
+              "left": 0,
+              "right": 11
+            },
+            "pointsPlayed": 11,
+            "serveTowards": "left",
+            "winner": "right"
+          }
+        },
+        {
+          "tick": 2760,
+          "state": {
+            "phase": "finished",
+            "phaseTicks": 0,
+            "left": {
+              "y": 300
+            },
+            "right": {
+              "y": 552
+            },
+            "ball": {
+              "x": 400,
+              "y": 300,
+              "vx": 0,
+              "vy": 0,
+              "speed": 330
+            },
+            "score": {
+              "left": 0,
+              "right": 11
+            },
+            "pointsPlayed": 11,
+            "serveTowards": "left",
+            "winner": "right"
+          }
+        },
+        {
+          "tick": 2790,
+          "state": {
+            "phase": "finished",
+            "phaseTicks": 0,
+            "left": {
+              "y": 300
+            },
+            "right": {
+              "y": 552
+            },
+            "ball": {
+              "x": 400,
+              "y": 300,
+              "vx": 0,
+              "vy": 0,
+              "speed": 330
+            },
+            "score": {
+              "left": 0,
+              "right": 11
+            },
+            "pointsPlayed": 11,
+            "serveTowards": "left",
+            "winner": "right"
+          }
+        },
+        {
+          "tick": 2820,
+          "state": {
+            "phase": "finished",
+            "phaseTicks": 0,
+            "left": {
+              "y": 300
+            },
+            "right": {
+              "y": 552
+            },
+            "ball": {
+              "x": 400,
+              "y": 300,
+              "vx": 0,
+              "vy": 0,
+              "speed": 330
+            },
+            "score": {
+              "left": 0,
+              "right": 11
+            },
+            "pointsPlayed": 11,
+            "serveTowards": "left",
+            "winner": "right"
+          }
+        },
+        {
+          "tick": 2850,
+          "state": {
+            "phase": "finished",
+            "phaseTicks": 0,
+            "left": {
+              "y": 300
+            },
+            "right": {
+              "y": 552
+            },
+            "ball": {
+              "x": 400,
+              "y": 300,
+              "vx": 0,
+              "vy": 0,
+              "speed": 330
+            },
+            "score": {
+              "left": 0,
+              "right": 11
+            },
+            "pointsPlayed": 11,
+            "serveTowards": "left",
+            "winner": "right"
+          }
+        },
+        {
+          "tick": 2880,
+          "state": {
+            "phase": "finished",
+            "phaseTicks": 0,
+            "left": {
+              "y": 300
+            },
+            "right": {
+              "y": 552
+            },
+            "ball": {
+              "x": 400,
+              "y": 300,
+              "vx": 0,
+              "vy": 0,
+              "speed": 330
+            },
+            "score": {
+              "left": 0,
+              "right": 11
+            },
+            "pointsPlayed": 11,
+            "serveTowards": "left",
+            "winner": "right"
+          }
+        },
+        {
+          "tick": 2910,
+          "state": {
+            "phase": "finished",
+            "phaseTicks": 0,
+            "left": {
+              "y": 300
+            },
+            "right": {
+              "y": 552
+            },
+            "ball": {
+              "x": 400,
+              "y": 300,
+              "vx": 0,
+              "vy": 0,
+              "speed": 330
+            },
+            "score": {
+              "left": 0,
+              "right": 11
+            },
+            "pointsPlayed": 11,
+            "serveTowards": "left",
+            "winner": "right"
+          }
+        },
+        {
+          "tick": 2940,
+          "state": {
+            "phase": "finished",
+            "phaseTicks": 0,
+            "left": {
+              "y": 300
+            },
+            "right": {
+              "y": 552
+            },
+            "ball": {
+              "x": 400,
+              "y": 300,
+              "vx": 0,
+              "vy": 0,
+              "speed": 330
+            },
+            "score": {
+              "left": 0,
+              "right": 11
+            },
+            "pointsPlayed": 11,
+            "serveTowards": "left",
+            "winner": "right"
+          }
+        },
+        {
+          "tick": 2970,
+          "state": {
+            "phase": "finished",
+            "phaseTicks": 0,
+            "left": {
+              "y": 300
+            },
+            "right": {
+              "y": 552
+            },
+            "ball": {
+              "x": 400,
+              "y": 300,
+              "vx": 0,
+              "vy": 0,
+              "speed": 330
+            },
+            "score": {
+              "left": 0,
+              "right": 11
+            },
+            "pointsPlayed": 11,
+            "serveTowards": "left",
+            "winner": "right"
+          }
+        },
+        {
+          "tick": 3000,
+          "state": {
+            "phase": "finished",
+            "phaseTicks": 0,
+            "left": {
+              "y": 300
+            },
+            "right": {
+              "y": 552
+            },
+            "ball": {
+              "x": 400,
+              "y": 300,
+              "vx": 0,
+              "vy": 0,
+              "speed": 330
+            },
+            "score": {
+              "left": 0,
+              "right": 11
+            },
+            "pointsPlayed": 11,
+            "serveTowards": "left",
+            "winner": "right"
+          }
+        },
+        {
+          "tick": 3000,
+          "state": {
+            "phase": "finished",
+            "phaseTicks": 0,
+            "left": {
+              "y": 300
+            },
+            "right": {
+              "y": 552
+            },
+            "ball": {
+              "x": 400,
+              "y": 300,
+              "vx": 0,
+              "vy": 0,
+              "speed": 330
+            },
+            "score": {
+              "left": 0,
+              "right": 11
+            },
+            "pointsPlayed": 11,
+            "serveTowards": "left",
+            "winner": "right"
+          }
+        }
+      ]
+    },
+    {
+      "name": "idle",
+      "description": "Nobody touches anything: the countdown runs out and the serve crosses the field.",
+      "inputs": [
+        "--",
+        "--",
+        "--",
+        "--",
+        "--",
+        "--",
+        "--",
+        "--",
+        "--",
+        "--",
+        "--",
+        "--",
+        "--",
+        "--",
+        "--",
+        "--",
+        "--",
+        "--",
+        "--",
+        "--",
+        "--",
+        "--",
+        "--",
+        "--",
+        "--",
+        "--",
+        "--",
+        "--",
+        "--",
+        "--",
+        "--",
+        "--",
+        "--",
+        "--",
+        "--",
+        "--",
+        "--",
+        "--",
+        "--",
+        "--",
+        "--",
+        "--",
+        "--",
+        "--",
+        "--",
+        "--",
+        "--",
+        "--",
+        "--",
+        "--",
+        "--",
+        "--",
+        "--",
+        "--",
+        "--",
+        "--",
+        "--",
+        "--",
+        "--",
+        "--",
+        "--",
+        "--",
+        "--",
+        "--",
+        "--",
+        "--",
+        "--",
+        "--",
+        "--",
+        "--",
+        "--",
+        "--",
+        "--",
+        "--",
+        "--",
+        "--",
+        "--",
+        "--",
+        "--",
+        "--",
+        "--",
+        "--",
+        "--",
+        "--",
+        "--",
+        "--",
+        "--",
+        "--",
+        "--",
+        "--",
+        "--",
+        "--",
+        "--",
+        "--",
+        "--",
+        "--",
+        "--",
+        "--",
+        "--",
+        "--",
+        "--",
+        "--",
+        "--",
+        "--",
+        "--",
+        "--",
+        "--",
+        "--",
+        "--",
+        "--",
+        "--",
+        "--",
+        "--",
+        "--",
+        "--",
+        "--",
+        "--",
+        "--",
+        "--",
+        "--"
+      ],
+      "checkpoints": [
+        {
+          "tick": 0,
+          "state": {
+            "phase": "countdown",
+            "phaseTicks": 90,
+            "left": {
+              "y": 300
+            },
+            "right": {
+              "y": 300
+            },
+            "ball": {
+              "x": 400,
+              "y": 300,
+              "vx": 0,
+              "vy": 0,
+              "speed": 330
+            },
+            "score": {
+              "left": 0,
+              "right": 0
+            },
+            "pointsPlayed": 0,
+            "serveTowards": "right",
+            "winner": null
+          }
+        },
+        {
+          "tick": 30,
+          "state": {
+            "phase": "countdown",
+            "phaseTicks": 60,
+            "left": {
+              "y": 300
+            },
+            "right": {
+              "y": 300
+            },
+            "ball": {
+              "x": 400,
+              "y": 300,
+              "vx": 0,
+              "vy": 0,
+              "speed": 330
+            },
+            "score": {
+              "left": 0,
+              "right": 0
+            },
+            "pointsPlayed": 0,
+            "serveTowards": "right",
+            "winner": null
+          }
+        },
+        {
+          "tick": 60,
+          "state": {
+            "phase": "countdown",
+            "phaseTicks": 30,
+            "left": {
+              "y": 300
+            },
+            "right": {
+              "y": 300
+            },
+            "ball": {
+              "x": 400,
+              "y": 300,
+              "vx": 0,
+              "vy": 0,
+              "speed": 330
+            },
+            "score": {
+              "left": 0,
+              "right": 0
+            },
+            "pointsPlayed": 0,
+            "serveTowards": "right",
+            "winner": null
+          }
+        },
+        {
+          "tick": 90,
+          "state": {
+            "phase": "playing",
+            "phaseTicks": 0,
+            "left": {
+              "y": 300
+            },
+            "right": {
+              "y": 300
+            },
+            "ball": {
+              "x": 400,
+              "y": 300,
+              "vx": 330,
+              "vy": 0,
+              "speed": 330
+            },
+            "score": {
+              "left": 0,
+              "right": 0
+            },
+            "pointsPlayed": 0,
+            "serveTowards": "right",
+            "winner": null
+          }
+        },
+        {
+          "tick": 120,
+          "state": {
+            "phase": "playing",
+            "phaseTicks": 0,
+            "left": {
+              "y": 300
+            },
+            "right": {
+              "y": 300
+            },
+            "ball": {
+              "x": 730,
+              "y": 300,
+              "vx": 330,
+              "vy": 0,
+              "speed": 330
+            },
+            "score": {
+              "left": 0,
+              "right": 0
+            },
+            "pointsPlayed": 0,
+            "serveTowards": "right",
+            "winner": null
+          }
+        },
+        {
+          "tick": 120,
+          "state": {
+            "phase": "playing",
+            "phaseTicks": 0,
+            "left": {
+              "y": 300
+            },
+            "right": {
+              "y": 300
+            },
+            "ball": {
+              "x": 730,
+              "y": 300,
+              "vx": 330,
+              "vy": 0,
+              "speed": 330
+            },
+            "score": {
+              "left": 0,
+              "right": 0
+            },
+            "pointsPlayed": 0,
+            "serveTowards": "right",
+            "winner": null
+          }
+        }
+      ]
+    }
+  ]
+}

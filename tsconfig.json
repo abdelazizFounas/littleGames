@@ -1,8 +1,20 @@
 {
   "files": [],
   "references": [
-    { "path": "./packages/core" },
-    { "path": "./packages/net" },
-    { "path": "./packages/ui" }
+    {
+      "path": "./packages/core"
+    },
+    {
+      "path": "./packages/net"
+    },
+    {
+      "path": "./packages/games/pong/logic"
+    },
+    {
+      "path": "./packages/ui"
+    },
+    {
+      "path": "./packages/renderer-headless"
+    }
   ]
 }

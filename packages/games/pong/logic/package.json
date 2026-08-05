@@ -1,0 +1,14 @@
+{
+  "name": "@littlegames/pong-logic",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Pong rules, physics and state machine. Pure TypeScript: no rendering, no networking.",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --build",
+    "vectors": "node scripts/write-vectors.ts"
+  }
+}

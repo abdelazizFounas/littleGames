@@ -32,6 +32,8 @@ importers:
 
   packages/core: {}
 
+  packages/games/pong/logic: {}
+
   packages/net:
     dependencies:
       '@bufbuild/protobuf':
@@ -43,6 +45,16 @@ importers:
       '@littlegames/core':
         specifier: workspace:*
         version: link:../core
+
+  packages/renderer-headless:
+    dependencies:
+      '@littlegames/core':
+        specifier: workspace:*
+        version: link:../core
+    devDependencies:
+      '@littlegames/pong-logic':
+        specifier: workspace:*
+        version: link:../games/pong/logic
 
   packages/ui:
     dependencies:
