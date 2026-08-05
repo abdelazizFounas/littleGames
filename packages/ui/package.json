@@ -15,7 +15,9 @@
     "@littlegames/net": "workspace:*",
     "react": "19.2.8",
     "react-dom": "19.2.8",
-    "react-router": "8.3.0"
+    "react-router": "8.3.0",
+    "@littlegames/pong-logic": "workspace:*",
+    "@littlegames/pong-renderer-pixi": "workspace:*"
   },
   "devDependencies": {
     "@types/react": "19.2.18",

@@ -355,3 +355,28 @@ body {
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   font-size: 0.8125rem;
 }
+
+/* --- Game stage --------------------------------------------------------- */
+
+.stage {
+  margin-top: 1.5rem;
+}
+
+.stage__surface {
+  width: 100%;
+  /* The field is 4:3 in logical units; matching it here means the renderer
+     letterboxes nothing on a well-sized screen. */
+  aspect-ratio: 4 / 3;
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+  overflow: hidden;
+  background: #101319;
+  /* Stops a vertical drag on the field from scrolling the page under it. */
+  touch-action: none;
+}
+
+.stage__surface canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}

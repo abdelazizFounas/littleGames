@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import { Link, Navigate, useParams } from 'react-router';
 import { useCatalog } from '../features/catalog/use-catalog';
-import { MatchPanel } from '../features/match/match-panel';
+import { PongStage } from '../features/game/pong-stage';
 import { useSession } from '../session/use-session';
 
 function Frame({ children }: { readonly children: ReactNode }): ReactNode {
@@ -76,7 +76,7 @@ export function GameLobbyRoute(): ReactNode {
         </div>
       </dl>
 
-      <MatchPanel />
+      <PongStage userId={state.profile.userId} />
 
       <Link className="link-button" to="/">
         Back to the games
