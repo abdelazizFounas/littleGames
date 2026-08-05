@@ -11,6 +11,9 @@
       "path": "./packages/games/pong/logic"
     },
     {
+      "path": "./packages/games/pong/renderer-pixi"
+    },
+    {
       "path": "./packages/ui"
     },
     {

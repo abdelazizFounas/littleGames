@@ -1,0 +1,18 @@
+{
+  "name": "@littlegames/pong-renderer-pixi",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "PixiJS implementation of the rendering contract for Pong.",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --build"
+  },
+  "dependencies": {
+    "@littlegames/core": "workspace:*",
+    "@littlegames/pong-logic": "workspace:*",
+    "pixi.js": "8.19.0"
+  }
+}
