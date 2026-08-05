@@ -1,0 +1,28 @@
+{
+  "name": "littlegames",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Real-time multiplayer mini-game platform built on Nakama.",
+  "packageManager": "pnpm@11.20.0",
+  "engines": {
+    "node": ">=24.19.0 <25"
+  },
+  "scripts": {
+    "typecheck": "tsc --build",
+    "typecheck:clean": "tsc --build --clean",
+    "lint": "oxlint --type-aware",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "server:up": "docker compose --env-file .env -f server/docker/docker-compose.yml up --build",
+    "server:down": "docker compose --env-file .env -f server/docker/docker-compose.yml down",
+    "server:logs": "docker compose --env-file .env -f server/docker/docker-compose.yml logs -f nakama"
+  },
+  "devDependencies": {
+    "@types/node": "26.1.2",
+    "oxlint": "1.77.0",
+    "oxlint-tsgolint": "7.0.2001",
+    "typescript": "7.0.2",
+    "vitest": "4.1.10"
+  }
+}
