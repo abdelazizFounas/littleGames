@@ -31,6 +31,9 @@ export {
   signOut,
 } from './auth';
 
+export type { GameSummary } from './catalog';
+export { fetchGameCatalog, toGameSummary } from './catalog';
+
 export type { NakamaAccount, PlayerProfile } from './account';
 export {
   displayNameOf,
