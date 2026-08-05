@@ -1,3 +1,8 @@
 packages:
   - 'packages/*'
   - 'packages/games/*/*'
+allowBuilds:
+  # Transitive dependency of @heroiclabs/nakama-js. Its install script reports
+  # analytics to a third party, so the script is blocked. Scarf is designed to
+  # no-op when it cannot run, and the SDK works unchanged without it.
+  '@scarf/scarf': false
