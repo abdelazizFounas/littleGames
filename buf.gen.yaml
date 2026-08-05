@@ -1,0 +1,39 @@
+version: v2
+
+# `clean` is deliberately not enabled: two of the outputs below sit inside
+# directories that hold hand-written code, and buf would delete them.
+plugins:
+  # Server side. The plugin binary is built by
+  # tools/scripts/generate-protocol.sh, pinned to the same protobuf version
+  # Nakama itself is built against.
+  - local: .tools/bin/protoc-gen-go
+    out: server/nakama/protocol
+    opt:
+      - module=littlegames.local/nakama/protocol
+
+  # Shared types, for packages/core. `onlyTypes` emits plain interfaces with no
+  # imports at all, which is what keeps core free of runtime dependencies and
+  # lets game logic be tested in Node without a protobuf runtime.
+  - local: node_modules/.bin/protoc-gen-ts_proto
+    out: packages/core/src/protocol/generated
+    opt:
+      - onlyTypes=true
+      - esModuleInterop=true
+      - forceLong=number
+      - useOptionals=none
+      # TypeScript `enum` is not erasable syntax, which the strict config
+      # forbids. Literal unions backed by a const object are.
+      - enumsAsLiterals=true
+      - unrecognizedEnum=false
+
+  # Wire codec, for packages/net. This is the copy that carries encode/decode
+  # and therefore the protobuf runtime dependency, next to the socket that
+  # needs it.
+  - local: node_modules/.bin/protoc-gen-ts_proto
+    out: packages/net/src/protocol/generated
+    opt:
+      - esModuleInterop=true
+      - forceLong=number
+      - useOptionals=none
+      - enumsAsLiterals=true
+      - unrecognizedEnum=false

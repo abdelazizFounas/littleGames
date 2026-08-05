@@ -3,7 +3,13 @@
   "options": {
     "typeAware": true
   },
-  "plugins": ["typescript", "unicorn", "oxc", "promise", "import"],
+  "plugins": [
+    "typescript",
+    "unicorn",
+    "oxc",
+    "promise",
+    "import"
+  ],
   "categories": {
     "correctness": "error",
     "suspicious": "error",
@@ -18,7 +24,28 @@
     "typescript/consistent-type-imports": "error",
     "typescript/no-explicit-any": "error",
     "typescript/no-non-null-assertion": "error",
-    "import/no-unassigned-import": ["error", { "allow": ["**/*.css"] }]
+    "import/no-unassigned-import": [
+      "error",
+      {
+        "allow": [
+          "**/*.css"
+        ]
+      }
+    ]
   },
-  "ignorePatterns": ["dist", "node_modules", "**/*.d.ts"]
+  "ignorePatterns": [
+    "dist",
+    "node_modules",
+    "**/*.d.ts"
+  ],
+  "overrides": [
+    {
+      "files": [
+        "**/scripts/**/*.ts"
+      ],
+      "rules": {
+        "no-console": "off"
+      }
+    }
+  ]
 }

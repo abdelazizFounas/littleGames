@@ -9,6 +9,7 @@
     "node": ">=24.19.0 <25"
   },
   "scripts": {
+    "proto": "tools/scripts/generate-protocol.sh",
     "dev": "pnpm --filter @littlegames/ui dev",
     "build": "pnpm --filter @littlegames/ui build",
     "typecheck": "tsc --build",
@@ -21,9 +22,11 @@
     "server:logs": "docker compose --env-file .env -f server/docker/docker-compose.yml logs -f nakama"
   },
   "devDependencies": {
+    "@bufbuild/buf": "1.72.0",
     "@types/node": "26.1.2",
     "oxlint": "1.77.0",
     "oxlint-tsgolint": "7.0.2001",
+    "ts-proto": "2.12.0",
     "typescript": "7.0.2",
     "vitest": "4.1.10"
   }

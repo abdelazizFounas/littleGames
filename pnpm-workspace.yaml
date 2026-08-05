@@ -2,6 +2,11 @@ packages:
   - 'packages/*'
   - 'packages/games/*/*'
 allowBuilds:
+  # buf ships its real binary through platform-specific optionalDependencies,
+  # which pnpm installs regardless. The postinstall script only wires up a
+  # convenience shim, and `buf --version` works without it, so nothing is
+  # gained by letting it run.
+  '@bufbuild/buf': false
   # Transitive dependency of @heroiclabs/nakama-js. Its install script reports
   # analytics to a third party, so the script is blocked. Scarf is designed to
   # no-op when it cannot run, and the SDK works unchanged without it.

@@ -22,3 +22,6 @@ server/nakama/build/
 
 # Test output
 coverage/
+
+# Generator binaries built on demand by tools/scripts/generate-protocol.sh
+.tools/

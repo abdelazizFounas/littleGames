@@ -1,0 +1,60 @@
+syntax = "proto3";
+
+// The single source of truth for everything sent over a match socket.
+//
+// Go and TypeScript are both generated from this file, so the two sides cannot
+// drift apart. Editing generated output instead of this file is always wrong.
+package littlegames.match.v1;
+
+option go_package = "littlegames.local/nakama/protocol/matchv1;matchv1";
+
+// Identifies what a match data frame carries.
+//
+// Nakama gives every frame an integer op code alongside its payload, and the
+// receiver needs it to know which message to decode.
+enum OpCode {
+  OP_CODE_UNSPECIFIED = 0;
+
+  // Client to server.
+  OP_CODE_PLAYER_INPUT = 1;
+
+  // Server to client.
+  OP_CODE_SNAPSHOT = 2;
+}
+
+// What a client is pressing, sent from client to server.
+//
+// Intent only, never a position: the server owns the simulation, so a tampered
+// client can lie about which keys it holds and nothing more.
+message PlayerInput {
+  // Monotonically increasing, assigned by the client.
+  //
+  // The server echoes the highest value it has processed back in the snapshot,
+  // which is what lets the client drop acknowledged inputs and replay the rest
+  // on top of the authoritative state.
+  uint32 seq = 1;
+
+  bool up = 2;
+  bool down = 3;
+}
+
+// The authoritative state, broadcast from server to client once per tick.
+message Snapshot {
+  // Server tick this state was produced on, counted from the match start.
+  uint32 tick = 1;
+
+  repeated PlayerState players = 2;
+}
+
+// One player, as the server sees them.
+message PlayerState {
+  string user_id = 1;
+  string username = 2;
+
+  // Highest input sequence number the server has applied for this player.
+  uint32 last_processed_seq = 3;
+
+  // The input the server acted on for the current tick.
+  bool up = 4;
+  bool down = 5;
+}
