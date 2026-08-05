@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
-import { Link, Navigate, useParams } from 'react-router';
+import { Link, Navigate, useParams, useSearchParams } from 'react-router';
 import { useCatalog } from '../features/catalog/use-catalog';
+import { InvitePanel } from '../features/game/invite-panel';
 import { PongStage } from '../features/game/pong-stage';
 import { useSession } from '../session/use-session';
 
@@ -12,6 +13,7 @@ function Frame({ children }: { readonly children: ReactNode }): ReactNode {
 
 export function GameLobbyRoute(): ReactNode {
   const { gameId } = useParams();
+  const [searchParams] = useSearchParams();
   const { state } = useSession();
   const catalog = useCatalog();
 
@@ -78,7 +80,9 @@ export function GameLobbyRoute(): ReactNode {
         </div>
       </dl>
 
-      <PongStage userId={state.profile.userId} />
+      <PongStage userId={state.profile.userId} matchId={searchParams.get('match') ?? undefined} />
+
+      <InvitePanel />
 
       <Link className="link-button" to="/">
         Back to the games

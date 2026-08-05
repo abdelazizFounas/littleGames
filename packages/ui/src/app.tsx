@@ -3,6 +3,7 @@ import { BrowserRouter, Route, Routes } from 'react-router';
 import { AppLayout } from './components/app-layout';
 import { GameLobbyRoute } from './routes/game-lobby-route';
 import { HomeRoute } from './routes/home-route';
+import { JoinRoute } from './routes/join-route';
 import { NotFoundRoute } from './routes/not-found-route';
 import { ProfileRoute } from './routes/profile-route';
 import { SessionProvider } from './session/session-provider';
@@ -15,6 +16,7 @@ export function App(): ReactNode {
           <Route element={<AppLayout />}>
             <Route path="/" element={<HomeRoute />} />
             <Route path="/games/:gameId" element={<GameLobbyRoute />} />
+            <Route path="/join/:code" element={<JoinRoute />} />
             <Route path="/profile" element={<ProfileRoute />} />
             {/* Catch-all: an unmatched path must say so, never render blank. */}
             <Route path="*" element={<NotFoundRoute />} />

@@ -1,5 +1,6 @@
 import type {
   GameSummary,
+  Invitation,
   MatchConnection,
   MatchListeners,
   PlayerProfile,
@@ -42,7 +43,11 @@ export interface SessionContextValue {
    *
    * The caller owns the returned connection and must leave it.
    */
-  readonly joinMatch: (listeners: MatchListeners) => Promise<MatchConnection>;
+  readonly joinMatch: (listeners: MatchListeners, matchId?: string) => Promise<MatchConnection>;
+  /** Opens a match and returns a shareable code that leads to it. */
+  readonly createInvitation: () => Promise<Invitation>;
+  /** Turns a code back into the match it points at. */
+  readonly resolveInvitation: (code: string) => Promise<string>;
 }
 
 export const SessionContext = createContext<SessionContextValue | null>(null);

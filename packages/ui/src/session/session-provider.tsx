@@ -2,6 +2,7 @@ import {
   authenticateEmail,
   authenticateGuest,
   createBrowserKeyValueStore,
+  createInvitation as createInvitationOnServer,
   createNakamaClient,
   fetchGameCatalog,
   findMatch,
@@ -9,10 +10,12 @@ import {
   joinMatch as joinMatchOnServer,
   linkEmail,
   persistSession,
+  resolveInvitation as resolveInvitationOnServer,
   restoreSession,
   signOut,
   updateDisplayName,
   type GameSummary,
+  type Invitation,
   type MatchConnection,
   type MatchListeners,
   type PlayerProfile,
@@ -128,14 +131,32 @@ export function SessionProvider({ children }: { readonly children: ReactNode }):
   }, [client, internal]);
 
   const joinMatch = useCallback(
-    async (listeners: MatchListeners): Promise<MatchConnection> => {
+    async (listeners: MatchListeners, matchId?: string): Promise<MatchConnection> => {
       if (internal.status !== 'signed-in') {
         throw new Error('Sign in before joining a match.');
       }
-      const matchId = await findMatch(client, internal.session);
-      return joinMatchOnServer(client, config, internal.session, matchId, listeners);
+      // A named match comes from an invitation; without one, find any with room.
+      const target = matchId ?? (await findMatch(client, internal.session));
+      return joinMatchOnServer(client, config, internal.session, target, listeners);
     },
     [client, config, internal],
+  );
+
+  const createInvitation = useCallback(async (): Promise<Invitation> => {
+    if (internal.status !== 'signed-in') {
+      throw new Error('Sign in before inviting anyone.');
+    }
+    return createInvitationOnServer(client, internal.session);
+  }, [client, internal]);
+
+  const resolveInvitation = useCallback(
+    async (code: string): Promise<string> => {
+      if (internal.status !== 'signed-in') {
+        throw new Error('Sign in before opening an invitation.');
+      }
+      return resolveInvitationOnServer(client, internal.session, code);
+    },
+    [client, internal],
   );
 
   const signOutPlayer = useCallback(async (): Promise<void> => {
@@ -164,11 +185,15 @@ export function SessionProvider({ children }: { readonly children: ReactNode }):
       signOutPlayer,
       loadCatalog,
       joinMatch,
+      createInvitation,
+      resolveInvitation,
     }),
     [
       changeDisplayName,
+      createInvitation,
       joinMatch,
       loadCatalog,
+      resolveInvitation,
       signInAsGuest,
       signInWithEmail,
       signOutPlayer,

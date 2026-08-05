@@ -104,7 +104,23 @@ func Seed(ctx context.Context, logger runtime.Logger, nk runtime.NakamaModule) e
 	return nil
 }
 
-// RegisterGuards blocks every client write into the catalogue collection.
+// GuardedCollections are the collections no client may touch directly.
+//
+// The catalogue is public information a client must not be able to rewrite.
+// Invitations are the opposite: private, and readable only by the server, so
+// that a code cannot be minted, harvested or brute-forced from the outside.
+var GuardedCollections = []string{Collection, "invites"}
+
+func isGuarded(collection string) bool {
+	for _, guarded := range GuardedCollections {
+		if collection == guarded {
+			return true
+		}
+	}
+	return false
+}
+
+// RegisterGuards blocks every client write into the guarded collections.
 //
 // Nakama namespaces storage objects by owner, so a client writing to this
 // collection does not overwrite the server's entry: it creates one under its
@@ -131,9 +147,9 @@ func rejectCatalogWrite(
 	in *api.WriteStorageObjectsRequest,
 ) (*api.WriteStorageObjectsRequest, error) {
 	for _, object := range in.GetObjects() {
-		if object.GetCollection() == Collection {
-			logger.Warn("Rejected a client write to the %q collection, key %q", Collection, object.GetKey())
-			return nil, runtime.NewError("the game catalogue is read-only", codePermissionDenied)
+		if isGuarded(object.GetCollection()) {
+			logger.Warn("Rejected a client write to %q, key %q", object.GetCollection(), object.GetKey())
+			return nil, runtime.NewError("that collection is managed by the server", codePermissionDenied)
 		}
 	}
 	return in, nil
@@ -147,9 +163,9 @@ func rejectCatalogDelete(
 	in *api.DeleteStorageObjectsRequest,
 ) (*api.DeleteStorageObjectsRequest, error) {
 	for _, object := range in.GetObjectIds() {
-		if object.GetCollection() == Collection {
-			logger.Warn("Rejected a client delete in the %q collection, key %q", Collection, object.GetKey())
-			return nil, runtime.NewError("the game catalogue is read-only", codePermissionDenied)
+		if isGuarded(object.GetCollection()) {
+			logger.Warn("Rejected a client delete in %q, key %q", object.GetCollection(), object.GetKey())
+			return nil, runtime.NewError("that collection is managed by the server", codePermissionDenied)
 		}
 	}
 	return in, nil

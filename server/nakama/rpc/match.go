@@ -29,7 +29,7 @@ func Register(initializer runtime.Initializer) error {
 	if err := initializer.RegisterRpc(FindMatchID, findMatch); err != nil {
 		return fmt.Errorf("register %s: %w", FindMatchID, err)
 	}
-	return nil
+	return registerInvites(initializer)
 }
 
 // findMatch returns a match with room to spare, creating one when there is

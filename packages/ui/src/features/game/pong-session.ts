@@ -87,7 +87,8 @@ function toFrame(snapshot: ProtocolSnapshot, userId: string): AuthoritativeFrame
 export async function startPongSession(
   container: HTMLElement,
   userId: string,
-  joinMatch: (listeners: MatchListeners) => Promise<MatchConnection>,
+  matchId: string | undefined,
+  joinMatch: (listeners: MatchListeners, matchId?: string) => Promise<MatchConnection>,
   onStatus: (status: SessionStatus) => void,
 ): Promise<PongSession> {
   // Loaded only now, so the catalogue and the lobby never carry a rendering
@@ -152,7 +153,7 @@ export async function startPongSession(
       onError: () => {
         onStatus({ kind: 'failed', message: 'The match connection ran into an error.' });
       },
-    });
+    }, matchId);
   } catch (cause) {
     input.stop();
     resizeObserver.disconnect();

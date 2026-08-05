@@ -10,7 +10,14 @@ import { startPongSession, type SessionStatus } from './pong-session';
  * never asks it to re-render: React is here to place a box on the page and to
  * report connecting or failing, nothing else.
  */
-export function PongStage({ userId }: { readonly userId: string }): ReactNode {
+export function PongStage({
+  userId,
+  matchId,
+}: {
+  readonly userId: string;
+  /** Set when arriving from an invitation; otherwise any match with room. */
+  readonly matchId?: string | undefined;
+}): ReactNode {
   const { joinMatch } = useSession();
   const frameRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -28,7 +35,7 @@ export function PongStage({ userId }: { readonly userId: string }): ReactNode {
 
     const run = async (): Promise<void> => {
       try {
-        const session = await startPongSession(container, userId, joinMatch, (next) => {
+        const session = await startPongSession(container, userId, matchId, joinMatch, (next) => {
           if (!cancelled) {
             setStatus(next);
           }
@@ -53,7 +60,7 @@ export function PongStage({ userId }: { readonly userId: string }): ReactNode {
       cancelled = true;
       started?.stop();
     };
-  }, [joinMatch, userId]);
+  }, [joinMatch, matchId, userId]);
 
   // Tracked from the document rather than from the click, so the button stays
   // honest when fullscreen is left with Escape.

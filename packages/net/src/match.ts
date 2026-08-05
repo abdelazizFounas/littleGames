@@ -113,3 +113,54 @@ export async function joinMatch(
     },
   };
 }
+
+/** A code that leads to a match, and how long it stays good for. */
+export interface Invitation {
+  readonly code: string;
+  readonly matchId: string;
+  /** Unix seconds after which the code stops working. */
+  readonly expiresAt: number;
+}
+
+/**
+ * Opens a match and asks the server for a code that leads to it.
+ *
+ * The code is drawn server-side from a cryptographic source: a predictable one
+ * would let anyone walk into a private match by guessing the next.
+ */
+export async function createInvitation(client: Client, session: Session): Promise<Invitation> {
+  const response = await client.rpc(session, 'invite.create', {});
+  const payload: unknown = response.payload;
+
+  if (
+    !isRecord(payload) ||
+    typeof payload['code'] !== 'string' ||
+    typeof payload['matchId'] !== 'string' ||
+    typeof payload['expiresAt'] !== 'number'
+  ) {
+    throw new Error('The server did not return an invitation.');
+  }
+
+  return { code: payload['code'], matchId: payload['matchId'], expiresAt: payload['expiresAt'] };
+}
+
+/**
+ * Turns an invitation code back into the match it points at.
+ *
+ * The server distinguishes an unknown code from an expired one, and the message
+ * it sends back is meant to be shown as-is: a player who followed a stale link
+ * needs to know to ask for a new one, not to hunt for a typo.
+ */
+export async function resolveInvitation(
+  client: Client,
+  session: Session,
+  code: string,
+): Promise<string> {
+  const response = await client.rpc(session, 'invite.resolve', { code });
+  const payload: unknown = response.payload;
+
+  if (!isRecord(payload) || typeof payload['matchId'] !== 'string') {
+    throw new Error('That invitation could not be resolved.');
+  }
+  return payload['matchId'];
+}

@@ -7,9 +7,9 @@ authoritative match logic in Go.
 The whole repository — code, identifiers, comments, UI strings, commit
 messages — is written in English.
 
-> **Status: phase 5 (playable).** Pong is playable by two people in a browser,
-> drawn with PixiJS, with the opponent interpolated and your own paddle
-> predicted ahead of the server. Keyboard and touch both work.
+> **Status: phase 6 (invitations).** Pong is playable by two people, and you
+> can open a match and send someone a link to it. Opening that link signs a
+> newcomer in as a guest and drops them straight into the match.
 
 ## Architecture in one paragraph
 
@@ -303,6 +303,34 @@ send five times what a 60 Hz one does.
 exists, and it is reached through a dynamic `import()`. The catalogue and lobby
 never carry a rendering engine: the built entry chunk contains no PixiJS at
 all, and the engine arrives in its own chunks when a match starts.
+
+## Invitations
+
+Opening a match mints a six-character code, and `/join/CODE` is the link that
+leads to it. The code is drawn server-side from a cryptographic source: a
+predictable one would let anyone walk into a private match by guessing the
+next. Its alphabet leaves out the characters people read wrong — no `O` against
+`0`, no `I` against `1` — because these codes get spoken aloud and typed from
+screenshots. Lower case is accepted for the same reason.
+
+Codes live in a storage collection no client can touch: permission zero on read
+and write, plus the same hook that protects the catalogue. A client cannot mint
+itself a code, read somebody else's, or find a match it was not invited to by
+listing them. They expire after thirty minutes.
+
+The join screen answers every way a link can fail with its own sentence — a
+code that does not exist, one that has expired, one whose match has since
+ended, one cut short in a chat — because a blank screen is the one outcome the
+brief rules out.
+
+### Where this departs from the brief
+
+The brief has the server create a Nakama Party and hand back a code. It cannot:
+the Go runtime exposes only `PartyList`, and a party is created by a client over
+its socket, so there is no server-side party to mint a code for. The code
+therefore points at the authoritative match itself, which needs no ready-screen
+handshake and no transfer of a party into a match. The ready screen the brief
+describes is not built.
 
 ## Repository layout
 
