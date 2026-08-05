@@ -1,0 +1,103 @@
+syntax = "proto3";
+
+// Everything sent over a Battleship match socket.
+//
+// Go and TypeScript are both generated from this file. Note what is absent: a
+// snapshot never carries the opponent's fleet, only the cells the recipient has
+// already fired at. Sending the board and hiding it in the interface would put
+// the answer in the browser, where anyone can read it.
+package littlegames.battleship.v1;
+
+option go_package = "littlegames.local/nakama/protocol/battleshipv1;battleshipv1";
+
+enum OpCode {
+  OP_CODE_UNSPECIFIED = 0;
+
+  // Client to server.
+  OP_CODE_PLACE_FLEET = 1;
+  OP_CODE_FIRE = 2;
+
+  // Server to client.
+  OP_CODE_SNAPSHOT = 3;
+  OP_CODE_REFUSED = 4;
+}
+
+enum Phase {
+  PHASE_UNSPECIFIED = 0;
+  PHASE_WAITING = 1;
+  PHASE_PLACEMENT = 2;
+  PHASE_PLAYING = 3;
+  PHASE_FINISHED = 4;
+}
+
+enum Orientation {
+  ORIENTATION_UNSPECIFIED = 0;
+  ORIENTATION_HORIZONTAL = 1;
+  ORIENTATION_VERTICAL = 2;
+}
+
+enum ShotResult {
+  SHOT_RESULT_UNSPECIFIED = 0;
+  SHOT_RESULT_MISS = 1;
+  SHOT_RESULT_HIT = 2;
+  SHOT_RESULT_SUNK = 3;
+}
+
+// Where one ship sits. Its length comes from its position in the fleet.
+message Placement {
+  uint32 row = 1;
+  uint32 column = 2;
+  Orientation orientation = 3;
+}
+
+// A cell someone fired at, and what it found.
+message Shot {
+  uint32 row = 1;
+  uint32 column = 2;
+  ShotResult result = 3;
+}
+
+// Client to server: the whole fleet at once.
+//
+// All five at once rather than one ship at a time, because whether an
+// arrangement is legal is a property of the arrangement.
+message PlaceFleet {
+  repeated Placement ships = 1;
+}
+
+// Client to server: fire at a cell.
+message Fire {
+  uint32 row = 1;
+  uint32 column = 2;
+}
+
+// Server to client: why something was refused, in words meant to be shown.
+message Refused {
+  string reason = 1;
+}
+
+// Server to client, built for one recipient.
+message Snapshot {
+  Phase phase = 1;
+
+  // True when it is the recipient's turn to fire.
+  bool your_turn = 2;
+
+  // The recipient's own fleet, in full, and every shot taken at it.
+  repeated Placement your_fleet = 3;
+  repeated Shot incoming = 4;
+  bool you_are_ready = 5;
+
+  // Only the cells the recipient has fired at. Never the opponent's ships.
+  repeated Shot outgoing = 6;
+  bool opponent_ready = 7;
+  bool opponent_present = 8;
+
+  // How many of each side's ships are on the bottom.
+  uint32 your_ships_sunk = 9;
+  uint32 opponent_ships_sunk = 10;
+
+  // Set once the game is over.
+  bool finished = 11;
+  bool you_won = 12;
+}

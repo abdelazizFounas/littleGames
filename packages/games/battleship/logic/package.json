@@ -4,6 +4,11 @@
   "private": true,
   "type": "module",
   "description": "Battleship rules: placement, firing, victory. Pure TypeScript, no rendering, no networking.",
-  "exports": { ".": "./src/index.ts" },
-  "scripts": { "typecheck": "tsc --build" }
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --build",
+    "vectors": "node scripts/write-vectors.ts"
+  }
 }

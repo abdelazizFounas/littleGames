@@ -1,0 +1,2417 @@
+{
+  "generatedBy": "packages/games/battleship/logic/scripts/write-vectors.ts",
+  "actions": [
+    {
+      "kind": "place",
+      "side": "a",
+      "fleet": [
+        {
+          "row": 0,
+          "column": 0,
+          "orientation": "horizontal"
+        },
+        {
+          "row": 2,
+          "column": 0,
+          "orientation": "horizontal"
+        },
+        {
+          "row": 4,
+          "column": 0,
+          "orientation": "horizontal"
+        },
+        {
+          "row": 6,
+          "column": 0,
+          "orientation": "horizontal"
+        },
+        {
+          "row": 8,
+          "column": 0,
+          "orientation": "horizontal"
+        }
+      ]
+    },
+    {
+      "kind": "place",
+      "side": "b",
+      "fleet": [
+        {
+          "row": 0,
+          "column": 0,
+          "orientation": "vertical"
+        },
+        {
+          "row": 0,
+          "column": 2,
+          "orientation": "vertical"
+        },
+        {
+          "row": 0,
+          "column": 4,
+          "orientation": "vertical"
+        },
+        {
+          "row": 0,
+          "column": 6,
+          "orientation": "vertical"
+        },
+        {
+          "row": 0,
+          "column": 8,
+          "orientation": "vertical"
+        }
+      ]
+    },
+    {
+      "kind": "fire",
+      "side": "a",
+      "row": 0,
+      "column": 0
+    },
+    {
+      "kind": "fire",
+      "side": "a",
+      "row": 0,
+      "column": 1
+    },
+    {
+      "kind": "fire",
+      "side": "b",
+      "row": 9,
+      "column": 9
+    },
+    {
+      "kind": "fire",
+      "side": "a",
+      "row": 0,
+      "column": 2
+    },
+    {
+      "kind": "fire",
+      "side": "a",
+      "row": 0,
+      "column": 3
+    },
+    {
+      "kind": "fire",
+      "side": "b",
+      "row": 9,
+      "column": 8
+    },
+    {
+      "kind": "fire",
+      "side": "a",
+      "row": 0,
+      "column": 4
+    },
+    {
+      "kind": "fire",
+      "side": "a",
+      "row": 0,
+      "column": 5
+    },
+    {
+      "kind": "fire",
+      "side": "b",
+      "row": 9,
+      "column": 7
+    },
+    {
+      "kind": "fire",
+      "side": "a",
+      "row": 0,
+      "column": 6
+    },
+    {
+      "kind": "fire",
+      "side": "a",
+      "row": 0,
+      "column": 7
+    },
+    {
+      "kind": "fire",
+      "side": "b",
+      "row": 9,
+      "column": 6
+    },
+    {
+      "kind": "fire",
+      "side": "a",
+      "row": 0,
+      "column": 8
+    },
+    {
+      "kind": "fire",
+      "side": "a",
+      "row": 0,
+      "column": 9
+    },
+    {
+      "kind": "fire",
+      "side": "b",
+      "row": 9,
+      "column": 5
+    },
+    {
+      "kind": "fire",
+      "side": "a",
+      "row": 1,
+      "column": 0
+    },
+    {
+      "kind": "fire",
+      "side": "a",
+      "row": 1,
+      "column": 1
+    },
+    {
+      "kind": "fire",
+      "side": "b",
+      "row": 9,
+      "column": 4
+    },
+    {
+      "kind": "fire",
+      "side": "a",
+      "row": 1,
+      "column": 2
+    },
+    {
+      "kind": "fire",
+      "side": "a",
+      "row": 1,
+      "column": 3
+    },
+    {
+      "kind": "fire",
+      "side": "b",
+      "row": 9,
+      "column": 3
+    },
+    {
+      "kind": "fire",
+      "side": "a",
+      "row": 1,
+      "column": 4
+    },
+    {
+      "kind": "fire",
+      "side": "a",
+      "row": 1,
+      "column": 5
+    },
+    {
+      "kind": "fire",
+      "side": "b",
+      "row": 9,
+      "column": 2
+    },
+    {
+      "kind": "fire",
+      "side": "a",
+      "row": 1,
+      "column": 6
+    },
+    {
+      "kind": "fire",
+      "side": "a",
+      "row": 1,
+      "column": 7
+    },
+    {
+      "kind": "fire",
+      "side": "b",
+      "row": 9,
+      "column": 1
+    },
+    {
+      "kind": "fire",
+      "side": "a",
+      "row": 1,
+      "column": 8
+    },
+    {
+      "kind": "fire",
+      "side": "a",
+      "row": 1,
+      "column": 9
+    },
+    {
+      "kind": "fire",
+      "side": "b",
+      "row": 9,
+      "column": 0
+    },
+    {
+      "kind": "fire",
+      "side": "a",
+      "row": 2,
+      "column": 0
+    },
+    {
+      "kind": "fire",
+      "side": "a",
+      "row": 2,
+      "column": 1
+    },
+    {
+      "kind": "fire",
+      "side": "b",
+      "row": 8,
+      "column": 9
+    },
+    {
+      "kind": "fire",
+      "side": "a",
+      "row": 2,
+      "column": 2
+    },
+    {
+      "kind": "fire",
+      "side": "a",
+      "row": 2,
+      "column": 3
+    },
+    {
+      "kind": "fire",
+      "side": "b",
+      "row": 8,
+      "column": 8
+    },
+    {
+      "kind": "fire",
+      "side": "a",
+      "row": 2,
+      "column": 4
+    },
+    {
+      "kind": "fire",
+      "side": "a",
+      "row": 2,
+      "column": 5
+    },
+    {
+      "kind": "fire",
+      "side": "b",
+      "row": 8,
+      "column": 7
+    },
+    {
+      "kind": "fire",
+      "side": "a",
+      "row": 2,
+      "column": 6
+    },
+    {
+      "kind": "fire",
+      "side": "a",
+      "row": 2,
+      "column": 7
+    },
+    {
+      "kind": "fire",
+      "side": "b",
+      "row": 8,
+      "column": 6
+    },
+    {
+      "kind": "fire",
+      "side": "a",
+      "row": 2,
+      "column": 8
+    },
+    {
+      "kind": "fire",
+      "side": "b",
+      "row": 8,
+      "column": 5
+    },
+    {
+      "kind": "fire",
+      "side": "a",
+      "row": 2,
+      "column": 9
+    },
+    {
+      "kind": "fire",
+      "side": "b",
+      "row": 8,
+      "column": 4
+    },
+    {
+      "kind": "fire",
+      "side": "a",
+      "row": 3,
+      "column": 0
+    },
+    {
+      "kind": "fire",
+      "side": "a",
+      "row": 3,
+      "column": 1
+    },
+    {
+      "kind": "fire",
+      "side": "b",
+      "row": 8,
+      "column": 3
+    },
+    {
+      "kind": "fire",
+      "side": "a",
+      "row": 3,
+      "column": 2
+    },
+    {
+      "kind": "fire",
+      "side": "a",
+      "row": 3,
+      "column": 3
+    },
+    {
+      "kind": "fire",
+      "side": "b",
+      "row": 8,
+      "column": 2
+    },
+    {
+      "kind": "fire",
+      "side": "a",
+      "row": 3,
+      "column": 4
+    },
+    {
+      "kind": "fire",
+      "side": "b",
+      "row": 8,
+      "column": 1
+    },
+    {
+      "kind": "fire",
+      "side": "b",
+      "row": 8,
+      "column": 0
+    },
+    {
+      "kind": "fire",
+      "side": "b",
+      "row": 7,
+      "column": 9
+    },
+    {
+      "kind": "fire",
+      "side": "a",
+      "row": 3,
+      "column": 5
+    },
+    {
+      "kind": "fire",
+      "side": "b",
+      "row": 7,
+      "column": 8
+    },
+    {
+      "kind": "fire",
+      "side": "a",
+      "row": 3,
+      "column": 6
+    },
+    {
+      "kind": "fire",
+      "side": "b",
+      "row": 7,
+      "column": 7
+    },
+    {
+      "kind": "fire",
+      "side": "a",
+      "row": 3,
+      "column": 7
+    },
+    {
+      "kind": "fire",
+      "side": "b",
+      "row": 7,
+      "column": 6
+    },
+    {
+      "kind": "fire",
+      "side": "a",
+      "row": 3,
+      "column": 8
+    },
+    {
+      "kind": "fire",
+      "side": "b",
+      "row": 7,
+      "column": 5
+    },
+    {
+      "kind": "fire",
+      "side": "a",
+      "row": 3,
+      "column": 9
+    },
+    {
+      "kind": "fire",
+      "side": "b",
+      "row": 7,
+      "column": 4
+    },
+    {
+      "kind": "fire",
+      "side": "a",
+      "row": 4,
+      "column": 0
+    },
+    {
+      "kind": "fire",
+      "side": "a",
+      "row": 0,
+      "column": 0
+    }
+  ],
+  "checkpoints": [
+    {
+      "step": 0,
+      "state": {
+        "phase": "placement",
+        "turn": "a",
+        "boards": {
+          "a": {
+            "fleet": [],
+            "ready": false,
+            "incoming": []
+          },
+          "b": {
+            "fleet": [],
+            "ready": false,
+            "incoming": []
+          }
+        },
+        "winner": null
+      }
+    },
+    {
+      "step": 10,
+      "state": {
+        "phase": "playing",
+        "turn": "b",
+        "boards": {
+          "a": {
+            "fleet": [
+              {
+                "row": 0,
+                "column": 0,
+                "orientation": "horizontal"
+              },
+              {
+                "row": 2,
+                "column": 0,
+                "orientation": "horizontal"
+              },
+              {
+                "row": 4,
+                "column": 0,
+                "orientation": "horizontal"
+              },
+              {
+                "row": 6,
+                "column": 0,
+                "orientation": "horizontal"
+              },
+              {
+                "row": 8,
+                "column": 0,
+                "orientation": "horizontal"
+              }
+            ],
+            "ready": true,
+            "incoming": [
+              {
+                "row": 9,
+                "column": 9
+              },
+              {
+                "row": 9,
+                "column": 8
+              }
+            ]
+          },
+          "b": {
+            "fleet": [
+              {
+                "row": 0,
+                "column": 0,
+                "orientation": "vertical"
+              },
+              {
+                "row": 0,
+                "column": 2,
+                "orientation": "vertical"
+              },
+              {
+                "row": 0,
+                "column": 4,
+                "orientation": "vertical"
+              },
+              {
+                "row": 0,
+                "column": 6,
+                "orientation": "vertical"
+              },
+              {
+                "row": 0,
+                "column": 8,
+                "orientation": "vertical"
+              }
+            ],
+            "ready": true,
+            "incoming": [
+              {
+                "row": 0,
+                "column": 0
+              },
+              {
+                "row": 0,
+                "column": 1
+              },
+              {
+                "row": 0,
+                "column": 2
+              },
+              {
+                "row": 0,
+                "column": 3
+              },
+              {
+                "row": 0,
+                "column": 4
+              },
+              {
+                "row": 0,
+                "column": 5
+              }
+            ]
+          }
+        },
+        "winner": null
+      }
+    },
+    {
+      "step": 20,
+      "state": {
+        "phase": "playing",
+        "turn": "a",
+        "boards": {
+          "a": {
+            "fleet": [
+              {
+                "row": 0,
+                "column": 0,
+                "orientation": "horizontal"
+              },
+              {
+                "row": 2,
+                "column": 0,
+                "orientation": "horizontal"
+              },
+              {
+                "row": 4,
+                "column": 0,
+                "orientation": "horizontal"
+              },
+              {
+                "row": 6,
+                "column": 0,
+                "orientation": "horizontal"
+              },
+              {
+                "row": 8,
+                "column": 0,
+                "orientation": "horizontal"
+              }
+            ],
+            "ready": true,
+            "incoming": [
+              {
+                "row": 9,
+                "column": 9
+              },
+              {
+                "row": 9,
+                "column": 8
+              },
+              {
+                "row": 9,
+                "column": 7
+              },
+              {
+                "row": 9,
+                "column": 6
+              },
+              {
+                "row": 9,
+                "column": 5
+              },
+              {
+                "row": 9,
+                "column": 4
+              }
+            ]
+          },
+          "b": {
+            "fleet": [
+              {
+                "row": 0,
+                "column": 0,
+                "orientation": "vertical"
+              },
+              {
+                "row": 0,
+                "column": 2,
+                "orientation": "vertical"
+              },
+              {
+                "row": 0,
+                "column": 4,
+                "orientation": "vertical"
+              },
+              {
+                "row": 0,
+                "column": 6,
+                "orientation": "vertical"
+              },
+              {
+                "row": 0,
+                "column": 8,
+                "orientation": "vertical"
+              }
+            ],
+            "ready": true,
+            "incoming": [
+              {
+                "row": 0,
+                "column": 0
+              },
+              {
+                "row": 0,
+                "column": 1
+              },
+              {
+                "row": 0,
+                "column": 2
+              },
+              {
+                "row": 0,
+                "column": 3
+              },
+              {
+                "row": 0,
+                "column": 4
+              },
+              {
+                "row": 0,
+                "column": 5
+              },
+              {
+                "row": 0,
+                "column": 6
+              },
+              {
+                "row": 0,
+                "column": 7
+              },
+              {
+                "row": 0,
+                "column": 8
+              },
+              {
+                "row": 0,
+                "column": 9
+              },
+              {
+                "row": 1,
+                "column": 0
+              },
+              {
+                "row": 1,
+                "column": 1
+              }
+            ]
+          }
+        },
+        "winner": null
+      }
+    },
+    {
+      "step": 30,
+      "state": {
+        "phase": "playing",
+        "turn": "a",
+        "boards": {
+          "a": {
+            "fleet": [
+              {
+                "row": 0,
+                "column": 0,
+                "orientation": "horizontal"
+              },
+              {
+                "row": 2,
+                "column": 0,
+                "orientation": "horizontal"
+              },
+              {
+                "row": 4,
+                "column": 0,
+                "orientation": "horizontal"
+              },
+              {
+                "row": 6,
+                "column": 0,
+                "orientation": "horizontal"
+              },
+              {
+                "row": 8,
+                "column": 0,
+                "orientation": "horizontal"
+              }
+            ],
+            "ready": true,
+            "incoming": [
+              {
+                "row": 9,
+                "column": 9
+              },
+              {
+                "row": 9,
+                "column": 8
+              },
+              {
+                "row": 9,
+                "column": 7
+              },
+              {
+                "row": 9,
+                "column": 6
+              },
+              {
+                "row": 9,
+                "column": 5
+              },
+              {
+                "row": 9,
+                "column": 4
+              },
+              {
+                "row": 9,
+                "column": 3
+              },
+              {
+                "row": 9,
+                "column": 2
+              },
+              {
+                "row": 9,
+                "column": 1
+              }
+            ]
+          },
+          "b": {
+            "fleet": [
+              {
+                "row": 0,
+                "column": 0,
+                "orientation": "vertical"
+              },
+              {
+                "row": 0,
+                "column": 2,
+                "orientation": "vertical"
+              },
+              {
+                "row": 0,
+                "column": 4,
+                "orientation": "vertical"
+              },
+              {
+                "row": 0,
+                "column": 6,
+                "orientation": "vertical"
+              },
+              {
+                "row": 0,
+                "column": 8,
+                "orientation": "vertical"
+              }
+            ],
+            "ready": true,
+            "incoming": [
+              {
+                "row": 0,
+                "column": 0
+              },
+              {
+                "row": 0,
+                "column": 1
+              },
+              {
+                "row": 0,
+                "column": 2
+              },
+              {
+                "row": 0,
+                "column": 3
+              },
+              {
+                "row": 0,
+                "column": 4
+              },
+              {
+                "row": 0,
+                "column": 5
+              },
+              {
+                "row": 0,
+                "column": 6
+              },
+              {
+                "row": 0,
+                "column": 7
+              },
+              {
+                "row": 0,
+                "column": 8
+              },
+              {
+                "row": 0,
+                "column": 9
+              },
+              {
+                "row": 1,
+                "column": 0
+              },
+              {
+                "row": 1,
+                "column": 1
+              },
+              {
+                "row": 1,
+                "column": 2
+              },
+              {
+                "row": 1,
+                "column": 3
+              },
+              {
+                "row": 1,
+                "column": 4
+              },
+              {
+                "row": 1,
+                "column": 5
+              },
+              {
+                "row": 1,
+                "column": 6
+              },
+              {
+                "row": 1,
+                "column": 7
+              },
+              {
+                "row": 1,
+                "column": 8
+              }
+            ]
+          }
+        },
+        "winner": null
+      }
+    },
+    {
+      "step": 40,
+      "state": {
+        "phase": "playing",
+        "turn": "b",
+        "boards": {
+          "a": {
+            "fleet": [
+              {
+                "row": 0,
+                "column": 0,
+                "orientation": "horizontal"
+              },
+              {
+                "row": 2,
+                "column": 0,
+                "orientation": "horizontal"
+              },
+              {
+                "row": 4,
+                "column": 0,
+                "orientation": "horizontal"
+              },
+              {
+                "row": 6,
+                "column": 0,
+                "orientation": "horizontal"
+              },
+              {
+                "row": 8,
+                "column": 0,
+                "orientation": "horizontal"
+              }
+            ],
+            "ready": true,
+            "incoming": [
+              {
+                "row": 9,
+                "column": 9
+              },
+              {
+                "row": 9,
+                "column": 8
+              },
+              {
+                "row": 9,
+                "column": 7
+              },
+              {
+                "row": 9,
+                "column": 6
+              },
+              {
+                "row": 9,
+                "column": 5
+              },
+              {
+                "row": 9,
+                "column": 4
+              },
+              {
+                "row": 9,
+                "column": 3
+              },
+              {
+                "row": 9,
+                "column": 2
+              },
+              {
+                "row": 9,
+                "column": 1
+              },
+              {
+                "row": 9,
+                "column": 0
+              },
+              {
+                "row": 8,
+                "column": 9
+              },
+              {
+                "row": 8,
+                "column": 8
+              }
+            ]
+          },
+          "b": {
+            "fleet": [
+              {
+                "row": 0,
+                "column": 0,
+                "orientation": "vertical"
+              },
+              {
+                "row": 0,
+                "column": 2,
+                "orientation": "vertical"
+              },
+              {
+                "row": 0,
+                "column": 4,
+                "orientation": "vertical"
+              },
+              {
+                "row": 0,
+                "column": 6,
+                "orientation": "vertical"
+              },
+              {
+                "row": 0,
+                "column": 8,
+                "orientation": "vertical"
+              }
+            ],
+            "ready": true,
+            "incoming": [
+              {
+                "row": 0,
+                "column": 0
+              },
+              {
+                "row": 0,
+                "column": 1
+              },
+              {
+                "row": 0,
+                "column": 2
+              },
+              {
+                "row": 0,
+                "column": 3
+              },
+              {
+                "row": 0,
+                "column": 4
+              },
+              {
+                "row": 0,
+                "column": 5
+              },
+              {
+                "row": 0,
+                "column": 6
+              },
+              {
+                "row": 0,
+                "column": 7
+              },
+              {
+                "row": 0,
+                "column": 8
+              },
+              {
+                "row": 0,
+                "column": 9
+              },
+              {
+                "row": 1,
+                "column": 0
+              },
+              {
+                "row": 1,
+                "column": 1
+              },
+              {
+                "row": 1,
+                "column": 2
+              },
+              {
+                "row": 1,
+                "column": 3
+              },
+              {
+                "row": 1,
+                "column": 4
+              },
+              {
+                "row": 1,
+                "column": 5
+              },
+              {
+                "row": 1,
+                "column": 6
+              },
+              {
+                "row": 1,
+                "column": 7
+              },
+              {
+                "row": 1,
+                "column": 8
+              },
+              {
+                "row": 1,
+                "column": 9
+              },
+              {
+                "row": 2,
+                "column": 0
+              },
+              {
+                "row": 2,
+                "column": 1
+              },
+              {
+                "row": 2,
+                "column": 2
+              },
+              {
+                "row": 2,
+                "column": 3
+              },
+              {
+                "row": 2,
+                "column": 4
+              },
+              {
+                "row": 2,
+                "column": 5
+              }
+            ]
+          }
+        },
+        "winner": null
+      }
+    },
+    {
+      "step": 50,
+      "state": {
+        "phase": "playing",
+        "turn": "b",
+        "boards": {
+          "a": {
+            "fleet": [
+              {
+                "row": 0,
+                "column": 0,
+                "orientation": "horizontal"
+              },
+              {
+                "row": 2,
+                "column": 0,
+                "orientation": "horizontal"
+              },
+              {
+                "row": 4,
+                "column": 0,
+                "orientation": "horizontal"
+              },
+              {
+                "row": 6,
+                "column": 0,
+                "orientation": "horizontal"
+              },
+              {
+                "row": 8,
+                "column": 0,
+                "orientation": "horizontal"
+              }
+            ],
+            "ready": true,
+            "incoming": [
+              {
+                "row": 9,
+                "column": 9
+              },
+              {
+                "row": 9,
+                "column": 8
+              },
+              {
+                "row": 9,
+                "column": 7
+              },
+              {
+                "row": 9,
+                "column": 6
+              },
+              {
+                "row": 9,
+                "column": 5
+              },
+              {
+                "row": 9,
+                "column": 4
+              },
+              {
+                "row": 9,
+                "column": 3
+              },
+              {
+                "row": 9,
+                "column": 2
+              },
+              {
+                "row": 9,
+                "column": 1
+              },
+              {
+                "row": 9,
+                "column": 0
+              },
+              {
+                "row": 8,
+                "column": 9
+              },
+              {
+                "row": 8,
+                "column": 8
+              },
+              {
+                "row": 8,
+                "column": 7
+              },
+              {
+                "row": 8,
+                "column": 6
+              },
+              {
+                "row": 8,
+                "column": 5
+              },
+              {
+                "row": 8,
+                "column": 4
+              }
+            ]
+          },
+          "b": {
+            "fleet": [
+              {
+                "row": 0,
+                "column": 0,
+                "orientation": "vertical"
+              },
+              {
+                "row": 0,
+                "column": 2,
+                "orientation": "vertical"
+              },
+              {
+                "row": 0,
+                "column": 4,
+                "orientation": "vertical"
+              },
+              {
+                "row": 0,
+                "column": 6,
+                "orientation": "vertical"
+              },
+              {
+                "row": 0,
+                "column": 8,
+                "orientation": "vertical"
+              }
+            ],
+            "ready": true,
+            "incoming": [
+              {
+                "row": 0,
+                "column": 0
+              },
+              {
+                "row": 0,
+                "column": 1
+              },
+              {
+                "row": 0,
+                "column": 2
+              },
+              {
+                "row": 0,
+                "column": 3
+              },
+              {
+                "row": 0,
+                "column": 4
+              },
+              {
+                "row": 0,
+                "column": 5
+              },
+              {
+                "row": 0,
+                "column": 6
+              },
+              {
+                "row": 0,
+                "column": 7
+              },
+              {
+                "row": 0,
+                "column": 8
+              },
+              {
+                "row": 0,
+                "column": 9
+              },
+              {
+                "row": 1,
+                "column": 0
+              },
+              {
+                "row": 1,
+                "column": 1
+              },
+              {
+                "row": 1,
+                "column": 2
+              },
+              {
+                "row": 1,
+                "column": 3
+              },
+              {
+                "row": 1,
+                "column": 4
+              },
+              {
+                "row": 1,
+                "column": 5
+              },
+              {
+                "row": 1,
+                "column": 6
+              },
+              {
+                "row": 1,
+                "column": 7
+              },
+              {
+                "row": 1,
+                "column": 8
+              },
+              {
+                "row": 1,
+                "column": 9
+              },
+              {
+                "row": 2,
+                "column": 0
+              },
+              {
+                "row": 2,
+                "column": 1
+              },
+              {
+                "row": 2,
+                "column": 2
+              },
+              {
+                "row": 2,
+                "column": 3
+              },
+              {
+                "row": 2,
+                "column": 4
+              },
+              {
+                "row": 2,
+                "column": 5
+              },
+              {
+                "row": 2,
+                "column": 6
+              },
+              {
+                "row": 2,
+                "column": 7
+              },
+              {
+                "row": 2,
+                "column": 8
+              },
+              {
+                "row": 2,
+                "column": 9
+              },
+              {
+                "row": 3,
+                "column": 0
+              },
+              {
+                "row": 3,
+                "column": 1
+              }
+            ]
+          }
+        },
+        "winner": null
+      }
+    },
+    {
+      "step": 60,
+      "state": {
+        "phase": "playing",
+        "turn": "a",
+        "boards": {
+          "a": {
+            "fleet": [
+              {
+                "row": 0,
+                "column": 0,
+                "orientation": "horizontal"
+              },
+              {
+                "row": 2,
+                "column": 0,
+                "orientation": "horizontal"
+              },
+              {
+                "row": 4,
+                "column": 0,
+                "orientation": "horizontal"
+              },
+              {
+                "row": 6,
+                "column": 0,
+                "orientation": "horizontal"
+              },
+              {
+                "row": 8,
+                "column": 0,
+                "orientation": "horizontal"
+              }
+            ],
+            "ready": true,
+            "incoming": [
+              {
+                "row": 9,
+                "column": 9
+              },
+              {
+                "row": 9,
+                "column": 8
+              },
+              {
+                "row": 9,
+                "column": 7
+              },
+              {
+                "row": 9,
+                "column": 6
+              },
+              {
+                "row": 9,
+                "column": 5
+              },
+              {
+                "row": 9,
+                "column": 4
+              },
+              {
+                "row": 9,
+                "column": 3
+              },
+              {
+                "row": 9,
+                "column": 2
+              },
+              {
+                "row": 9,
+                "column": 1
+              },
+              {
+                "row": 9,
+                "column": 0
+              },
+              {
+                "row": 8,
+                "column": 9
+              },
+              {
+                "row": 8,
+                "column": 8
+              },
+              {
+                "row": 8,
+                "column": 7
+              },
+              {
+                "row": 8,
+                "column": 6
+              },
+              {
+                "row": 8,
+                "column": 5
+              },
+              {
+                "row": 8,
+                "column": 4
+              },
+              {
+                "row": 8,
+                "column": 3
+              },
+              {
+                "row": 8,
+                "column": 2
+              },
+              {
+                "row": 8,
+                "column": 1
+              },
+              {
+                "row": 8,
+                "column": 0
+              },
+              {
+                "row": 7,
+                "column": 9
+              },
+              {
+                "row": 7,
+                "column": 8
+              }
+            ]
+          },
+          "b": {
+            "fleet": [
+              {
+                "row": 0,
+                "column": 0,
+                "orientation": "vertical"
+              },
+              {
+                "row": 0,
+                "column": 2,
+                "orientation": "vertical"
+              },
+              {
+                "row": 0,
+                "column": 4,
+                "orientation": "vertical"
+              },
+              {
+                "row": 0,
+                "column": 6,
+                "orientation": "vertical"
+              },
+              {
+                "row": 0,
+                "column": 8,
+                "orientation": "vertical"
+              }
+            ],
+            "ready": true,
+            "incoming": [
+              {
+                "row": 0,
+                "column": 0
+              },
+              {
+                "row": 0,
+                "column": 1
+              },
+              {
+                "row": 0,
+                "column": 2
+              },
+              {
+                "row": 0,
+                "column": 3
+              },
+              {
+                "row": 0,
+                "column": 4
+              },
+              {
+                "row": 0,
+                "column": 5
+              },
+              {
+                "row": 0,
+                "column": 6
+              },
+              {
+                "row": 0,
+                "column": 7
+              },
+              {
+                "row": 0,
+                "column": 8
+              },
+              {
+                "row": 0,
+                "column": 9
+              },
+              {
+                "row": 1,
+                "column": 0
+              },
+              {
+                "row": 1,
+                "column": 1
+              },
+              {
+                "row": 1,
+                "column": 2
+              },
+              {
+                "row": 1,
+                "column": 3
+              },
+              {
+                "row": 1,
+                "column": 4
+              },
+              {
+                "row": 1,
+                "column": 5
+              },
+              {
+                "row": 1,
+                "column": 6
+              },
+              {
+                "row": 1,
+                "column": 7
+              },
+              {
+                "row": 1,
+                "column": 8
+              },
+              {
+                "row": 1,
+                "column": 9
+              },
+              {
+                "row": 2,
+                "column": 0
+              },
+              {
+                "row": 2,
+                "column": 1
+              },
+              {
+                "row": 2,
+                "column": 2
+              },
+              {
+                "row": 2,
+                "column": 3
+              },
+              {
+                "row": 2,
+                "column": 4
+              },
+              {
+                "row": 2,
+                "column": 5
+              },
+              {
+                "row": 2,
+                "column": 6
+              },
+              {
+                "row": 2,
+                "column": 7
+              },
+              {
+                "row": 2,
+                "column": 8
+              },
+              {
+                "row": 2,
+                "column": 9
+              },
+              {
+                "row": 3,
+                "column": 0
+              },
+              {
+                "row": 3,
+                "column": 1
+              },
+              {
+                "row": 3,
+                "column": 2
+              },
+              {
+                "row": 3,
+                "column": 3
+              },
+              {
+                "row": 3,
+                "column": 4
+              },
+              {
+                "row": 3,
+                "column": 5
+              }
+            ]
+          }
+        },
+        "winner": null
+      }
+    },
+    {
+      "step": 70,
+      "state": {
+        "phase": "finished",
+        "turn": "a",
+        "boards": {
+          "a": {
+            "fleet": [
+              {
+                "row": 0,
+                "column": 0,
+                "orientation": "horizontal"
+              },
+              {
+                "row": 2,
+                "column": 0,
+                "orientation": "horizontal"
+              },
+              {
+                "row": 4,
+                "column": 0,
+                "orientation": "horizontal"
+              },
+              {
+                "row": 6,
+                "column": 0,
+                "orientation": "horizontal"
+              },
+              {
+                "row": 8,
+                "column": 0,
+                "orientation": "horizontal"
+              }
+            ],
+            "ready": true,
+            "incoming": [
+              {
+                "row": 9,
+                "column": 9
+              },
+              {
+                "row": 9,
+                "column": 8
+              },
+              {
+                "row": 9,
+                "column": 7
+              },
+              {
+                "row": 9,
+                "column": 6
+              },
+              {
+                "row": 9,
+                "column": 5
+              },
+              {
+                "row": 9,
+                "column": 4
+              },
+              {
+                "row": 9,
+                "column": 3
+              },
+              {
+                "row": 9,
+                "column": 2
+              },
+              {
+                "row": 9,
+                "column": 1
+              },
+              {
+                "row": 9,
+                "column": 0
+              },
+              {
+                "row": 8,
+                "column": 9
+              },
+              {
+                "row": 8,
+                "column": 8
+              },
+              {
+                "row": 8,
+                "column": 7
+              },
+              {
+                "row": 8,
+                "column": 6
+              },
+              {
+                "row": 8,
+                "column": 5
+              },
+              {
+                "row": 8,
+                "column": 4
+              },
+              {
+                "row": 8,
+                "column": 3
+              },
+              {
+                "row": 8,
+                "column": 2
+              },
+              {
+                "row": 8,
+                "column": 1
+              },
+              {
+                "row": 8,
+                "column": 0
+              },
+              {
+                "row": 7,
+                "column": 9
+              },
+              {
+                "row": 7,
+                "column": 8
+              },
+              {
+                "row": 7,
+                "column": 7
+              },
+              {
+                "row": 7,
+                "column": 6
+              },
+              {
+                "row": 7,
+                "column": 5
+              },
+              {
+                "row": 7,
+                "column": 4
+              }
+            ]
+          },
+          "b": {
+            "fleet": [
+              {
+                "row": 0,
+                "column": 0,
+                "orientation": "vertical"
+              },
+              {
+                "row": 0,
+                "column": 2,
+                "orientation": "vertical"
+              },
+              {
+                "row": 0,
+                "column": 4,
+                "orientation": "vertical"
+              },
+              {
+                "row": 0,
+                "column": 6,
+                "orientation": "vertical"
+              },
+              {
+                "row": 0,
+                "column": 8,
+                "orientation": "vertical"
+              }
+            ],
+            "ready": true,
+            "incoming": [
+              {
+                "row": 0,
+                "column": 0
+              },
+              {
+                "row": 0,
+                "column": 1
+              },
+              {
+                "row": 0,
+                "column": 2
+              },
+              {
+                "row": 0,
+                "column": 3
+              },
+              {
+                "row": 0,
+                "column": 4
+              },
+              {
+                "row": 0,
+                "column": 5
+              },
+              {
+                "row": 0,
+                "column": 6
+              },
+              {
+                "row": 0,
+                "column": 7
+              },
+              {
+                "row": 0,
+                "column": 8
+              },
+              {
+                "row": 0,
+                "column": 9
+              },
+              {
+                "row": 1,
+                "column": 0
+              },
+              {
+                "row": 1,
+                "column": 1
+              },
+              {
+                "row": 1,
+                "column": 2
+              },
+              {
+                "row": 1,
+                "column": 3
+              },
+              {
+                "row": 1,
+                "column": 4
+              },
+              {
+                "row": 1,
+                "column": 5
+              },
+              {
+                "row": 1,
+                "column": 6
+              },
+              {
+                "row": 1,
+                "column": 7
+              },
+              {
+                "row": 1,
+                "column": 8
+              },
+              {
+                "row": 1,
+                "column": 9
+              },
+              {
+                "row": 2,
+                "column": 0
+              },
+              {
+                "row": 2,
+                "column": 1
+              },
+              {
+                "row": 2,
+                "column": 2
+              },
+              {
+                "row": 2,
+                "column": 3
+              },
+              {
+                "row": 2,
+                "column": 4
+              },
+              {
+                "row": 2,
+                "column": 5
+              },
+              {
+                "row": 2,
+                "column": 6
+              },
+              {
+                "row": 2,
+                "column": 7
+              },
+              {
+                "row": 2,
+                "column": 8
+              },
+              {
+                "row": 2,
+                "column": 9
+              },
+              {
+                "row": 3,
+                "column": 0
+              },
+              {
+                "row": 3,
+                "column": 1
+              },
+              {
+                "row": 3,
+                "column": 2
+              },
+              {
+                "row": 3,
+                "column": 3
+              },
+              {
+                "row": 3,
+                "column": 4
+              },
+              {
+                "row": 3,
+                "column": 5
+              },
+              {
+                "row": 3,
+                "column": 6
+              },
+              {
+                "row": 3,
+                "column": 7
+              },
+              {
+                "row": 3,
+                "column": 8
+              },
+              {
+                "row": 3,
+                "column": 9
+              },
+              {
+                "row": 4,
+                "column": 0
+              }
+            ]
+          }
+        },
+        "winner": "a"
+      }
+    },
+    {
+      "step": 70,
+      "state": {
+        "phase": "finished",
+        "turn": "a",
+        "boards": {
+          "a": {
+            "fleet": [
+              {
+                "row": 0,
+                "column": 0,
+                "orientation": "horizontal"
+              },
+              {
+                "row": 2,
+                "column": 0,
+                "orientation": "horizontal"
+              },
+              {
+                "row": 4,
+                "column": 0,
+                "orientation": "horizontal"
+              },
+              {
+                "row": 6,
+                "column": 0,
+                "orientation": "horizontal"
+              },
+              {
+                "row": 8,
+                "column": 0,
+                "orientation": "horizontal"
+              }
+            ],
+            "ready": true,
+            "incoming": [
+              {
+                "row": 9,
+                "column": 9
+              },
+              {
+                "row": 9,
+                "column": 8
+              },
+              {
+                "row": 9,
+                "column": 7
+              },
+              {
+                "row": 9,
+                "column": 6
+              },
+              {
+                "row": 9,
+                "column": 5
+              },
+              {
+                "row": 9,
+                "column": 4
+              },
+              {
+                "row": 9,
+                "column": 3
+              },
+              {
+                "row": 9,
+                "column": 2
+              },
+              {
+                "row": 9,
+                "column": 1
+              },
+              {
+                "row": 9,
+                "column": 0
+              },
+              {
+                "row": 8,
+                "column": 9
+              },
+              {
+                "row": 8,
+                "column": 8
+              },
+              {
+                "row": 8,
+                "column": 7
+              },
+              {
+                "row": 8,
+                "column": 6
+              },
+              {
+                "row": 8,
+                "column": 5
+              },
+              {
+                "row": 8,
+                "column": 4
+              },
+              {
+                "row": 8,
+                "column": 3
+              },
+              {
+                "row": 8,
+                "column": 2
+              },
+              {
+                "row": 8,
+                "column": 1
+              },
+              {
+                "row": 8,
+                "column": 0
+              },
+              {
+                "row": 7,
+                "column": 9
+              },
+              {
+                "row": 7,
+                "column": 8
+              },
+              {
+                "row": 7,
+                "column": 7
+              },
+              {
+                "row": 7,
+                "column": 6
+              },
+              {
+                "row": 7,
+                "column": 5
+              },
+              {
+                "row": 7,
+                "column": 4
+              }
+            ]
+          },
+          "b": {
+            "fleet": [
+              {
+                "row": 0,
+                "column": 0,
+                "orientation": "vertical"
+              },
+              {
+                "row": 0,
+                "column": 2,
+                "orientation": "vertical"
+              },
+              {
+                "row": 0,
+                "column": 4,
+                "orientation": "vertical"
+              },
+              {
+                "row": 0,
+                "column": 6,
+                "orientation": "vertical"
+              },
+              {
+                "row": 0,
+                "column": 8,
+                "orientation": "vertical"
+              }
+            ],
+            "ready": true,
+            "incoming": [
+              {
+                "row": 0,
+                "column": 0
+              },
+              {
+                "row": 0,
+                "column": 1
+              },
+              {
+                "row": 0,
+                "column": 2
+              },
+              {
+                "row": 0,
+                "column": 3
+              },
+              {
+                "row": 0,
+                "column": 4
+              },
+              {
+                "row": 0,
+                "column": 5
+              },
+              {
+                "row": 0,
+                "column": 6
+              },
+              {
+                "row": 0,
+                "column": 7
+              },
+              {
+                "row": 0,
+                "column": 8
+              },
+              {
+                "row": 0,
+                "column": 9
+              },
+              {
+                "row": 1,
+                "column": 0
+              },
+              {
+                "row": 1,
+                "column": 1
+              },
+              {
+                "row": 1,
+                "column": 2
+              },
+              {
+                "row": 1,
+                "column": 3
+              },
+              {
+                "row": 1,
+                "column": 4
+              },
+              {
+                "row": 1,
+                "column": 5
+              },
+              {
+                "row": 1,
+                "column": 6
+              },
+              {
+                "row": 1,
+                "column": 7
+              },
+              {
+                "row": 1,
+                "column": 8
+              },
+              {
+                "row": 1,
+                "column": 9
+              },
+              {
+                "row": 2,
+                "column": 0
+              },
+              {
+                "row": 2,
+                "column": 1
+              },
+              {
+                "row": 2,
+                "column": 2
+              },
+              {
+                "row": 2,
+                "column": 3
+              },
+              {
+                "row": 2,
+                "column": 4
+              },
+              {
+                "row": 2,
+                "column": 5
+              },
+              {
+                "row": 2,
+                "column": 6
+              },
+              {
+                "row": 2,
+                "column": 7
+              },
+              {
+                "row": 2,
+                "column": 8
+              },
+              {
+                "row": 2,
+                "column": 9
+              },
+              {
+                "row": 3,
+                "column": 0
+              },
+              {
+                "row": 3,
+                "column": 1
+              },
+              {
+                "row": 3,
+                "column": 2
+              },
+              {
+                "row": 3,
+                "column": 3
+              },
+              {
+                "row": 3,
+                "column": 4
+              },
+              {
+                "row": 3,
+                "column": 5
+              },
+              {
+                "row": 3,
+                "column": 6
+              },
+              {
+                "row": 3,
+                "column": 7
+              },
+              {
+                "row": 3,
+                "column": 8
+              },
+              {
+                "row": 3,
+                "column": 9
+              },
+              {
+                "row": 4,
+                "column": 0
+              }
+            ]
+          }
+        },
+        "winner": "a"
+      }
+    }
+  ]
+}
