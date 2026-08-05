@@ -39,15 +39,22 @@ func InitModule(
 		return err
 	}
 
-	if err := initializer.RegisterMatch(match.PongName, func(
-		_ context.Context,
-		_ runtime.Logger,
-		_ *sql.DB,
-		_ runtime.NakamaModule,
-	) (runtime.Match, error) {
-		return &match.PongMatch{}, nil
-	}); err != nil {
-		return fmt.Errorf("register the %s match handler: %w", match.PongName, err)
+	handlers := map[string]func() runtime.Match{
+		match.PongName:       func() runtime.Match { return &match.PongMatch{} },
+		match.BattleshipName: func() runtime.Match { return &match.BattleshipMatch{} },
+	}
+	for name, build := range handlers {
+		make := build
+		if err := initializer.RegisterMatch(name, func(
+			_ context.Context,
+			_ runtime.Logger,
+			_ *sql.DB,
+			_ runtime.NakamaModule,
+		) (runtime.Match, error) {
+			return make(), nil
+		}); err != nil {
+			return fmt.Errorf("register the %s match handler: %w", name, err)
+		}
 	}
 
 	// One weekly board per game. A win at one says nothing about the other.

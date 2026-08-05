@@ -48,6 +48,16 @@ var seedEntries = []Game{
 		MinPlayers: 2,
 		MaxPlayers: 2,
 	},
+	{
+		ID:      "battleship",
+		Name:    "Battleship",
+		Tagline: "Hide five ships, then find theirs first.",
+		Description: "Place your fleet on the lower grid, then take turns firing at " +
+			"the upper one. A hit keeps the turn, a miss hands it over, and the " +
+			"first to sink all seventeen cells wins.",
+		MinPlayers: 2,
+		MaxPlayers: 2,
+	},
 }
 
 // Seed creates the catalogue entries that do not exist yet.

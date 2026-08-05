@@ -471,18 +471,31 @@ func (s *matchState) rememberFor(
 	nk runtime.NakamaModule,
 	userID string,
 ) {
+	rememberMatchFor(ctx, logger, nk, userID, s.matchID, s.label, s.password)
+}
+
+// rememberMatchFor is shared by every game: one record per player per match.
+func rememberMatchFor(
+	ctx context.Context,
+	logger runtime.Logger,
+	nk runtime.NakamaModule,
+	userID string,
+	matchID string,
+	label Label,
+	password string,
+) {
 	value, err := json.Marshal(activeRecord{
-		MatchID:  s.matchID,
-		Game:     s.label.Game,
-		Host:     s.label.Host,
-		Password: s.password,
+		MatchID:  matchID,
+		Game:     label.Game,
+		Host:     label.Host,
+		Password: password,
 	})
 	if err != nil {
 		return
 	}
 	if _, err := nk.StorageWrite(ctx, []*runtime.StorageWrite{{
 		Collection:      ActiveCollection,
-		Key:             s.matchID,
+		Key:             matchID,
 		UserID:          userID,
 		Value:           string(value),
 		PermissionRead:  1,
@@ -498,11 +511,26 @@ func (s *matchState) forgetAll(
 	logger runtime.Logger,
 	nk runtime.NakamaModule,
 ) {
-	deletes := make([]*runtime.StorageDelete, 0, len(s.players))
+	ids := make([]string, 0, len(s.players))
 	for userID := range s.players {
+		ids = append(ids, userID)
+	}
+	forgetMatchFor(ctx, logger, nk, s.matchID, ids)
+}
+
+// forgetMatchFor drops a match from the resume lists of the players given.
+func forgetMatchFor(
+	ctx context.Context,
+	logger runtime.Logger,
+	nk runtime.NakamaModule,
+	matchID string,
+	userIDs []string,
+) {
+	deletes := make([]*runtime.StorageDelete, 0, len(userIDs))
+	for _, userID := range userIDs {
 		deletes = append(deletes, &runtime.StorageDelete{
 			Collection: ActiveCollection,
-			Key:        s.matchID,
+			Key:        matchID,
 			UserID:     userID,
 		})
 	}
@@ -559,7 +587,7 @@ func (s *matchState) inputs() pong.Inputs {
 	return collected
 }
 
-func phaseToProto(phase string) matchv1.Phase {
+func pongPhaseToProto(phase string) matchv1.Phase {
 	switch phase {
 	case pong.PhaseWaiting:
 		return matchv1.Phase_PHASE_WAITING
@@ -597,7 +625,7 @@ func (s *matchState) broadcastSnapshot(dispatcher runtime.MatchDispatcher, tick 
 		Tick:    uint32(tick),
 		Players: make([]*matchv1.PlayerState, 0, len(s.players)),
 		Game: &matchv1.GameState{
-			Phase:        phaseToProto(s.sim.Phase),
+			Phase:        pongPhaseToProto(s.sim.Phase),
 			PhaseTicks:   uint32(s.sim.PhaseTicks),
 			LeftPaddleY:  s.sim.Left.Y,
 			RightPaddleY: s.sim.Right.Y,
