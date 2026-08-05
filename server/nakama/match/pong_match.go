@@ -21,6 +21,13 @@ const PongName = "pong"
 // cannot tick at a rate the physics was not written for.
 const TickRate = pong.TickRate
 
+// ReconnectGraceTicks is how long a match survives with nobody in it.
+//
+// A player crossing between Wi-Fi and mobile data disappears for a few seconds.
+// Closing the match the moment the last socket drops would turn every handover
+// into a forfeit, so the seats are held open and the simulation keeps running.
+const ReconnectGraceTicks = 30 * TickRate
+
 // Capacity is how many players a match holds. Extra joiners are turned away
 // rather than queued.
 const Capacity = 2
@@ -48,6 +55,9 @@ type matchState struct {
 
 	// The authoritative simulation. The server owns the only copy that counts.
 	sim pong.State
+
+	// Tick the match last had nobody in it, or -1 while somebody is.
+	emptySince int64
 
 	// Whether the result has been written. The match keeps ticking after it
 	// finishes, so without this it would be recorded thirty times a second.
@@ -77,6 +87,7 @@ func (m *PongMatch) MatchInit(
 		players:          make(map[string]*player, Capacity),
 		broadcastTargets: make([]runtime.Presence, 0, Capacity),
 		sim:              pong.NewState(),
+		emptySince:       -1,
 	}
 
 	// The label is what the matchmaker and match listings search on.
@@ -196,11 +207,10 @@ func (m *PongMatch) MatchLeave(
 
 	current.rebuildTargets()
 
-	// Returning nil tells Nakama to shut the match down. An empty match has
-	// nothing left to simulate and would otherwise tick forever.
+	// Deliberately not closing here. The match is given time to be rejoined,
+	// and the loop closes it if nobody comes back.
 	if len(current.players) == 0 {
-		logger.Info("Last player left, closing the match")
-		return nil
+		logger.Info("Match is empty, holding it open for a reconnection")
 	}
 
 	return current
@@ -219,6 +229,18 @@ func (m *PongMatch) MatchLoop(
 	current, ok := state.(*matchState)
 	if !ok {
 		return state
+	}
+
+	if len(current.players) == 0 {
+		if current.emptySince < 0 {
+			current.emptySince = tick
+		}
+		if tick-current.emptySince > ReconnectGraceTicks {
+			logger.Info("Nobody came back, closing the match")
+			return nil
+		}
+	} else {
+		current.emptySince = -1
 	}
 
 	current.applyInputs(logger, messages)

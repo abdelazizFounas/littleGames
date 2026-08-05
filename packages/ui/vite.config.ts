@@ -1,5 +1,6 @@
 import { fileURLToPath } from 'node:url';
 import react from '@vitejs/plugin-react';
+import { VitePWA } from 'vite-plugin-pwa';
 import { defineConfig, loadEnv } from 'vite';
 
 const repositoryRoot = fileURLToPath(new URL('../..', import.meta.url));
@@ -16,7 +17,35 @@ export default defineConfig(({ mode }) => {
   const publicPort = Number.isInteger(parsedPublicPort) ? parsedPublicPort : 80;
 
   return {
-    plugins: [react()],
+    plugins: [
+      react(),
+      VitePWA({
+        registerType: 'autoUpdate',
+        manifest: {
+          name: 'LittleGames',
+          short_name: 'LittleGames',
+          description: 'Real-time multiplayer mini-games.',
+          start_url: '/',
+          // Fullscreen rather than standalone: a match wants the whole screen,
+          // and the browser chrome is of no use once a game has started.
+          display: 'fullscreen',
+          orientation: 'landscape',
+          background_color: '#101319',
+          theme_color: '#101319',
+          icons: [
+            { src: '/icon.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'any' },
+            { src: '/icon.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'maskable' },
+          ],
+        },
+        workbox: {
+          // The shell is cached so the app opens without a network. Nothing
+          // under the API is: a match is live state, and a cached snapshot of
+          // it would be a lie told confidently.
+          navigateFallbackDenylist: [/^\/v2\//, /^\/ws/, /^\/healthcheck/],
+          globPatterns: ['**/*.{js,css,html,svg}'],
+        },
+      }),
+    ],
     // A single .env at the repository root drives the whole project.
     envDir: repositoryRoot,
     define: {

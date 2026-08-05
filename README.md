@@ -7,9 +7,9 @@ authoritative match logic in Go.
 The whole repository — code, identifiers, comments, UI strings, commit
 messages — is written in English.
 
-> **Status: phase 7 (persistence).** Finished matches are recorded: a weekly
-> wins board, a per-player record, and a notification either way. Everything is
-> written server-side.
+> **Status: phase 8 (mobile hardening).** A dropped connection is fought for
+> rather than forfeited, a backgrounded tab resumes without replaying what it
+> missed, and the app installs as a PWA. All eight phases are done.
 
 ## Architecture in one paragraph
 
@@ -358,6 +358,35 @@ still wants to know how it ended.
 The analytics observers are `after` hooks throughout. An analytics failure must
 never be able to refuse a player something they asked for, and a `before` hook
 can.
+
+## Surviving a bad network
+
+A phone crossing from Wi-Fi to mobile data disappears for a few seconds. That
+must be a pause, not a forfeit, and three things make it one:
+
+- **The socket is rebuilt with a growing backoff**, starting at 250 ms because
+  most drops are momentary, and stretching to 8 s because one that is not
+  should not be met with a flood of attempts.
+- **The server holds the seats open for thirty seconds.** Closing the match the
+  moment the last socket dropped is what turned a handover into a lost game;
+  the simulation keeps running and the seat is waiting.
+- **What was buffered is thrown away on return.** It describes a moment the
+  match has left, and blending it with what arrives now would replay the gap at
+  speed. The brief calls that simulating blind.
+
+The same applies to a tab sent to the background: the frame loop is cancelled
+rather than left queueing frames nobody sees, and coming back empties the
+buffer instead of interpolating across the jump in the clock.
+
+Verified against a running server: a socket killed mid-match receives nothing
+while it is down, and is back to receiving on a rebuilt one, in the same seat.
+
+## Installing it
+
+The client is a PWA. The shell is precached so it opens without a network;
+nothing under the API is, because a match is live state and a cached snapshot
+of it would be a lie told confidently. It installs in fullscreen and landscape,
+which is what a match wants.
 
 ## Repository layout
 

@@ -18,6 +18,7 @@ const INPUT_INTERVAL_MS = 1000 / TICK_RATE;
 export type SessionStatus =
   | { readonly kind: 'connecting' }
   | { readonly kind: 'playing'; readonly side: Side; readonly matchId: string }
+  | { readonly kind: 'reconnecting' }
   | { readonly kind: 'failed'; readonly message: string };
 
 export interface PongSession {
@@ -112,6 +113,12 @@ export async function startPongSession(
     createTouchInput(container, () => predictedY / FIELD_HEIGHT),
   ]);
 
+  /** Throws away state that describes a moment we are no longer in. */
+  const resync = (): void => {
+    buffer.reset();
+    history.clear();
+  };
+
   const resizeToContainer = (): void => {
     renderer.resize(container.clientWidth, container.clientHeight);
   };
@@ -163,8 +170,23 @@ export async function startPongSession(
           onStatus({ kind: 'playing', side: next.side, matchId: joinedMatchId });
         }
       },
-      onDisconnect: () => {
-        onStatus({ kind: 'failed', message: 'The connection to the match was lost.' });
+      onConnectionChange: (link) => {
+        if (link === 'reconnecting') {
+          onStatus({ kind: 'reconnecting' });
+          return;
+        }
+        if (link === 'lost') {
+          onStatus({ kind: 'failed', message: 'The connection to the match was lost.' });
+          return;
+        }
+        // Back on a new socket. Everything buffered describes a match that has
+        // moved on without us, and the inputs we never got acknowledged were
+        // never seen, so both are dropped rather than blended into what comes
+        // next.
+        resync();
+        if (announcedSide !== null) {
+          onStatus({ kind: 'playing', side: announcedSide, matchId: joinedMatchId });
+        }
       },
       onError: () => {
         onStatus({ kind: 'failed', message: 'The match connection ran into an error.' });
@@ -245,8 +267,26 @@ export async function startPongSession(
 
   frame = requestAnimationFrame(tick);
 
+  const onVisibilityChange = (): void => {
+    if (document.hidden) {
+      // A hidden tab is throttled to a crawl or stopped outright. Cancelling is
+      // what stops it queueing frames it cannot draw.
+      cancelAnimationFrame(frame);
+      return;
+    }
+    // Coming back, every buffered snapshot is stamped before the pause and the
+    // clock has jumped. Interpolating across that gap would replay the match at
+    // speed; the brief calls this simulating blind, and it is why the buffer is
+    // emptied instead.
+    resync();
+    lastInputAt = 0;
+    frame = requestAnimationFrame(tick);
+  };
+  document.addEventListener('visibilitychange', onVisibilityChange);
+
   return {
     stop() {
+      document.removeEventListener('visibilitychange', onVisibilityChange);
       running = false;
       clearTimeout(firstSnapshotDeadline);
       cancelAnimationFrame(frame);

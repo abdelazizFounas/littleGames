@@ -42,7 +42,7 @@ export {
   updateDisplayName,
 } from './account';
 
-export type { MatchConnection, MatchListeners } from './match';
+export type { ConnectionState, MatchConnection, MatchListeners } from './match';
 export type { Invitation } from './match';
 export { createInvitation, findMatch, joinMatch, resolveInvitation } from './match';
 

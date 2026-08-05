@@ -92,3 +92,30 @@ describe('snapshot buffer', () => {
     expect(b.latest()).toBe('b');
   });
 });
+
+describe('reset', () => {
+  it('forgets everything, so a stale moment cannot be blended into a fresh one', () => {
+    const b = buffer();
+    b.push('a', 1000);
+    b.push('b', 1100);
+
+    b.reset();
+
+    expect(b.size).toBe(0);
+    expect(b.latest()).toBeNull();
+    expect(b.sampleAt(1150)).toBeNull();
+  });
+
+  it('accepts snapshots stamped earlier than the ones it forgot', () => {
+    const b = buffer();
+    b.push('old', 9000);
+    b.reset();
+
+    // A reconnection restarts the clock reference; without the reset these
+    // would be dropped as out of order and nothing would ever draw again.
+    b.push('new', 1000);
+    b.push('newer', 1100);
+
+    expect(b.latest()).toBe('newer');
+  });
+});

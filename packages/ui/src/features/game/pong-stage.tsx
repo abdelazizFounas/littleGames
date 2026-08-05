@@ -119,6 +119,9 @@ export function PongStage({
             field.
           </p>
         )}
+        {status.kind === 'reconnecting' && (
+          <p className="hint stage__hint">Connection lost. Getting you back in…</p>
+        )}
         {status.kind === 'failed' && (
           <p role="alert" className="error stage__hint">
             {status.message}

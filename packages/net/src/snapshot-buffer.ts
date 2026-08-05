@@ -15,6 +15,13 @@ export interface SnapshotBuffer<T> {
   sampleAt: (now: number) => InterpolationWindow<T> | null;
   /** The freshest snapshot, for values that must not be blended. */
   latest: () => T | null;
+  /**
+   * Forgets everything held.
+   *
+   * Used after a reconnection or a return from the background, where what is
+   * buffered describes a moment the match has long since left.
+   */
+  reset: () => void;
   readonly size: number;
 }
 
@@ -62,6 +69,11 @@ export function createSnapshotBuffer<T>(options: SnapshotBufferOptions): Snapsho
 
     latest() {
       return values.at(-1) ?? null;
+    },
+
+    reset() {
+      times.length = 0;
+      values.length = 0;
     },
 
     sampleAt(now) {
