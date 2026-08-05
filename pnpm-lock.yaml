@@ -32,6 +32,8 @@ importers:
 
   packages/core: {}
 
+  packages/games/battleship/logic: {}
+
   packages/games/pong/logic: {}
 
   packages/games/pong/renderer-pixi:

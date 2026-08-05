@@ -8,6 +8,9 @@
       "path": "./packages/net"
     },
     {
+      "path": "./packages/games/battleship/logic"
+    },
+    {
       "path": "./packages/games/pong/logic"
     },
     {
