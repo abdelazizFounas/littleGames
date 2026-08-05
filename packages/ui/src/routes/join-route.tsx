@@ -15,7 +15,7 @@ export function JoinRoute(): ReactNode {
   const { code } = useParams();
   const { state, signInAsGuest, resolveInvitation } = useSession();
 
-  const load = useCallback(async (): Promise<string> => {
+  const load = useCallback(async () => {
     if (code === undefined || code.length === 0) {
       throw new Error('That link is missing its invitation code.');
     }
@@ -79,5 +79,11 @@ export function JoinRoute(): ReactNode {
 
   // Replace rather than push: going back should return to wherever the link was
   // opened from, not to a code that has now been used.
-  return <Navigate to={`/games/pong?match=${resolved.data}`} replace />;
+  // The password rides along in the URL because the invitation already granted
+  // it: the host chose to let this person past the door.
+  const query = new URLSearchParams({ match: resolved.data.matchId });
+  if (resolved.data.password !== '') {
+    query.set('key', resolved.data.password);
+  }
+  return <Navigate to={`/games/pong?${query.toString()}`} replace />;
 }

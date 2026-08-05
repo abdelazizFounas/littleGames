@@ -85,13 +85,21 @@ export function GameLobbyRoute(): ReactNode {
         </div>
       </dl>
 
-      <PongStage
+      {searchParams.get('match') === null ? (
+        <p className="hint">
+          Pick <strong>Quick game</strong>, <strong>Create lobby</strong> or{' '}
+          <strong>List lobbies</strong> from the game list to start.
+        </p>
+      ) : (
+        <PongStage
         userId={state.profile.userId}
         matchId={searchParams.get('match') ?? undefined}
-        onJoined={onJoined}
-      />
+        password={searchParams.get('key') ?? undefined}
+          onJoined={onJoined}
+        />
+      )}
 
-      <InvitePanel matchId={joinedMatchId} />
+      {joinedMatchId !== null && <InvitePanel matchId={joinedMatchId} />}
 
       <RecordPanel gameId={game.id} />
 

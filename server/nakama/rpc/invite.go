@@ -45,6 +45,7 @@ const inviteLifetime = 30 * time.Minute
 
 type inviteRecord struct {
 	MatchID   string `json:"matchId"`
+	Password  string `json:"password"`
 	CreatedBy string `json:"createdBy"`
 	ExpiresAt int64  `json:"expiresAt"`
 }
@@ -68,6 +69,12 @@ type resolveInviteRequest struct {
 
 type resolveInviteResponse struct {
 	MatchID string `json:"matchId"`
+	// The lobby's password, if it has one.
+	//
+	// Handing it over is the point of an invitation: the host chose to let this
+	// person in, and making them ask for the password separately would defeat
+	// the link. It is only ever sent in answer to a valid, unexpired code.
+	Password string `json:"password"`
 }
 
 // newInviteCode draws a code from a cryptographic source.
@@ -202,7 +209,10 @@ func resolveInvite(
 		return "", runtime.NewError("that match is no longer running", codeNotFound)
 	}
 
-	response, err := json.Marshal(resolveInviteResponse{MatchID: record.MatchID})
+	response, err := json.Marshal(resolveInviteResponse{
+		MatchID:  record.MatchID,
+		Password: record.Password,
+	})
 	if err != nil {
 		return "", runtime.NewError("could not encode the response", codeInternal)
 	}

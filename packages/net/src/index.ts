@@ -42,9 +42,17 @@ export {
   updateDisplayName,
 } from './account';
 
-export type { ConnectionState, MatchConnection, MatchListeners } from './match';
+export type { ConnectionState, LobbySummary, MatchConnection, MatchListeners } from './match';
 export type { Invitation } from './match';
-export { createInvitation, findMatch, joinMatch, resolveInvitation } from './match';
+export {
+  autoLobby,
+  createInvitation,
+  createLobby,
+  findMatch,
+  joinMatch,
+  listLobbies,
+  resolveInvitation,
+} from './match';
 
 export type { InterpolationWindow, SnapshotBuffer, SnapshotBufferOptions } from './snapshot-buffer';
 export { createSnapshotBuffer } from './snapshot-buffer';

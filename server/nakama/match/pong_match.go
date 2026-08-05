@@ -4,6 +4,7 @@ package match
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 
 	"github.com/heroiclabs/nakama-common/runtime"
 	"google.golang.org/protobuf/proto"
@@ -21,12 +22,34 @@ const PongName = "pong"
 // cannot tick at a rate the physics was not written for.
 const TickRate = pong.TickRate
 
-// FinishedLabel replaces the joinable one once a match is over.
+// Lobby states, as they appear in the label listings are filtered on.
+const (
+	StateWaiting = "waiting"
+	StatePlaying = "playing"
+	StateOver    = "over"
+)
+
+// Label is what a match advertises about itself.
 //
-// Match listings filter on the label, so changing it is what stops a finished
-// match being handed to the next player looking for a game. Without this a
-// table that has already been won keeps being offered as if it were free.
-const FinishedLabel = PongName + "_over"
+// It is public: anyone can list it. The password is deliberately absent — only
+// whether there is one — because a lobby's lock is meant to keep people out,
+// not to publish the key beside the door.
+type Label struct {
+	Game   string `json:"game"`
+	State  string `json:"state"`
+	Locked string `json:"locked"`
+	Host   string `json:"host"`
+}
+
+func (l Label) encode() string {
+	encoded, err := json.Marshal(l)
+	if err != nil {
+		// A label that will not encode would make the match invisible; the bare
+		// game name still lists it, which is the better failure.
+		return PongName
+	}
+	return string(encoded)
+}
 
 // FinishedLingerTicks is how long a finished match keeps running so its result
 // can be read, before it closes on its own.
@@ -73,6 +96,10 @@ type matchState struct {
 	// Tick the match finished on, or -1 while it is still being played.
 	finishedAt int64
 
+	// What this lobby advertises, and the secret it does not.
+	label    Label
+	password string
+
 	// Whether the result has been written. The match keeps ticking after it
 	// finishes, so without this it would be recorded thirty times a second.
 	recorded bool
@@ -93,9 +120,20 @@ func (m *PongMatch) MatchInit(
 	logger runtime.Logger,
 	_ *sql.DB,
 	_ runtime.NakamaModule,
-	_ map[string]interface{},
+	params map[string]interface{},
 ) (interface{}, int, string) {
-	logger.Info("Pong match created at %d Hz", TickRate)
+	password, _ := params["password"].(string)
+	host, _ := params["host"].(string)
+	if host == "" {
+		host = "someone"
+	}
+
+	locked := "no"
+	if password != "" {
+		locked = "yes"
+	}
+
+	logger.Info("Pong lobby opened by %s at %d Hz, locked=%s", host, TickRate, locked)
 
 	state := &matchState{
 		players:          make(map[string]*player, Capacity),
@@ -103,10 +141,12 @@ func (m *PongMatch) MatchInit(
 		sim:              pong.NewState(),
 		emptySince:       -1,
 		finishedAt:       -1,
+		password:         password,
+		label:            Label{Game: PongName, State: StateWaiting, Locked: locked, Host: host},
 	}
 
-	// The label is what the matchmaker and match listings search on.
-	return state, TickRate, PongName
+	// The label is what listings search on, and all a lobby says about itself.
+	return state, TickRate, state.label.encode()
 }
 
 func (m *PongMatch) MatchJoinAttempt(
@@ -118,7 +158,7 @@ func (m *PongMatch) MatchJoinAttempt(
 	_ int64,
 	state interface{},
 	presence runtime.Presence,
-	_ map[string]string,
+	metadata map[string]string,
 ) (interface{}, bool, string) {
 	current, ok := state.(*matchState)
 	if !ok {
@@ -139,6 +179,12 @@ func (m *PongMatch) MatchJoinAttempt(
 		return current, false, "match is full"
 	}
 
+	// Checked here rather than in a listing filter: a filter is a convenience,
+	// and anyone holding a match id could skip it. This is the actual door.
+	if current.password != "" && metadata["password"] != current.password {
+		return current, false, "that lobby needs the right password"
+	}
+
 	return current, true, ""
 }
 
@@ -147,7 +193,7 @@ func (m *PongMatch) MatchJoin(
 	logger runtime.Logger,
 	_ *sql.DB,
 	_ runtime.NakamaModule,
-	_ runtime.MatchDispatcher,
+	dispatcher runtime.MatchDispatcher,
 	_ int64,
 	state interface{},
 	presences []runtime.Presence,
@@ -180,6 +226,8 @@ func (m *PongMatch) MatchJoin(
 	if len(current.players) == Capacity && current.sim.Phase == pong.PhaseWaiting {
 		current.sim = pong.StartCountdown(current.sim)
 		logger.Info("Both players present, starting the countdown")
+		// Out of the waiting list the moment it stops waiting.
+		current.relabel(logger, dispatcher, StatePlaying)
 	}
 
 	return current
@@ -273,9 +321,7 @@ func (m *PongMatch) MatchLoop(
 
 		// Taken out of the listings straight away, so nobody looking for a game
 		// is sent to a table that has already been won.
-		if err := dispatcher.MatchLabelUpdate(FinishedLabel); err != nil {
-			logger.Error("Failed to take a finished match out of the listings: %v", err)
-		}
+		current.relabel(logger, dispatcher, StateOver)
 	}
 
 	// Long enough to read the score, then gone. A finished match left running
@@ -349,6 +395,18 @@ func (s *matchState) applyInputs(logger runtime.Logger, messages []runtime.Match
 		participant.lastProcessedSeq = input.GetSeq()
 		participant.up = input.GetUp()
 		participant.down = input.GetDown()
+	}
+}
+
+// relabel republishes what the lobby advertises after its state changed.
+func (s *matchState) relabel(
+	logger runtime.Logger,
+	dispatcher runtime.MatchDispatcher,
+	state string,
+) {
+	s.label.State = state
+	if err := dispatcher.MatchLabelUpdate(s.label.encode()); err != nil {
+		logger.Error("Failed to update the lobby label: %v", err)
 	}
 }
 

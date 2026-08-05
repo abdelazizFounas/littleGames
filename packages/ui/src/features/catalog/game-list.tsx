@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { Link } from 'react-router';
+import { GameActions } from './game-actions';
 import { useCatalog } from './use-catalog';
 
 function playerCount(minPlayers: number, maxPlayers: number): string {
@@ -32,12 +32,11 @@ export function GameList(): ReactNode {
   return (
     <ul className="game-list">
       {catalog.data.map((game) => (
-        <li key={game.id}>
-          <Link className="game-card" to={`/games/${game.id}`}>
-            <span className="game-card__name">{game.name}</span>
-            <span className="game-card__tagline">{game.tagline}</span>
-            <span className="game-card__meta">{playerCount(game.minPlayers, game.maxPlayers)}</span>
-          </Link>
+        <li key={game.id} className="game-card">
+          <span className="game-card__name">{game.name}</span>
+          <span className="game-card__tagline">{game.tagline}</span>
+          <span className="game-card__meta">{playerCount(game.minPlayers, game.maxPlayers)}</span>
+          <GameActions gameId={game.id} />
         </li>
       ))}
     </ul>

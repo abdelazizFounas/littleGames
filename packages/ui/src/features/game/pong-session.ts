@@ -89,11 +89,11 @@ export async function startPongSession(
   container: HTMLElement,
   userId: string,
   matchId: string | undefined,
-  fresh: boolean,
+  password: string,
   joinMatch: (
     listeners: MatchListeners,
     matchId?: string,
-    fresh?: boolean,
+    password?: string,
   ) => Promise<MatchConnection>,
   onStatus: (status: SessionStatus) => void,
   signal: AbortSignal,
@@ -196,7 +196,7 @@ export async function startPongSession(
       onError: () => {
         onStatus({ kind: 'failed', message: 'The match connection ran into an error.' });
       },
-    }, matchId, fresh);
+    }, matchId, password);
   } catch (cause) {
     input.stop();
     resizeObserver.disconnect();

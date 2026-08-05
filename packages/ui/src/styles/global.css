@@ -505,3 +505,44 @@ body {
   font-family: ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
   font-weight: 700;
 }
+
+/* --- Lobbies ------------------------------------------------------------ */
+
+.game-card {
+  display: block;
+}
+
+.game-actions {
+  margin-top: 1rem;
+}
+
+.game-actions .actions {
+  margin-top: 0;
+}
+
+.lobby-list {
+  margin: 0.5rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.lobby-list li {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 0.75rem;
+  align-items: center;
+  padding: 0.625rem 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.lobby-list__host {
+  flex: 1;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.lobby-list__meta {
+  color: var(--text-muted);
+  font-family: ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
+  font-size: 0.8125rem;
+}

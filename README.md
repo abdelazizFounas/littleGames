@@ -304,7 +304,31 @@ exists, and it is reached through a dynamic `import()`. The catalogue and lobby
 never carry a rendering engine: the built entry chunk contains no PixiJS at
 all, and the engine arrives in its own chunks when a match starts.
 
+## Lobbies
+
+Three ways into a game, all of which resolve a lobby before the game screen is
+reached. Landing there and being handed whatever was lying around is how a
+player ends up in a stranger's game, or back in one already over.
+
+| Button | What it does |
+|---|---|
+| Quick game | joins an open, unlocked lobby still waiting; opens one if there is none |
+| Create lobby | opens one, with or without a password |
+| List lobbies | shows who is waiting and whether their lobby is locked |
+
+Nakama has no built-in password on a match, but it has the mechanism for one:
+`joinMatch` carries metadata to the handler, which accepts or refuses. The
+password is checked there, on the way in, and never in the browser — a check in
+the browser is a suggestion. It is held in the match's own state, never in its
+label: a label is public, and a lock that publishes its key is not one.
+
+Locked lobbies are listed but never handed to Quick game. Someone who asked for
+a quick game did not ask for a door they have no key to.
+
 ## Invitations
+
+An invitation carries the password too, when there is one: the host chose to
+let this person in, so making them ask separately would defeat the link.
 
 Opening a match mints a six-character code, and `/join/CODE` is the link that
 leads to it. The code is drawn server-side from a cryptographic source: a

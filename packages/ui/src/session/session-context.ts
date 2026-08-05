@@ -2,6 +2,7 @@ import type {
   GameSummary,
   Invitation,
   LeaderboardEntry,
+  LobbySummary,
   MatchConnection,
   MatchListeners,
   PlayerProfile,
@@ -48,12 +49,20 @@ export interface SessionContextValue {
   readonly joinMatch: (
     listeners: MatchListeners,
     matchId?: string,
-    fresh?: boolean,
+    password?: string,
   ) => Promise<MatchConnection>;
+  /** Joins an open lobby, or opens one when there is none. */
+  readonly findOpenLobby: () => Promise<string>;
+  /** Opens a lobby. An empty password means anyone may walk in. */
+  readonly openLobby: (password: string) => Promise<string>;
+  /** The lobbies still waiting for an opponent. */
+  readonly listOpenLobbies: () => Promise<LobbySummary[]>;
   /** Opens a match and returns a shareable code that leads to it. */
   readonly createInvitation: (matchId?: string) => Promise<Invitation>;
   /** Turns a code back into the match it points at. */
-  readonly resolveInvitation: (code: string) => Promise<string>;
+  readonly resolveInvitation: (
+    code: string,
+  ) => Promise<{ readonly matchId: string; readonly password: string }>;
   /** The signed-in player's record for a game. */
   readonly loadStats: (gameId: string) => Promise<PlayerStats>;
   /** This week's board. */

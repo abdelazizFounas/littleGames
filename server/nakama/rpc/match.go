@@ -36,6 +36,9 @@ func Register(initializer runtime.Initializer) error {
 	if err := initializer.RegisterRpc(FindMatchID, findMatch); err != nil {
 		return fmt.Errorf("register %s: %w", FindMatchID, err)
 	}
+	if err := registerLobbies(initializer); err != nil {
+		return err
+	}
 	return registerInvites(initializer)
 }
 

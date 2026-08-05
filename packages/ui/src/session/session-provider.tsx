@@ -3,14 +3,16 @@ import {
   authenticateGuest,
   createBrowserKeyValueStore,
   createInvitation as createInvitationOnServer,
+  autoLobby,
+  createLobby,
   createNakamaClient,
   fetchGameCatalog,
   fetchLeaderboard,
   fetchPlayerStats,
-  findMatch,
   fetchPlayerProfile,
   joinMatch as joinMatchOnServer,
   linkEmail,
+  listLobbies,
   persistSession,
   resolveInvitation as resolveInvitationOnServer,
   restoreSession,
@@ -19,6 +21,7 @@ import {
   type GameSummary,
   type Invitation,
   type LeaderboardEntry,
+  type LobbySummary,
   type MatchConnection,
   type MatchListeners,
   type PlayerProfile,
@@ -138,18 +141,49 @@ export function SessionProvider({ children }: { readonly children: ReactNode }):
     async (
       listeners: MatchListeners,
       matchId?: string,
-      fresh?: boolean,
+      password?: string,
     ): Promise<MatchConnection> => {
       if (internal.status !== 'signed-in') {
         throw new Error('Sign in before joining a match.');
       }
-      // A named match comes from an invitation; without one, find any with
-      // room, or insist on a new one when the player asked to play again.
-      const target = matchId ?? (await findMatch(client, internal.session, fresh === true));
-      return joinMatchOnServer(client, config, internal.session, target, listeners);
+      // A named lobby comes from the list or an invitation; without one, take
+      // whatever open lobby there is.
+      const target = matchId ?? (await autoLobby(client, internal.session));
+      return joinMatchOnServer(
+        client,
+        config,
+        internal.session,
+        target,
+        listeners,
+        password ?? '',
+      );
     },
     [client, config, internal],
   );
+
+  const findOpenLobby = useCallback(async (): Promise<string> => {
+    if (internal.status !== 'signed-in') {
+      throw new Error('Sign in before looking for a game.');
+    }
+    return autoLobby(client, internal.session);
+  }, [client, internal]);
+
+  const openLobby = useCallback(
+    async (password: string): Promise<string> => {
+      if (internal.status !== 'signed-in') {
+        throw new Error('Sign in before opening a lobby.');
+      }
+      return createLobby(client, internal.session, password);
+    },
+    [client, internal],
+  );
+
+  const listOpenLobbies = useCallback(async (): Promise<LobbySummary[]> => {
+    if (internal.status !== 'signed-in') {
+      throw new Error('Sign in to see the lobbies.');
+    }
+    return listLobbies(client, internal.session);
+  }, [client, internal]);
 
   const createInvitation = useCallback(
     async (matchId?: string): Promise<Invitation> => {
@@ -162,7 +196,7 @@ export function SessionProvider({ children }: { readonly children: ReactNode }):
   );
 
   const resolveInvitation = useCallback(
-    async (code: string): Promise<string> => {
+    async (code: string): Promise<{ readonly matchId: string; readonly password: string }> => {
       if (internal.status !== 'signed-in') {
         throw new Error('Sign in before opening an invitation.');
       }
@@ -218,14 +252,20 @@ export function SessionProvider({ children }: { readonly children: ReactNode }):
       resolveInvitation,
       loadStats,
       loadLeaderboard,
+      findOpenLobby,
+      openLobby,
+      listOpenLobbies,
     }),
     [
       changeDisplayName,
       createInvitation,
+      findOpenLobby,
       joinMatch,
+      listOpenLobbies,
       loadCatalog,
       loadLeaderboard,
       loadStats,
+      openLobby,
       resolveInvitation,
       signInAsGuest,
       signInWithEmail,

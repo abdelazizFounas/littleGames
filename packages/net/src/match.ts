@@ -89,6 +89,7 @@ export async function joinMatch(
   session: Session,
   matchId: string,
   listeners: MatchListeners,
+  password = '',
 ): Promise<MatchConnection> {
   let socket: Socket = client.createSocket(config.useSSL);
   let leaving = false;
@@ -152,7 +153,7 @@ export async function joinMatch(
         // oxlint-disable-next-line eslint/no-await-in-loop
         await replacement.connect(session, false);
         // oxlint-disable-next-line eslint/no-await-in-loop
-        await replacement.joinMatch(matchId);
+        await replacement.joinMatch(matchId, undefined, password === '' ? undefined : { password });
         socket = replacement;
         attempt = 0;
         listeners.onConnectionChange('live');
@@ -172,7 +173,7 @@ export async function joinMatch(
   // `false` keeps the player out of the global status feed: presence inside a
   // match is tracked by the match itself.
   await socket.connect(session, false);
-  await socket.joinMatch(matchId);
+  await socket.joinMatch(matchId, undefined, password === '' ? undefined : { password });
   listeners.onConnectionChange('live');
 
   return {
@@ -195,6 +196,61 @@ export async function joinMatch(
       }
     },
   };
+}
+
+/** A lobby waiting for an opponent, as the listing describes it. */
+export interface LobbySummary {
+  readonly matchId: string;
+  readonly host: string;
+  readonly locked: boolean;
+  readonly players: number;
+}
+
+function matchIdOf(payload: unknown): string {
+  if (!isRecord(payload) || typeof payload['matchId'] !== 'string') {
+    throw new Error('The server did not return a lobby.');
+  }
+  return payload['matchId'];
+}
+
+/** Joins the first open lobby with room, or opens one when there is none. */
+export async function autoLobby(client: Client, session: Session): Promise<string> {
+  return matchIdOf((await client.rpc(session, 'lobby.auto', {})).payload);
+}
+
+/** Opens a lobby. An empty password means anyone may walk in. */
+export async function createLobby(
+  client: Client,
+  session: Session,
+  password: string,
+): Promise<string> {
+  return matchIdOf((await client.rpc(session, 'lobby.create', { password })).payload);
+}
+
+/**
+ * Lists the lobbies still waiting for an opponent.
+ *
+ * Locked ones are included: knowing a game is there and needing a password to
+ * enter is the point. The password itself is never part of this.
+ */
+export async function listLobbies(client: Client, session: Session): Promise<LobbySummary[]> {
+  const payload: unknown = (await client.rpc(session, 'lobby.list', {})).payload;
+  if (!isRecord(payload) || !Array.isArray(payload['lobbies'])) {
+    return [];
+  }
+  return payload['lobbies'].flatMap((entry: unknown) => {
+    if (!isRecord(entry) || typeof entry['matchId'] !== 'string') {
+      return [];
+    }
+    return [
+      {
+        matchId: entry['matchId'],
+        host: typeof entry['host'] === 'string' ? entry['host'] : 'someone',
+        locked: entry['locked'] === true,
+        players: typeof entry['players'] === 'number' ? entry['players'] : 0,
+      },
+    ];
+  });
 }
 
 /** A code that leads to a match, and how long it stays good for. */
@@ -242,12 +298,16 @@ export async function resolveInvitation(
   client: Client,
   session: Session,
   code: string,
-): Promise<string> {
-  const response = await client.rpc(session, 'invite.resolve', { code });
-  const payload: unknown = response.payload;
+): Promise<{ readonly matchId: string; readonly password: string }> {
+  const payload: unknown = (await client.rpc(session, 'invite.resolve', { code })).payload;
 
   if (!isRecord(payload) || typeof payload['matchId'] !== 'string') {
     throw new Error('That invitation could not be resolved.');
   }
-  return payload['matchId'];
+  // The link carries the password: the host chose to let this person in, so
+  // asking them for it separately would defeat the invitation.
+  return {
+    matchId: payload['matchId'],
+    password: typeof payload['password'] === 'string' ? payload['password'] : '',
+  };
 }
