@@ -108,6 +108,25 @@ for (const player of latest.players) {
   );
 }
 
+console.log('\n=== 4b. the simulation is running server-side ===');
+const game = latest.game;
+if (game === undefined) {
+  throw new Error('the snapshot carries no game state');
+}
+console.log(`  phase=${String(game.phase)} phaseTicks=${String(game.phaseTicks)} score=${String(game.scoreLeft)}-${String(game.scoreRight)}`);
+console.log(`  ball x=${game.ball?.x.toFixed(1) ?? '?'} y=${game.ball?.y.toFixed(1) ?? '?'} speed=${game.ball?.speed.toFixed(1) ?? '?'}`);
+console.log(`  sides: ${latest.players.map((p) => `${p.username}=${String(p.side)}`).join(', ')}`);
+
+await new Promise((resolve) => setTimeout(resolve, 4000));
+const later = bobSnapshots.at(-1);
+const laterGame = later?.game;
+console.log(`  four seconds on: phase=${String(laterGame?.phase)} ball x=${laterGame?.ball?.x.toFixed(1) ?? '?'} y=${laterGame?.ball?.y.toFixed(1) ?? '?'}`);
+if (laterGame?.ball?.x === game.ball?.x && laterGame?.ball?.y === game.ball?.y) {
+  console.log('  PROBLEM: the ball never moved');
+} else {
+  console.log('  the ball is moving under the server simulation');
+}
+
 console.log('\n=== 5. measured tick rate ===');
 const start = bobSnapshots.length;
 await new Promise((resolve) => setTimeout(resolve, 2000));

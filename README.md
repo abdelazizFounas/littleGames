@@ -7,9 +7,10 @@ authoritative match logic in Go.
 The whole repository — code, identifiers, comments, UI strings, commit
 messages — is written in English.
 
-> **Status: phase 3 (match handler).** Two clients can join the same
-> authoritative match and exchange typed messages over a 30 Hz server loop. The
-> Pong rules and rendering come next.
+> **Status: phase 4 (Pong rules).** The rules exist as pure TypeScript and as a
+> Go port that runs the authoritative match, both held to the same conformance
+> vectors. A full match plays to its end in a unit test with no browser.
+> Rendering comes next.
 
 ## Architecture in one paragraph
 
@@ -225,12 +226,47 @@ Human clicks are never that close, but the race is real. Nakama's matchmaker is
 the race-free primitive and is what random opponent matching will use rather
 than this function.
 
+## The rules exist twice
+
+The simulation runs on the server, in Go, and will also run on the client to
+predict ahead of it. Two implementations of the same rules drift, and a drift
+between prediction and truth is what makes a ball appear to teleport.
+
+`packages/games/pong/logic` is the reference, in pure TypeScript with no
+rendering and no networking. `server/nakama/pong` is the port. Neither is
+trusted to stay in step by review:
+
+```sh
+pnpm --filter @littlegames/pong-logic vectors   # regenerate after a rules change
+pnpm test                                       # TypeScript replays them
+./tools/scripts/test-go.sh                      # Go replays the same file
+```
+
+`testdata/vectors.json` records three scenarios tick by tick, one of which
+plays a match to the winning score. Both implementations replay them and must
+land on identical numbers. The guard is tight: nudging the Go ball's speed gain
+by one part in ten million is caught at tick 150.
+
+Keeping that possible constrains how the physics may be written. Only `+`, `-`,
+`*`, `/`, comparisons and square root appear in it, all exactly rounded by
+IEEE-754 in both languages. Trigonometry is not, so a bounce angle comes from a
+square root rather than a cosine.
+
+### Proving the rules are free of the renderer
+
+`packages/renderer-headless` implements the rendering contract and draws
+nothing. A unit test plays a full match against it, to the winning score, with
+no browser and no network. If that keeps passing, nothing in the rules reaches
+for a canvas, and a second engine can be added later without touching them.
+
 ## Repository layout
 
 ```
 packages/
   core/            Shared contracts and protocol. Zero runtime dependencies.
   net/             Nakama client, session lifecycle, accounts, match sockets.
+  games/pong/logic Pong rules and physics. Pure TypeScript, the reference.
+  renderer-headless A renderer that draws nothing, for headless matches.
   ui/              React shell: routing, authentication, profile, catalogue.
 server/
   nakama/          Go runtime module (match handlers, RPCs, hooks)
