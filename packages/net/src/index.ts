@@ -44,3 +44,9 @@ export {
 
 export type { MatchConnection, MatchListeners } from './match';
 export { findMatch, joinMatch } from './match';
+
+export type { InterpolationWindow, SnapshotBuffer, SnapshotBufferOptions } from './snapshot-buffer';
+export { createSnapshotBuffer } from './snapshot-buffer';
+
+export type { InputHistory, Sequenced } from './prediction';
+export { createInputHistory, reconcile } from './prediction';

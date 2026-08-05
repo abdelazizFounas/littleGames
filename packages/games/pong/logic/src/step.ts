@@ -36,7 +36,15 @@ function clamp(value: number, min: number, max: number): number {
   return value > max ? max : value;
 }
 
-function movePaddle(paddle: Paddle, input: PaddleInput): Paddle {
+/**
+ * Advances one paddle by a tick.
+ *
+ * Exported because the client predicts its own paddle ahead of the server, and
+ * has to do it with this exact rule. Predicting with a near-copy is how a
+ * paddle ends up a few units away from where the server puts it and visibly
+ * snaps back on every correction.
+ */
+export function movePaddle(paddle: Paddle, input: PaddleInput): Paddle {
   const direction = (input.down ? 1 : 0) - (input.up ? 1 : 0);
   if (direction === 0) {
     return paddle;
