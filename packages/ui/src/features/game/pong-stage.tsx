@@ -26,6 +26,9 @@ export function PongStage({
   const containerRef = useRef<HTMLDivElement>(null);
   const [status, setStatus] = useState<SessionStatus>({ kind: 'connecting' });
   const [isFullscreen, setIsFullscreen] = useState(false);
+  // Bumping this tears the session down and builds another. `fresh` after the
+  // first pass so that "play again" opens a new table rather than finding one.
+  const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -43,6 +46,7 @@ export function PongStage({
           container,
           userId,
           matchId,
+          attempt > 0,
           joinMatch,
           (next) => {
             if (cancelled) {
@@ -77,7 +81,7 @@ export function PongStage({
       abort.abort();
       started?.stop();
     };
-  }, [joinMatch, matchId, onJoined, userId]);
+  }, [attempt, joinMatch, matchId, onJoined, userId]);
 
   // Tracked from the document rather than from the click, so the button stays
   // honest when fullscreen is left with Escape.
@@ -127,6 +131,15 @@ export function PongStage({
             {status.message}
           </p>
         )}
+        <button
+          type="button"
+          className="button"
+          onClick={() => {
+            setAttempt((previous) => previous + 1);
+          }}
+        >
+          New match
+        </button>
         <button type="button" className="button" onClick={toggleFullscreen}>
           {isFullscreen ? 'Exit fullscreen' : 'Fullscreen'}
         </button>

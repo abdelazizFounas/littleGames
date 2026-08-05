@@ -21,6 +21,17 @@ const PongName = "pong"
 // cannot tick at a rate the physics was not written for.
 const TickRate = pong.TickRate
 
+// FinishedLabel replaces the joinable one once a match is over.
+//
+// Match listings filter on the label, so changing it is what stops a finished
+// match being handed to the next player looking for a game. Without this a
+// table that has already been won keeps being offered as if it were free.
+const FinishedLabel = PongName + "_over"
+
+// FinishedLingerTicks is how long a finished match keeps running so its result
+// can be read, before it closes on its own.
+const FinishedLingerTicks = 30 * TickRate
+
 // ReconnectGraceTicks is how long a match survives with nobody in it.
 //
 // A player crossing between Wi-Fi and mobile data disappears for a few seconds.
@@ -59,6 +70,9 @@ type matchState struct {
 	// Tick the match last had nobody in it, or -1 while somebody is.
 	emptySince int64
 
+	// Tick the match finished on, or -1 while it is still being played.
+	finishedAt int64
+
 	// Whether the result has been written. The match keeps ticking after it
 	// finishes, so without this it would be recorded thirty times a second.
 	recorded bool
@@ -88,6 +102,7 @@ func (m *PongMatch) MatchInit(
 		broadcastTargets: make([]runtime.Presence, 0, Capacity),
 		sim:              pong.NewState(),
 		emptySince:       -1,
+		finishedAt:       -1,
 	}
 
 	// The label is what the matchmaker and match listings search on.
@@ -114,6 +129,10 @@ func (m *PongMatch) MatchJoinAttempt(
 	// to its own seat instead of being refused as a duplicate.
 	if _, alreadyIn := current.players[presence.GetUserId()]; alreadyIn {
 		return current, true, ""
+	}
+
+	if current.sim.Phase == pong.PhaseFinished {
+		return current, false, "that match is already over"
 	}
 
 	if len(current.players) >= Capacity {
@@ -249,7 +268,21 @@ func (m *PongMatch) MatchLoop(
 
 	if current.sim.Phase == pong.PhaseFinished && before != pong.PhaseFinished && !current.recorded {
 		current.recorded = true
+		current.finishedAt = tick
 		stats.RecordMatch(ctx, logger, nk, PongName, current.outcomes())
+
+		// Taken out of the listings straight away, so nobody looking for a game
+		// is sent to a table that has already been won.
+		if err := dispatcher.MatchLabelUpdate(FinishedLabel); err != nil {
+			logger.Error("Failed to take a finished match out of the listings: %v", err)
+		}
+	}
+
+	// Long enough to read the score, then gone. A finished match left running
+	// keeps ticking for a game nobody can play.
+	if current.finishedAt >= 0 && tick-current.finishedAt > FinishedLingerTicks {
+		logger.Info("Finished match has been read, closing it")
+		return nil
 	}
 
 	if err := current.broadcastSnapshot(dispatcher, tick); err != nil {

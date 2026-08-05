@@ -62,8 +62,12 @@ function isRecord(value: unknown): value is Record<string, unknown> {
  * The id comes from the server rather than the client, because a client that
  * could name its own match could drop itself into somebody else's game.
  */
-export async function findMatch(client: Client, session: Session): Promise<string> {
-  const response = await client.rpc(session, FIND_MATCH_RPC, {});
+export async function findMatch(
+  client: Client,
+  session: Session,
+  fresh = false,
+): Promise<string> {
+  const response = await client.rpc(session, FIND_MATCH_RPC, fresh ? { fresh: true } : {});
   const payload: unknown = response.payload;
 
   if (!isRecord(payload) || typeof payload['matchId'] !== 'string') {

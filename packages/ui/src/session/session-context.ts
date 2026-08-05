@@ -45,7 +45,11 @@ export interface SessionContextValue {
    *
    * The caller owns the returned connection and must leave it.
    */
-  readonly joinMatch: (listeners: MatchListeners, matchId?: string) => Promise<MatchConnection>;
+  readonly joinMatch: (
+    listeners: MatchListeners,
+    matchId?: string,
+    fresh?: boolean,
+  ) => Promise<MatchConnection>;
   /** Opens a match and returns a shareable code that leads to it. */
   readonly createInvitation: (matchId?: string) => Promise<Invitation>;
   /** Turns a code back into the match it points at. */

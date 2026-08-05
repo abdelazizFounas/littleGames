@@ -20,6 +20,13 @@ const codeInternal = 13
 // How many candidate matches to consider before giving up and creating one.
 const findMatchCandidates = 10
 
+type findMatchRequest struct {
+	// Skip the search and open a new match. What "play again" asks for: the
+	// player has just finished one and does not want to be dropped into a
+	// stranger's half-played game.
+	Fresh bool `json:"fresh"`
+}
+
 type findMatchResponse struct {
 	MatchID string `json:"matchId"`
 }
@@ -49,8 +56,26 @@ func findMatch(
 	logger runtime.Logger,
 	_ *sql.DB,
 	nk runtime.NakamaModule,
-	_ string,
+	payload string,
 ) (string, error) {
+	var request findMatchRequest
+	if payload != "" {
+		_ = json.Unmarshal([]byte(payload), &request)
+	}
+
+	if request.Fresh {
+		matchID, err := nk.MatchCreate(ctx, match.PongName, nil)
+		if err != nil {
+			logger.Error("Failed to create a match: %v", err)
+			return "", runtime.NewError("could not create a match", codeInternal)
+		}
+		response, err := json.Marshal(findMatchResponse{MatchID: matchID})
+		if err != nil {
+			return "", runtime.NewError("could not encode the response", codeInternal)
+		}
+		return string(response), nil
+	}
+
 	// Any match with a free seat is a candidate, including an empty one.
 	//
 	// Zero is not an oversight. A match exists from the moment it is created,

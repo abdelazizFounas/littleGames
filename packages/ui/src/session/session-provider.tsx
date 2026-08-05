@@ -135,12 +135,17 @@ export function SessionProvider({ children }: { readonly children: ReactNode }):
   }, [client, internal]);
 
   const joinMatch = useCallback(
-    async (listeners: MatchListeners, matchId?: string): Promise<MatchConnection> => {
+    async (
+      listeners: MatchListeners,
+      matchId?: string,
+      fresh?: boolean,
+    ): Promise<MatchConnection> => {
       if (internal.status !== 'signed-in') {
         throw new Error('Sign in before joining a match.');
       }
-      // A named match comes from an invitation; without one, find any with room.
-      const target = matchId ?? (await findMatch(client, internal.session));
+      // A named match comes from an invitation; without one, find any with
+      // room, or insist on a new one when the player asked to play again.
+      const target = matchId ?? (await findMatch(client, internal.session, fresh === true));
       return joinMatchOnServer(client, config, internal.session, target, listeners);
     },
     [client, config, internal],
