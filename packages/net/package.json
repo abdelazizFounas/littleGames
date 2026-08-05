@@ -1,0 +1,17 @@
+{
+  "name": "@littlegames/net",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Nakama client, session lifecycle and realtime networking. Depends on core only.",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --build"
+  },
+  "dependencies": {
+    "@heroiclabs/nakama-js": "2.8.0",
+    "@littlegames/core": "workspace:*"
+  }
+}
