@@ -214,6 +214,22 @@ It signs in two players, puts them in one match, sends input from one and reads
 the server's echo from the other, measures the tick rate, and checks that a
 third player is turned away.
 
+### Two clocks, not one
+
+A match has two counters and they start at different moments, which is easy to
+misread when watching a snapshot:
+
+| Counter | Starts |
+|---|---|
+| Nakama's `tick` | when the match is **created**, before anyone joins |
+| The Pong countdown | when the **second** player joins |
+
+A match therefore ticks, and broadcasts nothing, while it waits for an
+opponent. `match.max_empty_sec` stops one that stays empty: the handler already
+closes a match when its last player leaves, but a match created and never joined
+has no departure to react to, and would otherwise tick thirty times a second for
+as long as the server runs.
+
 ### A race worth knowing about
 
 `match.find` lists open matches and creates one when it finds none. Nakama
