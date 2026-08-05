@@ -1,0 +1,13 @@
+{
+  "name": "@littlegames/core",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Shared contracts, network protocol and utilities. No runtime dependency, ever.",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --build"
+  }
+}
