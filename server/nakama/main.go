@@ -11,14 +11,11 @@ import (
 	"database/sql"
 
 	"github.com/heroiclabs/nakama-common/runtime"
+	"littlegames.local/nakama/catalog"
 )
 
 // InitModule is the entry point Nakama calls once, at server startup, after
 // the plugin has been loaded.
-//
-// Phase 0 registers nothing: it only proves the plugin was compiled against a
-// matching toolchain and is being executed by the server. Match handlers, RPCs
-// and hooks are registered here from phase 3 onwards.
 func InitModule(
 	ctx context.Context,
 	logger runtime.Logger,
@@ -26,6 +23,17 @@ func InitModule(
 	nk runtime.NakamaModule,
 	initializer runtime.Initializer,
 ) error {
+	// Returning the error aborts startup on purpose: a server whose catalogue
+	// failed to seed would serve an empty game list and look merely empty
+	// rather than broken.
+	if err := catalog.Seed(ctx, logger, nk); err != nil {
+		return err
+	}
+
+	if err := catalog.RegisterGuards(initializer); err != nil {
+		return err
+	}
+
 	logger.Info("LittleGames runtime module loaded")
 	return nil
 }
