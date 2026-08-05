@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import { useCallback, type ReactNode } from 'react';
 import { useAsyncData } from '../../lib/use-async-data';
 import { useSession } from '../../session/use-session';
 
@@ -9,12 +9,11 @@ function winRate(played: number, won: number): string {
 
 export function RecordPanel({ gameId }: { readonly gameId: string }): ReactNode {
   const { loadStats, loadLeaderboard } = useSession();
-  const stats = useAsyncData(
-    // Bound to the game rather than loaded globally: a record only means
-    // anything next to the game it was earned in.
-    () => loadStats(gameId),
-    'Could not load your record.',
-  );
+  // Wrapped rather than written inline: useAsyncData reloads whenever its
+  // loader changes identity, and a fresh arrow function on every render means
+  // every render triggers another load, which triggers another render.
+  const load = useCallback(() => loadStats(gameId), [gameId, loadStats]);
+  const stats = useAsyncData(load, 'Could not load your record.');
   const board = useAsyncData(loadLeaderboard, 'Could not load the board.');
 
   return (

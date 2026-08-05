@@ -61,6 +61,11 @@ export function createPongPixiRenderer(): GameRenderer<PongState> {
   });
 
   let mounted = false;
+  // What the numbers currently show. Rebuilding their geometry every frame
+  // re-tessellates and re-uploads it sixty times a second for a score that
+  // changes once a minute.
+  let drawnNumbers = '';
+  let drawnMessage = '';
   let lastWidth = 0;
   let lastHeight = 0;
 
@@ -136,23 +141,25 @@ export function createPongPixiRenderer(): GameRenderer<PongState> {
       // reading as a live ball nobody can reach.
       ball.visible = state.phase === 'playing';
 
-      // One clear and one fill for every number on screen, so a score change
-      // costs a single draw call rather than a text relayout.
-      numbers.clear();
-      drawNumber(numbers, state.score.left, FIELD_WIDTH / 2 - 90, 48, 84);
-      drawNumber(numbers, state.score.right, FIELD_WIDTH / 2 + 90, 48, 84);
-      if (state.phase === 'countdown') {
-        drawNumber(
-          numbers,
-          Math.ceil(state.phaseTicks / TICK_RATE),
-          FIELD_WIDTH / 2,
-          FIELD_HEIGHT / 2 - 60,
-          120,
-        );
+      const countdown = state.phase === 'countdown' ? Math.ceil(state.phaseTicks / TICK_RATE) : 0;
+      const wanted = `${String(state.score.left)}:${String(state.score.right)}:${String(countdown)}`;
+      if (wanted !== drawnNumbers) {
+        drawnNumbers = wanted;
+        numbers.clear();
+        drawNumber(numbers, state.score.left, FIELD_WIDTH / 2 - 90, 48, 84);
+        drawNumber(numbers, state.score.right, FIELD_WIDTH / 2 + 90, 48, 84);
+        if (countdown > 0) {
+          drawNumber(numbers, countdown, FIELD_WIDTH / 2, FIELD_HEIGHT / 2 - 60, 120);
+        }
+        numbers.fill(FOREGROUND);
       }
-      numbers.fill(FOREGROUND);
 
-      message.text = messageFor(state);
+      const wantedMessage = messageFor(state);
+      if (wantedMessage !== drawnMessage) {
+        // Assigning the same string still costs a text measurement.
+        drawnMessage = wantedMessage;
+        message.text = wantedMessage;
+      }
 
       app.renderer.render(app.stage);
     },
@@ -186,6 +193,8 @@ export function createPongPixiRenderer(): GameRenderer<PongState> {
         return;
       }
       mounted = false;
+      drawnNumbers = '';
+      drawnMessage = '';
       lastWidth = 0;
       lastHeight = 0;
       // Releasing the GPU context matters on mobile, where a leaked one can

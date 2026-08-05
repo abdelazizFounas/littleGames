@@ -9,6 +9,12 @@ export type AsyncData<T> =
 /**
  * Loads a value once, and again whenever `load` changes identity.
  *
+ * That identity is load-bearing in both directions. It is how a loader that
+ * needs a session reloads once the session arrives — and it is why `load` must
+ * never be written inline: a new function on every render reloads on every
+ * render, which renders again. Pass something stable, from `useCallback` or
+ * from a context.
+ *
  * The cancellation flag matters beyond tidiness: React runs effects twice in
  * development, and a player can leave a screen mid-request, so without it a
  * late response would write into an unmounted component or overwrite fresher
