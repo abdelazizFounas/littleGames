@@ -81,6 +81,115 @@ func (OpCode) EnumDescriptor() ([]byte, []int) {
 	return file_littlegames_match_v1_match_proto_rawDescGZIP(), []int{0}
 }
 
+// Where a match is in its life. Mirrors the phases of the shared rules.
+type Phase int32
+
+const (
+	Phase_PHASE_UNSPECIFIED  Phase = 0
+	Phase_PHASE_WAITING      Phase = 1
+	Phase_PHASE_COUNTDOWN    Phase = 2
+	Phase_PHASE_PLAYING      Phase = 3
+	Phase_PHASE_POINT_SCORED Phase = 4
+	Phase_PHASE_FINISHED     Phase = 5
+)
+
+// Enum value maps for Phase.
+var (
+	Phase_name = map[int32]string{
+		0: "PHASE_UNSPECIFIED",
+		1: "PHASE_WAITING",
+		2: "PHASE_COUNTDOWN",
+		3: "PHASE_PLAYING",
+		4: "PHASE_POINT_SCORED",
+		5: "PHASE_FINISHED",
+	}
+	Phase_value = map[string]int32{
+		"PHASE_UNSPECIFIED":  0,
+		"PHASE_WAITING":      1,
+		"PHASE_COUNTDOWN":    2,
+		"PHASE_PLAYING":      3,
+		"PHASE_POINT_SCORED": 4,
+		"PHASE_FINISHED":     5,
+	}
+)
+
+func (x Phase) Enum() *Phase {
+	p := new(Phase)
+	*p = x
+	return p
+}
+
+func (x Phase) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (Phase) Descriptor() protoreflect.EnumDescriptor {
+	return file_littlegames_match_v1_match_proto_enumTypes[1].Descriptor()
+}
+
+func (Phase) Type() protoreflect.EnumType {
+	return &file_littlegames_match_v1_match_proto_enumTypes[1]
+}
+
+func (x Phase) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use Phase.Descriptor instead.
+func (Phase) EnumDescriptor() ([]byte, []int) {
+	return file_littlegames_match_v1_match_proto_rawDescGZIP(), []int{1}
+}
+
+// Which end of the field a player defends.
+type Side int32
+
+const (
+	Side_SIDE_UNSPECIFIED Side = 0
+	Side_SIDE_LEFT        Side = 1
+	Side_SIDE_RIGHT       Side = 2
+)
+
+// Enum value maps for Side.
+var (
+	Side_name = map[int32]string{
+		0: "SIDE_UNSPECIFIED",
+		1: "SIDE_LEFT",
+		2: "SIDE_RIGHT",
+	}
+	Side_value = map[string]int32{
+		"SIDE_UNSPECIFIED": 0,
+		"SIDE_LEFT":        1,
+		"SIDE_RIGHT":       2,
+	}
+)
+
+func (x Side) Enum() *Side {
+	p := new(Side)
+	*p = x
+	return p
+}
+
+func (x Side) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (Side) Descriptor() protoreflect.EnumDescriptor {
+	return file_littlegames_match_v1_match_proto_enumTypes[2].Descriptor()
+}
+
+func (Side) Type() protoreflect.EnumType {
+	return &file_littlegames_match_v1_match_proto_enumTypes[2]
+}
+
+func (x Side) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use Side.Descriptor instead.
+func (Side) EnumDescriptor() ([]byte, []int) {
+	return file_littlegames_match_v1_match_proto_rawDescGZIP(), []int{2}
+}
+
 // What a client is pressing, sent from client to server.
 //
 // Intent only, never a position: the server owns the simulation, so a tampered
@@ -150,19 +259,203 @@ func (x *PlayerInput) GetDown() bool {
 	return false
 }
 
+// The ball, in fixed logical field units rather than pixels.
+type Ball struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	X     float64                `protobuf:"fixed64,1,opt,name=x,proto3" json:"x,omitempty"`
+	Y     float64                `protobuf:"fixed64,2,opt,name=y,proto3" json:"y,omitempty"`
+	Vx    float64                `protobuf:"fixed64,3,opt,name=vx,proto3" json:"vx,omitempty"`
+	Vy    float64                `protobuf:"fixed64,4,opt,name=vy,proto3" json:"vy,omitempty"`
+	// Magnitude of the velocity, so a client can rebuild a bounce exactly.
+	Speed         float64 `protobuf:"fixed64,5,opt,name=speed,proto3" json:"speed,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *Ball) Reset() {
+	*x = Ball{}
+	mi := &file_littlegames_match_v1_match_proto_msgTypes[1]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Ball) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Ball) ProtoMessage() {}
+
+func (x *Ball) ProtoReflect() protoreflect.Message {
+	mi := &file_littlegames_match_v1_match_proto_msgTypes[1]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Ball.ProtoReflect.Descriptor instead.
+func (*Ball) Descriptor() ([]byte, []int) {
+	return file_littlegames_match_v1_match_proto_rawDescGZIP(), []int{1}
+}
+
+func (x *Ball) GetX() float64 {
+	if x != nil {
+		return x.X
+	}
+	return 0
+}
+
+func (x *Ball) GetY() float64 {
+	if x != nil {
+		return x.Y
+	}
+	return 0
+}
+
+func (x *Ball) GetVx() float64 {
+	if x != nil {
+		return x.Vx
+	}
+	return 0
+}
+
+func (x *Ball) GetVy() float64 {
+	if x != nil {
+		return x.Vy
+	}
+	return 0
+}
+
+func (x *Ball) GetSpeed() float64 {
+	if x != nil {
+		return x.Speed
+	}
+	return 0
+}
+
+// The simulation itself, as the server holds it.
+type GameState struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	Phase Phase                  `protobuf:"varint,1,opt,name=phase,proto3,enum=littlegames.match.v1.Phase" json:"phase,omitempty"`
+	// Ticks left in a timed phase, zero outside the countdown and the pause
+	// after a point.
+	PhaseTicks uint32 `protobuf:"varint,2,opt,name=phase_ticks,json=phaseTicks,proto3" json:"phase_ticks,omitempty"`
+	// Centre of each paddle along the y axis.
+	LeftPaddleY  float64 `protobuf:"fixed64,3,opt,name=left_paddle_y,json=leftPaddleY,proto3" json:"left_paddle_y,omitempty"`
+	RightPaddleY float64 `protobuf:"fixed64,4,opt,name=right_paddle_y,json=rightPaddleY,proto3" json:"right_paddle_y,omitempty"`
+	Ball         *Ball   `protobuf:"bytes,5,opt,name=ball,proto3" json:"ball,omitempty"`
+	ScoreLeft    uint32  `protobuf:"varint,6,opt,name=score_left,json=scoreLeft,proto3" json:"score_left,omitempty"`
+	ScoreRight   uint32  `protobuf:"varint,7,opt,name=score_right,json=scoreRight,proto3" json:"score_right,omitempty"`
+	// Set once the match is over.
+	Winner        Side `protobuf:"varint,8,opt,name=winner,proto3,enum=littlegames.match.v1.Side" json:"winner,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GameState) Reset() {
+	*x = GameState{}
+	mi := &file_littlegames_match_v1_match_proto_msgTypes[2]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GameState) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GameState) ProtoMessage() {}
+
+func (x *GameState) ProtoReflect() protoreflect.Message {
+	mi := &file_littlegames_match_v1_match_proto_msgTypes[2]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GameState.ProtoReflect.Descriptor instead.
+func (*GameState) Descriptor() ([]byte, []int) {
+	return file_littlegames_match_v1_match_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *GameState) GetPhase() Phase {
+	if x != nil {
+		return x.Phase
+	}
+	return Phase_PHASE_UNSPECIFIED
+}
+
+func (x *GameState) GetPhaseTicks() uint32 {
+	if x != nil {
+		return x.PhaseTicks
+	}
+	return 0
+}
+
+func (x *GameState) GetLeftPaddleY() float64 {
+	if x != nil {
+		return x.LeftPaddleY
+	}
+	return 0
+}
+
+func (x *GameState) GetRightPaddleY() float64 {
+	if x != nil {
+		return x.RightPaddleY
+	}
+	return 0
+}
+
+func (x *GameState) GetBall() *Ball {
+	if x != nil {
+		return x.Ball
+	}
+	return nil
+}
+
+func (x *GameState) GetScoreLeft() uint32 {
+	if x != nil {
+		return x.ScoreLeft
+	}
+	return 0
+}
+
+func (x *GameState) GetScoreRight() uint32 {
+	if x != nil {
+		return x.ScoreRight
+	}
+	return 0
+}
+
+func (x *GameState) GetWinner() Side {
+	if x != nil {
+		return x.Winner
+	}
+	return Side_SIDE_UNSPECIFIED
+}
+
 // The authoritative state, broadcast from server to client once per tick.
 type Snapshot struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Server tick this state was produced on, counted from the match start.
 	Tick          uint32         `protobuf:"varint,1,opt,name=tick,proto3" json:"tick,omitempty"`
 	Players       []*PlayerState `protobuf:"bytes,2,rep,name=players,proto3" json:"players,omitempty"`
+	Game          *GameState     `protobuf:"bytes,3,opt,name=game,proto3" json:"game,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *Snapshot) Reset() {
 	*x = Snapshot{}
-	mi := &file_littlegames_match_v1_match_proto_msgTypes[1]
+	mi := &file_littlegames_match_v1_match_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -174,7 +467,7 @@ func (x *Snapshot) String() string {
 func (*Snapshot) ProtoMessage() {}
 
 func (x *Snapshot) ProtoReflect() protoreflect.Message {
-	mi := &file_littlegames_match_v1_match_proto_msgTypes[1]
+	mi := &file_littlegames_match_v1_match_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -187,7 +480,7 @@ func (x *Snapshot) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Snapshot.ProtoReflect.Descriptor instead.
 func (*Snapshot) Descriptor() ([]byte, []int) {
-	return file_littlegames_match_v1_match_proto_rawDescGZIP(), []int{1}
+	return file_littlegames_match_v1_match_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *Snapshot) GetTick() uint32 {
@@ -204,6 +497,13 @@ func (x *Snapshot) GetPlayers() []*PlayerState {
 	return nil
 }
 
+func (x *Snapshot) GetGame() *GameState {
+	if x != nil {
+		return x.Game
+	}
+	return nil
+}
+
 // One player, as the server sees them.
 type PlayerState struct {
 	state    protoimpl.MessageState `protogen:"open.v1"`
@@ -212,15 +512,17 @@ type PlayerState struct {
 	// Highest input sequence number the server has applied for this player.
 	LastProcessedSeq uint32 `protobuf:"varint,3,opt,name=last_processed_seq,json=lastProcessedSeq,proto3" json:"last_processed_seq,omitempty"`
 	// The input the server acted on for the current tick.
-	Up            bool `protobuf:"varint,4,opt,name=up,proto3" json:"up,omitempty"`
-	Down          bool `protobuf:"varint,5,opt,name=down,proto3" json:"down,omitempty"`
+	Up   bool `protobuf:"varint,4,opt,name=up,proto3" json:"up,omitempty"`
+	Down bool `protobuf:"varint,5,opt,name=down,proto3" json:"down,omitempty"`
+	// End of the field this player defends.
+	Side          Side `protobuf:"varint,6,opt,name=side,proto3,enum=littlegames.match.v1.Side" json:"side,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *PlayerState) Reset() {
 	*x = PlayerState{}
-	mi := &file_littlegames_match_v1_match_proto_msgTypes[2]
+	mi := &file_littlegames_match_v1_match_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -232,7 +534,7 @@ func (x *PlayerState) String() string {
 func (*PlayerState) ProtoMessage() {}
 
 func (x *PlayerState) ProtoReflect() protoreflect.Message {
-	mi := &file_littlegames_match_v1_match_proto_msgTypes[2]
+	mi := &file_littlegames_match_v1_match_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -245,7 +547,7 @@ func (x *PlayerState) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PlayerState.ProtoReflect.Descriptor instead.
 func (*PlayerState) Descriptor() ([]byte, []int) {
-	return file_littlegames_match_v1_match_proto_rawDescGZIP(), []int{2}
+	return file_littlegames_match_v1_match_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *PlayerState) GetUserId() string {
@@ -283,6 +585,13 @@ func (x *PlayerState) GetDown() bool {
 	return false
 }
 
+func (x *PlayerState) GetSide() Side {
+	if x != nil {
+		return x.Side
+	}
+	return Side_SIDE_UNSPECIFIED
+}
+
 var File_littlegames_match_v1_match_proto protoreflect.FileDescriptor
 
 const file_littlegames_match_v1_match_proto_rawDesc = "" +
@@ -291,20 +600,52 @@ const file_littlegames_match_v1_match_proto_rawDesc = "" +
 	"\vPlayerInput\x12\x10\n" +
 	"\x03seq\x18\x01 \x01(\rR\x03seq\x12\x0e\n" +
 	"\x02up\x18\x02 \x01(\bR\x02up\x12\x12\n" +
-	"\x04down\x18\x03 \x01(\bR\x04down\"[\n" +
+	"\x04down\x18\x03 \x01(\bR\x04down\"X\n" +
+	"\x04Ball\x12\f\n" +
+	"\x01x\x18\x01 \x01(\x01R\x01x\x12\f\n" +
+	"\x01y\x18\x02 \x01(\x01R\x01y\x12\x0e\n" +
+	"\x02vx\x18\x03 \x01(\x01R\x02vx\x12\x0e\n" +
+	"\x02vy\x18\x04 \x01(\x01R\x02vy\x12\x14\n" +
+	"\x05speed\x18\x05 \x01(\x01R\x05speed\"\xcd\x02\n" +
+	"\tGameState\x121\n" +
+	"\x05phase\x18\x01 \x01(\x0e2\x1b.littlegames.match.v1.PhaseR\x05phase\x12\x1f\n" +
+	"\vphase_ticks\x18\x02 \x01(\rR\n" +
+	"phaseTicks\x12\"\n" +
+	"\rleft_paddle_y\x18\x03 \x01(\x01R\vleftPaddleY\x12$\n" +
+	"\x0eright_paddle_y\x18\x04 \x01(\x01R\frightPaddleY\x12.\n" +
+	"\x04ball\x18\x05 \x01(\v2\x1a.littlegames.match.v1.BallR\x04ball\x12\x1d\n" +
+	"\n" +
+	"score_left\x18\x06 \x01(\rR\tscoreLeft\x12\x1f\n" +
+	"\vscore_right\x18\a \x01(\rR\n" +
+	"scoreRight\x122\n" +
+	"\x06winner\x18\b \x01(\x0e2\x1a.littlegames.match.v1.SideR\x06winner\"\x90\x01\n" +
 	"\bSnapshot\x12\x12\n" +
 	"\x04tick\x18\x01 \x01(\rR\x04tick\x12;\n" +
-	"\aplayers\x18\x02 \x03(\v2!.littlegames.match.v1.PlayerStateR\aplayers\"\x94\x01\n" +
+	"\aplayers\x18\x02 \x03(\v2!.littlegames.match.v1.PlayerStateR\aplayers\x123\n" +
+	"\x04game\x18\x03 \x01(\v2\x1f.littlegames.match.v1.GameStateR\x04game\"\xc4\x01\n" +
 	"\vPlayerState\x12\x17\n" +
 	"\auser_id\x18\x01 \x01(\tR\x06userId\x12\x1a\n" +
 	"\busername\x18\x02 \x01(\tR\busername\x12,\n" +
 	"\x12last_processed_seq\x18\x03 \x01(\rR\x10lastProcessedSeq\x12\x0e\n" +
 	"\x02up\x18\x04 \x01(\bR\x02up\x12\x12\n" +
-	"\x04down\x18\x05 \x01(\bR\x04down*Q\n" +
+	"\x04down\x18\x05 \x01(\bR\x04down\x12.\n" +
+	"\x04side\x18\x06 \x01(\x0e2\x1a.littlegames.match.v1.SideR\x04side*Q\n" +
 	"\x06OpCode\x12\x17\n" +
 	"\x13OP_CODE_UNSPECIFIED\x10\x00\x12\x18\n" +
 	"\x14OP_CODE_PLAYER_INPUT\x10\x01\x12\x14\n" +
-	"\x10OP_CODE_SNAPSHOT\x10\x02B3Z1littlegames.local/nakama/protocol/matchv1;matchv1b\x06proto3"
+	"\x10OP_CODE_SNAPSHOT\x10\x02*\x85\x01\n" +
+	"\x05Phase\x12\x15\n" +
+	"\x11PHASE_UNSPECIFIED\x10\x00\x12\x11\n" +
+	"\rPHASE_WAITING\x10\x01\x12\x13\n" +
+	"\x0fPHASE_COUNTDOWN\x10\x02\x12\x11\n" +
+	"\rPHASE_PLAYING\x10\x03\x12\x16\n" +
+	"\x12PHASE_POINT_SCORED\x10\x04\x12\x12\n" +
+	"\x0ePHASE_FINISHED\x10\x05*;\n" +
+	"\x04Side\x12\x14\n" +
+	"\x10SIDE_UNSPECIFIED\x10\x00\x12\r\n" +
+	"\tSIDE_LEFT\x10\x01\x12\x0e\n" +
+	"\n" +
+	"SIDE_RIGHT\x10\x02B3Z1littlegames.local/nakama/protocol/matchv1;matchv1b\x06proto3"
 
 var (
 	file_littlegames_match_v1_match_proto_rawDescOnce sync.Once
@@ -318,21 +659,30 @@ func file_littlegames_match_v1_match_proto_rawDescGZIP() []byte {
 	return file_littlegames_match_v1_match_proto_rawDescData
 }
 
-var file_littlegames_match_v1_match_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_littlegames_match_v1_match_proto_msgTypes = make([]protoimpl.MessageInfo, 3)
+var file_littlegames_match_v1_match_proto_enumTypes = make([]protoimpl.EnumInfo, 3)
+var file_littlegames_match_v1_match_proto_msgTypes = make([]protoimpl.MessageInfo, 5)
 var file_littlegames_match_v1_match_proto_goTypes = []any{
 	(OpCode)(0),         // 0: littlegames.match.v1.OpCode
-	(*PlayerInput)(nil), // 1: littlegames.match.v1.PlayerInput
-	(*Snapshot)(nil),    // 2: littlegames.match.v1.Snapshot
-	(*PlayerState)(nil), // 3: littlegames.match.v1.PlayerState
+	(Phase)(0),          // 1: littlegames.match.v1.Phase
+	(Side)(0),           // 2: littlegames.match.v1.Side
+	(*PlayerInput)(nil), // 3: littlegames.match.v1.PlayerInput
+	(*Ball)(nil),        // 4: littlegames.match.v1.Ball
+	(*GameState)(nil),   // 5: littlegames.match.v1.GameState
+	(*Snapshot)(nil),    // 6: littlegames.match.v1.Snapshot
+	(*PlayerState)(nil), // 7: littlegames.match.v1.PlayerState
 }
 var file_littlegames_match_v1_match_proto_depIdxs = []int32{
-	3, // 0: littlegames.match.v1.Snapshot.players:type_name -> littlegames.match.v1.PlayerState
-	1, // [1:1] is the sub-list for method output_type
-	1, // [1:1] is the sub-list for method input_type
-	1, // [1:1] is the sub-list for extension type_name
-	1, // [1:1] is the sub-list for extension extendee
-	0, // [0:1] is the sub-list for field type_name
+	1, // 0: littlegames.match.v1.GameState.phase:type_name -> littlegames.match.v1.Phase
+	4, // 1: littlegames.match.v1.GameState.ball:type_name -> littlegames.match.v1.Ball
+	2, // 2: littlegames.match.v1.GameState.winner:type_name -> littlegames.match.v1.Side
+	7, // 3: littlegames.match.v1.Snapshot.players:type_name -> littlegames.match.v1.PlayerState
+	5, // 4: littlegames.match.v1.Snapshot.game:type_name -> littlegames.match.v1.GameState
+	2, // 5: littlegames.match.v1.PlayerState.side:type_name -> littlegames.match.v1.Side
+	6, // [6:6] is the sub-list for method output_type
+	6, // [6:6] is the sub-list for method input_type
+	6, // [6:6] is the sub-list for extension type_name
+	6, // [6:6] is the sub-list for extension extendee
+	0, // [0:6] is the sub-list for field type_name
 }
 
 func init() { file_littlegames_match_v1_match_proto_init() }
@@ -345,8 +695,8 @@ func file_littlegames_match_v1_match_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_littlegames_match_v1_match_proto_rawDesc), len(file_littlegames_match_v1_match_proto_rawDesc)),
-			NumEnums:      1,
-			NumMessages:   3,
+			NumEnums:      3,
+			NumMessages:   5,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

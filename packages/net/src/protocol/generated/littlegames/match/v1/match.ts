@@ -60,6 +60,111 @@ export function opCodeToJSON(object: OpCode): string {
   }
 }
 
+/** Where a match is in its life. Mirrors the phases of the shared rules. */
+export const Phase = {
+  PHASE_UNSPECIFIED: 0,
+  PHASE_WAITING: 1,
+  PHASE_COUNTDOWN: 2,
+  PHASE_PLAYING: 3,
+  PHASE_POINT_SCORED: 4,
+  PHASE_FINISHED: 5,
+} as const;
+
+export type Phase = typeof Phase[keyof typeof Phase];
+
+export namespace Phase {
+  export type PHASE_UNSPECIFIED = typeof Phase.PHASE_UNSPECIFIED;
+  export type PHASE_WAITING = typeof Phase.PHASE_WAITING;
+  export type PHASE_COUNTDOWN = typeof Phase.PHASE_COUNTDOWN;
+  export type PHASE_PLAYING = typeof Phase.PHASE_PLAYING;
+  export type PHASE_POINT_SCORED = typeof Phase.PHASE_POINT_SCORED;
+  export type PHASE_FINISHED = typeof Phase.PHASE_FINISHED;
+}
+
+export function phaseFromJSON(object: any): Phase {
+  switch (object) {
+    case 0:
+    case "PHASE_UNSPECIFIED":
+      return Phase.PHASE_UNSPECIFIED;
+    case 1:
+    case "PHASE_WAITING":
+      return Phase.PHASE_WAITING;
+    case 2:
+    case "PHASE_COUNTDOWN":
+      return Phase.PHASE_COUNTDOWN;
+    case 3:
+    case "PHASE_PLAYING":
+      return Phase.PHASE_PLAYING;
+    case 4:
+    case "PHASE_POINT_SCORED":
+      return Phase.PHASE_POINT_SCORED;
+    case 5:
+    case "PHASE_FINISHED":
+      return Phase.PHASE_FINISHED;
+    default:
+      throw new globalThis.Error("Unrecognized enum value " + object + " for enum Phase");
+  }
+}
+
+export function phaseToJSON(object: Phase): string {
+  switch (object) {
+    case Phase.PHASE_UNSPECIFIED:
+      return "PHASE_UNSPECIFIED";
+    case Phase.PHASE_WAITING:
+      return "PHASE_WAITING";
+    case Phase.PHASE_COUNTDOWN:
+      return "PHASE_COUNTDOWN";
+    case Phase.PHASE_PLAYING:
+      return "PHASE_PLAYING";
+    case Phase.PHASE_POINT_SCORED:
+      return "PHASE_POINT_SCORED";
+    case Phase.PHASE_FINISHED:
+      return "PHASE_FINISHED";
+    default:
+      throw new globalThis.Error("Unrecognized enum value " + object + " for enum Phase");
+  }
+}
+
+/** Which end of the field a player defends. */
+export const Side = { SIDE_UNSPECIFIED: 0, SIDE_LEFT: 1, SIDE_RIGHT: 2 } as const;
+
+export type Side = typeof Side[keyof typeof Side];
+
+export namespace Side {
+  export type SIDE_UNSPECIFIED = typeof Side.SIDE_UNSPECIFIED;
+  export type SIDE_LEFT = typeof Side.SIDE_LEFT;
+  export type SIDE_RIGHT = typeof Side.SIDE_RIGHT;
+}
+
+export function sideFromJSON(object: any): Side {
+  switch (object) {
+    case 0:
+    case "SIDE_UNSPECIFIED":
+      return Side.SIDE_UNSPECIFIED;
+    case 1:
+    case "SIDE_LEFT":
+      return Side.SIDE_LEFT;
+    case 2:
+    case "SIDE_RIGHT":
+      return Side.SIDE_RIGHT;
+    default:
+      throw new globalThis.Error("Unrecognized enum value " + object + " for enum Side");
+  }
+}
+
+export function sideToJSON(object: Side): string {
+  switch (object) {
+    case Side.SIDE_UNSPECIFIED:
+      return "SIDE_UNSPECIFIED";
+    case Side.SIDE_LEFT:
+      return "SIDE_LEFT";
+    case Side.SIDE_RIGHT:
+      return "SIDE_RIGHT";
+    default:
+      throw new globalThis.Error("Unrecognized enum value " + object + " for enum Side");
+  }
+}
+
 /**
  * What a client is pressing, sent from client to server.
  *
@@ -79,11 +184,40 @@ export interface PlayerInput {
   down: boolean;
 }
 
+/** The ball, in fixed logical field units rather than pixels. */
+export interface Ball {
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+  /** Magnitude of the velocity, so a client can rebuild a bounce exactly. */
+  speed: number;
+}
+
+/** The simulation itself, as the server holds it. */
+export interface GameState {
+  phase: Phase;
+  /**
+   * Ticks left in a timed phase, zero outside the countdown and the pause
+   * after a point.
+   */
+  phaseTicks: number;
+  /** Centre of each paddle along the y axis. */
+  leftPaddleY: number;
+  rightPaddleY: number;
+  ball: Ball | undefined;
+  scoreLeft: number;
+  scoreRight: number;
+  /** Set once the match is over. */
+  winner: Side;
+}
+
 /** The authoritative state, broadcast from server to client once per tick. */
 export interface Snapshot {
   /** Server tick this state was produced on, counted from the match start. */
   tick: number;
   players: PlayerState[];
+  game: GameState | undefined;
 }
 
 /** One player, as the server sees them. */
@@ -95,6 +229,8 @@ export interface PlayerState {
   /** The input the server acted on for the current tick. */
   up: boolean;
   down: boolean;
+  /** End of the field this player defends. */
+  side: Side;
 }
 
 function createBasePlayerInput(): PlayerInput {
@@ -189,8 +325,333 @@ export const PlayerInput: MessageFns<PlayerInput> = {
   },
 };
 
+function createBaseBall(): Ball {
+  return { x: 0, y: 0, vx: 0, vy: 0, speed: 0 };
+}
+
+export const Ball: MessageFns<Ball> = {
+  encode(message: Ball, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.x !== 0) {
+      writer.uint32(9).double(message.x);
+    }
+    if (message.y !== 0) {
+      writer.uint32(17).double(message.y);
+    }
+    if (message.vx !== 0) {
+      writer.uint32(25).double(message.vx);
+    }
+    if (message.vy !== 0) {
+      writer.uint32(33).double(message.vy);
+    }
+    if (message.speed !== 0) {
+      writer.uint32(41).double(message.speed);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): Ball {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseBall();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 9) {
+            break;
+          }
+
+          message.x = reader.double();
+          continue;
+        }
+        case 2: {
+          if (tag !== 17) {
+            break;
+          }
+
+          message.y = reader.double();
+          continue;
+        }
+        case 3: {
+          if (tag !== 25) {
+            break;
+          }
+
+          message.vx = reader.double();
+          continue;
+        }
+        case 4: {
+          if (tag !== 33) {
+            break;
+          }
+
+          message.vy = reader.double();
+          continue;
+        }
+        case 5: {
+          if (tag !== 41) {
+            break;
+          }
+
+          message.speed = reader.double();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): Ball {
+    return {
+      x: isSet(object.x) ? globalThis.Number(object.x) : 0,
+      y: isSet(object.y) ? globalThis.Number(object.y) : 0,
+      vx: isSet(object.vx) ? globalThis.Number(object.vx) : 0,
+      vy: isSet(object.vy) ? globalThis.Number(object.vy) : 0,
+      speed: isSet(object.speed) ? globalThis.Number(object.speed) : 0,
+    };
+  },
+
+  toJSON(message: Ball): unknown {
+    const obj: any = {};
+    if (message.x !== 0) {
+      obj.x = message.x;
+    }
+    if (message.y !== 0) {
+      obj.y = message.y;
+    }
+    if (message.vx !== 0) {
+      obj.vx = message.vx;
+    }
+    if (message.vy !== 0) {
+      obj.vy = message.vy;
+    }
+    if (message.speed !== 0) {
+      obj.speed = message.speed;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<Ball>, I>>(base?: I): Ball {
+    return Ball.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<Ball>, I>>(object: I): Ball {
+    const message = createBaseBall();
+    message.x = object.x ?? 0;
+    message.y = object.y ?? 0;
+    message.vx = object.vx ?? 0;
+    message.vy = object.vy ?? 0;
+    message.speed = object.speed ?? 0;
+    return message;
+  },
+};
+
+function createBaseGameState(): GameState {
+  return {
+    phase: 0,
+    phaseTicks: 0,
+    leftPaddleY: 0,
+    rightPaddleY: 0,
+    ball: undefined,
+    scoreLeft: 0,
+    scoreRight: 0,
+    winner: 0,
+  };
+}
+
+export const GameState: MessageFns<GameState> = {
+  encode(message: GameState, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.phase !== 0) {
+      writer.uint32(8).int32(message.phase);
+    }
+    if (message.phaseTicks !== 0) {
+      writer.uint32(16).uint32(message.phaseTicks);
+    }
+    if (message.leftPaddleY !== 0) {
+      writer.uint32(25).double(message.leftPaddleY);
+    }
+    if (message.rightPaddleY !== 0) {
+      writer.uint32(33).double(message.rightPaddleY);
+    }
+    if (message.ball !== undefined) {
+      Ball.encode(message.ball, writer.uint32(42).fork()).join();
+    }
+    if (message.scoreLeft !== 0) {
+      writer.uint32(48).uint32(message.scoreLeft);
+    }
+    if (message.scoreRight !== 0) {
+      writer.uint32(56).uint32(message.scoreRight);
+    }
+    if (message.winner !== 0) {
+      writer.uint32(64).int32(message.winner);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): GameState {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseGameState();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 8) {
+            break;
+          }
+
+          message.phase = reader.int32() as any;
+          continue;
+        }
+        case 2: {
+          if (tag !== 16) {
+            break;
+          }
+
+          message.phaseTicks = reader.uint32();
+          continue;
+        }
+        case 3: {
+          if (tag !== 25) {
+            break;
+          }
+
+          message.leftPaddleY = reader.double();
+          continue;
+        }
+        case 4: {
+          if (tag !== 33) {
+            break;
+          }
+
+          message.rightPaddleY = reader.double();
+          continue;
+        }
+        case 5: {
+          if (tag !== 42) {
+            break;
+          }
+
+          message.ball = Ball.decode(reader, reader.uint32());
+          continue;
+        }
+        case 6: {
+          if (tag !== 48) {
+            break;
+          }
+
+          message.scoreLeft = reader.uint32();
+          continue;
+        }
+        case 7: {
+          if (tag !== 56) {
+            break;
+          }
+
+          message.scoreRight = reader.uint32();
+          continue;
+        }
+        case 8: {
+          if (tag !== 64) {
+            break;
+          }
+
+          message.winner = reader.int32() as any;
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): GameState {
+    return {
+      phase: isSet(object.phase) ? phaseFromJSON(object.phase) : 0,
+      phaseTicks: isSet(object.phaseTicks)
+        ? globalThis.Number(object.phaseTicks)
+        : isSet(object.phase_ticks)
+        ? globalThis.Number(object.phase_ticks)
+        : 0,
+      leftPaddleY: isSet(object.leftPaddleY)
+        ? globalThis.Number(object.leftPaddleY)
+        : isSet(object.left_paddle_y)
+        ? globalThis.Number(object.left_paddle_y)
+        : 0,
+      rightPaddleY: isSet(object.rightPaddleY)
+        ? globalThis.Number(object.rightPaddleY)
+        : isSet(object.right_paddle_y)
+        ? globalThis.Number(object.right_paddle_y)
+        : 0,
+      ball: isSet(object.ball) ? Ball.fromJSON(object.ball) : undefined,
+      scoreLeft: isSet(object.scoreLeft)
+        ? globalThis.Number(object.scoreLeft)
+        : isSet(object.score_left)
+        ? globalThis.Number(object.score_left)
+        : 0,
+      scoreRight: isSet(object.scoreRight)
+        ? globalThis.Number(object.scoreRight)
+        : isSet(object.score_right)
+        ? globalThis.Number(object.score_right)
+        : 0,
+      winner: isSet(object.winner) ? sideFromJSON(object.winner) : 0,
+    };
+  },
+
+  toJSON(message: GameState): unknown {
+    const obj: any = {};
+    if (message.phase !== 0) {
+      obj.phase = phaseToJSON(message.phase);
+    }
+    if (message.phaseTicks !== 0) {
+      obj.phaseTicks = Math.round(message.phaseTicks);
+    }
+    if (message.leftPaddleY !== 0) {
+      obj.leftPaddleY = message.leftPaddleY;
+    }
+    if (message.rightPaddleY !== 0) {
+      obj.rightPaddleY = message.rightPaddleY;
+    }
+    if (message.ball !== undefined) {
+      obj.ball = Ball.toJSON(message.ball);
+    }
+    if (message.scoreLeft !== 0) {
+      obj.scoreLeft = Math.round(message.scoreLeft);
+    }
+    if (message.scoreRight !== 0) {
+      obj.scoreRight = Math.round(message.scoreRight);
+    }
+    if (message.winner !== 0) {
+      obj.winner = sideToJSON(message.winner);
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<GameState>, I>>(base?: I): GameState {
+    return GameState.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<GameState>, I>>(object: I): GameState {
+    const message = createBaseGameState();
+    message.phase = object.phase ?? 0;
+    message.phaseTicks = object.phaseTicks ?? 0;
+    message.leftPaddleY = object.leftPaddleY ?? 0;
+    message.rightPaddleY = object.rightPaddleY ?? 0;
+    message.ball = (object.ball !== undefined && object.ball !== null) ? Ball.fromPartial(object.ball) : undefined;
+    message.scoreLeft = object.scoreLeft ?? 0;
+    message.scoreRight = object.scoreRight ?? 0;
+    message.winner = object.winner ?? 0;
+    return message;
+  },
+};
+
 function createBaseSnapshot(): Snapshot {
-  return { tick: 0, players: [] };
+  return { tick: 0, players: [], game: undefined };
 }
 
 export const Snapshot: MessageFns<Snapshot> = {
@@ -200,6 +661,9 @@ export const Snapshot: MessageFns<Snapshot> = {
     }
     for (const v of message.players) {
       PlayerState.encode(v!, writer.uint32(18).fork()).join();
+    }
+    if (message.game !== undefined) {
+      GameState.encode(message.game, writer.uint32(26).fork()).join();
     }
     return writer;
   },
@@ -227,6 +691,14 @@ export const Snapshot: MessageFns<Snapshot> = {
           message.players.push(PlayerState.decode(reader, reader.uint32()));
           continue;
         }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.game = GameState.decode(reader, reader.uint32());
+          continue;
+        }
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -240,6 +712,7 @@ export const Snapshot: MessageFns<Snapshot> = {
     return {
       tick: isSet(object.tick) ? globalThis.Number(object.tick) : 0,
       players: globalThis.Array.isArray(object?.players) ? object.players.map((e: any) => PlayerState.fromJSON(e)) : [],
+      game: isSet(object.game) ? GameState.fromJSON(object.game) : undefined,
     };
   },
 
@@ -251,6 +724,9 @@ export const Snapshot: MessageFns<Snapshot> = {
     if (message.players?.length) {
       obj.players = message.players.map((e) => PlayerState.toJSON(e));
     }
+    if (message.game !== undefined) {
+      obj.game = GameState.toJSON(message.game);
+    }
     return obj;
   },
 
@@ -261,12 +737,13 @@ export const Snapshot: MessageFns<Snapshot> = {
     const message = createBaseSnapshot();
     message.tick = object.tick ?? 0;
     message.players = object.players?.map((e) => PlayerState.fromPartial(e)) || [];
+    message.game = (object.game !== undefined && object.game !== null) ? GameState.fromPartial(object.game) : undefined;
     return message;
   },
 };
 
 function createBasePlayerState(): PlayerState {
-  return { userId: "", username: "", lastProcessedSeq: 0, up: false, down: false };
+  return { userId: "", username: "", lastProcessedSeq: 0, up: false, down: false, side: 0 };
 }
 
 export const PlayerState: MessageFns<PlayerState> = {
@@ -285,6 +762,9 @@ export const PlayerState: MessageFns<PlayerState> = {
     }
     if (message.down !== false) {
       writer.uint32(40).bool(message.down);
+    }
+    if (message.side !== 0) {
+      writer.uint32(48).int32(message.side);
     }
     return writer;
   },
@@ -336,6 +816,14 @@ export const PlayerState: MessageFns<PlayerState> = {
           message.down = reader.bool();
           continue;
         }
+        case 6: {
+          if (tag !== 48) {
+            break;
+          }
+
+          message.side = reader.int32() as any;
+          continue;
+        }
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -360,6 +848,7 @@ export const PlayerState: MessageFns<PlayerState> = {
         : 0,
       up: isSet(object.up) ? globalThis.Boolean(object.up) : false,
       down: isSet(object.down) ? globalThis.Boolean(object.down) : false,
+      side: isSet(object.side) ? sideFromJSON(object.side) : 0,
     };
   },
 
@@ -380,6 +869,9 @@ export const PlayerState: MessageFns<PlayerState> = {
     if (message.down !== false) {
       obj.down = message.down;
     }
+    if (message.side !== 0) {
+      obj.side = sideToJSON(message.side);
+    }
     return obj;
   },
 
@@ -393,6 +885,7 @@ export const PlayerState: MessageFns<PlayerState> = {
     message.lastProcessedSeq = object.lastProcessedSeq ?? 0;
     message.up = object.up ?? false;
     message.down = object.down ?? false;
+    message.side = object.side ?? 0;
     return message;
   },
 };

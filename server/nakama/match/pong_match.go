@@ -7,6 +7,7 @@ import (
 
 	"github.com/heroiclabs/nakama-common/runtime"
 	"google.golang.org/protobuf/proto"
+	"littlegames.local/nakama/pong"
 	matchv1 "littlegames.local/nakama/protocol/matchv1"
 )
 
@@ -15,10 +16,9 @@ const PongName = "pong"
 
 // TickRate is the number of authoritative steps per second.
 //
-// Every part of the simulation derives its timing from this, never from a
-// client's frame rate: a fixed step is what keeps two clients agreeing on the
-// same outcome.
-const TickRate = 30
+// Taken from the shared rules rather than declared again here, so the server
+// cannot tick at a rate the physics was not written for.
+const TickRate = pong.TickRate
 
 // Capacity is how many players a match holds. Extra joiners are turned away
 // rather than queued.
@@ -27,6 +27,9 @@ const Capacity = 2
 // player is one participant, as the server tracks them.
 type player struct {
 	presence runtime.Presence
+
+	// End of the field this player defends, assigned on join.
+	side string
 
 	// Latest input the server has accepted from this player.
 	up   bool
@@ -41,6 +44,9 @@ type player struct {
 // never touches it, so it is only ever read and written on the match loop.
 type matchState struct {
 	players map[string]*player
+
+	// The authoritative simulation. The server owns the only copy that counts.
+	sim pong.State
 
 	// Presence list rebuilt whenever membership changes, so the loop does not
 	// allocate one every tick.
@@ -65,6 +71,7 @@ func (m *PongMatch) MatchInit(
 	state := &matchState{
 		players:          make(map[string]*player, Capacity),
 		broadcastTargets: make([]runtime.Presence, 0, Capacity),
+		sim:              pong.NewState(),
 	}
 
 	// The label is what the matchmaker and match listings search on.
@@ -116,12 +123,33 @@ func (m *PongMatch) MatchJoin(
 	}
 
 	for _, presence := range presences {
-		current.players[presence.GetUserId()] = &player{presence: presence}
+		current.players[presence.GetUserId()] = &player{
+			presence: presence,
+			side:     current.freeSide(),
+		}
 		logger.Info("Player %s joined the match", presence.GetUsername())
 	}
 
 	current.rebuildTargets()
+
+	// The countdown opens as soon as both seats are taken, and only from
+	// waiting: a rejoin mid-match must not restart the match.
+	if len(current.players) == Capacity && current.sim.Phase == pong.PhaseWaiting {
+		current.sim = pong.StartCountdown(current.sim)
+		logger.Info("Both players present, starting the countdown")
+	}
+
 	return current
+}
+
+// freeSide returns whichever end of the field nobody is defending yet.
+func (s *matchState) freeSide() string {
+	for _, participant := range s.players {
+		if participant.side == pong.SideLeft {
+			return pong.SideRight
+		}
+	}
+	return pong.SideLeft
 }
 
 func (m *PongMatch) MatchLeave(
@@ -172,6 +200,7 @@ func (m *PongMatch) MatchLoop(
 	}
 
 	current.applyInputs(logger, messages)
+	current.sim = pong.Step(current.sim, current.inputs())
 
 	if err := current.broadcastSnapshot(dispatcher, tick); err != nil {
 		logger.Error("Failed to broadcast snapshot: %v", err)
@@ -240,6 +269,48 @@ func (s *matchState) applyInputs(logger runtime.Logger, messages []runtime.Match
 	}
 }
 
+// inputs collects what each side is pressing for this tick.
+func (s *matchState) inputs() pong.Inputs {
+	var collected pong.Inputs
+	for _, participant := range s.players {
+		pressed := pong.PaddleInput{Up: participant.up, Down: participant.down}
+		if participant.side == pong.SideLeft {
+			collected.Left = pressed
+		} else {
+			collected.Right = pressed
+		}
+	}
+	return collected
+}
+
+func phaseToProto(phase string) matchv1.Phase {
+	switch phase {
+	case pong.PhaseWaiting:
+		return matchv1.Phase_PHASE_WAITING
+	case pong.PhaseCountdown:
+		return matchv1.Phase_PHASE_COUNTDOWN
+	case pong.PhasePlaying:
+		return matchv1.Phase_PHASE_PLAYING
+	case pong.PhasePointScored:
+		return matchv1.Phase_PHASE_POINT_SCORED
+	case pong.PhaseFinished:
+		return matchv1.Phase_PHASE_FINISHED
+	default:
+		return matchv1.Phase_PHASE_UNSPECIFIED
+	}
+}
+
+func sideToProto(side string) matchv1.Side {
+	switch side {
+	case pong.SideLeft:
+		return matchv1.Side_SIDE_LEFT
+	case pong.SideRight:
+		return matchv1.Side_SIDE_RIGHT
+	default:
+		return matchv1.Side_SIDE_UNSPECIFIED
+	}
+}
+
 // broadcastSnapshot sends the authoritative state to everyone in the match.
 func (s *matchState) broadcastSnapshot(dispatcher runtime.MatchDispatcher, tick int64) error {
 	if len(s.broadcastTargets) == 0 {
@@ -249,6 +320,22 @@ func (s *matchState) broadcastSnapshot(dispatcher runtime.MatchDispatcher, tick 
 	snapshot := &matchv1.Snapshot{
 		Tick:    uint32(tick),
 		Players: make([]*matchv1.PlayerState, 0, len(s.players)),
+		Game: &matchv1.GameState{
+			Phase:        phaseToProto(s.sim.Phase),
+			PhaseTicks:   uint32(s.sim.PhaseTicks),
+			LeftPaddleY:  s.sim.Left.Y,
+			RightPaddleY: s.sim.Right.Y,
+			Ball: &matchv1.Ball{
+				X:     s.sim.Ball.X,
+				Y:     s.sim.Ball.Y,
+				Vx:    s.sim.Ball.VX,
+				Vy:    s.sim.Ball.VY,
+				Speed: s.sim.Ball.Speed,
+			},
+			ScoreLeft:  uint32(s.sim.Score.Left),
+			ScoreRight: uint32(s.sim.Score.Right),
+			Winner:     sideToProto(s.sim.Winner),
+		},
 	}
 
 	for _, participant := range s.players {
@@ -258,6 +345,7 @@ func (s *matchState) broadcastSnapshot(dispatcher runtime.MatchDispatcher, tick 
 			LastProcessedSeq: participant.lastProcessedSeq,
 			Up:               participant.up,
 			Down:             participant.down,
+			Side:             sideToProto(participant.side),
 		})
 	}
 

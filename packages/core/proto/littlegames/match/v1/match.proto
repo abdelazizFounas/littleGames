@@ -38,12 +38,61 @@ message PlayerInput {
   bool down = 3;
 }
 
+// Where a match is in its life. Mirrors the phases of the shared rules.
+enum Phase {
+  PHASE_UNSPECIFIED = 0;
+  PHASE_WAITING = 1;
+  PHASE_COUNTDOWN = 2;
+  PHASE_PLAYING = 3;
+  PHASE_POINT_SCORED = 4;
+  PHASE_FINISHED = 5;
+}
+
+// Which end of the field a player defends.
+enum Side {
+  SIDE_UNSPECIFIED = 0;
+  SIDE_LEFT = 1;
+  SIDE_RIGHT = 2;
+}
+
+// The ball, in fixed logical field units rather than pixels.
+message Ball {
+  double x = 1;
+  double y = 2;
+  double vx = 3;
+  double vy = 4;
+  // Magnitude of the velocity, so a client can rebuild a bounce exactly.
+  double speed = 5;
+}
+
+// The simulation itself, as the server holds it.
+message GameState {
+  Phase phase = 1;
+  // Ticks left in a timed phase, zero outside the countdown and the pause
+  // after a point.
+  uint32 phase_ticks = 2;
+
+  // Centre of each paddle along the y axis.
+  double left_paddle_y = 3;
+  double right_paddle_y = 4;
+
+  Ball ball = 5;
+
+  uint32 score_left = 6;
+  uint32 score_right = 7;
+
+  // Set once the match is over.
+  Side winner = 8;
+}
+
 // The authoritative state, broadcast from server to client once per tick.
 message Snapshot {
   // Server tick this state was produced on, counted from the match start.
   uint32 tick = 1;
 
   repeated PlayerState players = 2;
+
+  GameState game = 3;
 }
 
 // One player, as the server sees them.
@@ -57,4 +106,7 @@ message PlayerState {
   // The input the server acted on for the current tick.
   bool up = 4;
   bool down = 5;
+
+  // End of the field this player defends.
+  Side side = 6;
 }

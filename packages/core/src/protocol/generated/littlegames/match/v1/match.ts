@@ -30,6 +30,38 @@ export namespace OpCode {
   export type OP_CODE_SNAPSHOT = typeof OpCode.OP_CODE_SNAPSHOT;
 }
 
+/** Where a match is in its life. Mirrors the phases of the shared rules. */
+export const Phase = {
+  PHASE_UNSPECIFIED: 0,
+  PHASE_WAITING: 1,
+  PHASE_COUNTDOWN: 2,
+  PHASE_PLAYING: 3,
+  PHASE_POINT_SCORED: 4,
+  PHASE_FINISHED: 5,
+} as const;
+
+export type Phase = typeof Phase[keyof typeof Phase];
+
+export namespace Phase {
+  export type PHASE_UNSPECIFIED = typeof Phase.PHASE_UNSPECIFIED;
+  export type PHASE_WAITING = typeof Phase.PHASE_WAITING;
+  export type PHASE_COUNTDOWN = typeof Phase.PHASE_COUNTDOWN;
+  export type PHASE_PLAYING = typeof Phase.PHASE_PLAYING;
+  export type PHASE_POINT_SCORED = typeof Phase.PHASE_POINT_SCORED;
+  export type PHASE_FINISHED = typeof Phase.PHASE_FINISHED;
+}
+
+/** Which end of the field a player defends. */
+export const Side = { SIDE_UNSPECIFIED: 0, SIDE_LEFT: 1, SIDE_RIGHT: 2 } as const;
+
+export type Side = typeof Side[keyof typeof Side];
+
+export namespace Side {
+  export type SIDE_UNSPECIFIED = typeof Side.SIDE_UNSPECIFIED;
+  export type SIDE_LEFT = typeof Side.SIDE_LEFT;
+  export type SIDE_RIGHT = typeof Side.SIDE_RIGHT;
+}
+
 /**
  * What a client is pressing, sent from client to server.
  *
@@ -49,11 +81,40 @@ export interface PlayerInput {
   down: boolean;
 }
 
+/** The ball, in fixed logical field units rather than pixels. */
+export interface Ball {
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+  /** Magnitude of the velocity, so a client can rebuild a bounce exactly. */
+  speed: number;
+}
+
+/** The simulation itself, as the server holds it. */
+export interface GameState {
+  phase: Phase;
+  /**
+   * Ticks left in a timed phase, zero outside the countdown and the pause
+   * after a point.
+   */
+  phaseTicks: number;
+  /** Centre of each paddle along the y axis. */
+  leftPaddleY: number;
+  rightPaddleY: number;
+  ball: Ball | undefined;
+  scoreLeft: number;
+  scoreRight: number;
+  /** Set once the match is over. */
+  winner: Side;
+}
+
 /** The authoritative state, broadcast from server to client once per tick. */
 export interface Snapshot {
   /** Server tick this state was produced on, counted from the match start. */
   tick: number;
   players: PlayerState[];
+  game: GameState | undefined;
 }
 
 /** One player, as the server sees them. */
@@ -65,4 +126,6 @@ export interface PlayerState {
   /** The input the server acted on for the current tick. */
   up: boolean;
   down: boolean;
+  /** End of the field this player defends. */
+  side: Side;
 }
