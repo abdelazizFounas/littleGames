@@ -42,7 +42,13 @@ export {
   updateDisplayName,
 } from './account';
 
-export type { ConnectionState, LobbySummary, MatchConnection, MatchListeners } from './match';
+export type {
+  ConnectionState,
+  LobbySummary,
+  MatchConnection,
+  MatchListeners,
+  ResumableMatch,
+} from './match';
 export type { Invitation } from './match';
 export {
   autoLobby,
@@ -51,6 +57,7 @@ export {
   findMatch,
   joinMatch,
   listLobbies,
+  listMyMatches,
   resolveInvitation,
 } from './match';
 

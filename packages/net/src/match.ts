@@ -253,6 +253,43 @@ export async function listLobbies(client: Client, session: Session): Promise<Lob
   });
 }
 
+/** A match this player belongs to and can go back into. */
+export interface ResumableMatch {
+  readonly matchId: string;
+  readonly game: string;
+  readonly host: string;
+  /** Carried so a locked lobby can be re-entered without asking again. */
+  readonly password: string;
+  readonly players: number;
+}
+
+/**
+ * Lists the matches this player can return to.
+ *
+ * The server checks each one still exists before offering it, so a game that
+ * ended while the player was away never appears as a door onto nothing.
+ */
+export async function listMyMatches(client: Client, session: Session): Promise<ResumableMatch[]> {
+  const payload: unknown = (await client.rpc(session, 'lobby.mine', {})).payload;
+  if (!isRecord(payload) || !Array.isArray(payload['matches'])) {
+    return [];
+  }
+  return payload['matches'].flatMap((entry: unknown) => {
+    if (!isRecord(entry) || typeof entry['matchId'] !== 'string') {
+      return [];
+    }
+    return [
+      {
+        matchId: entry['matchId'],
+        game: typeof entry['game'] === 'string' ? entry['game'] : 'pong',
+        host: typeof entry['host'] === 'string' ? entry['host'] : 'someone',
+        password: typeof entry['password'] === 'string' ? entry['password'] : '',
+        players: typeof entry['players'] === 'number' ? entry['players'] : 0,
+      },
+    ];
+  });
+}
+
 /** A code that leads to a match, and how long it stays good for. */
 export interface Invitation {
   readonly code: string;

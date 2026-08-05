@@ -3,6 +3,7 @@ import type {
   Invitation,
   LeaderboardEntry,
   LobbySummary,
+  ResumableMatch,
   MatchConnection,
   MatchListeners,
   PlayerProfile,
@@ -57,6 +58,8 @@ export interface SessionContextValue {
   readonly openLobby: (password: string) => Promise<string>;
   /** The lobbies still waiting for an opponent. */
   readonly listOpenLobbies: () => Promise<LobbySummary[]>;
+  /** Matches this player walked away from and can return to. */
+  readonly listMyMatches: () => Promise<ResumableMatch[]>;
   /** Opens a match and returns a shareable code that leads to it. */
   readonly createInvitation: (matchId?: string) => Promise<Invitation>;
   /** Turns a code back into the match it points at. */

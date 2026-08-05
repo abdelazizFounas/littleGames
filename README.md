@@ -304,6 +304,20 @@ exists, and it is reached through a dynamic `import()`. The catalogue and lobby
 never carry a rendering engine: the built entry chunk contains no PixiJS at
 all, and the engine arrives in its own chunks when a match starts.
 
+## Coming back to a game
+
+A player who walks away from a match sees it listed above the catalogue, and
+can step back into it. The server keeps that list, one record per player per
+match, readable by its owner and writable by nobody.
+
+Each entry is checked against the server before being offered: a record can
+outlive the match it names, and a door that opens onto nothing is worse than no
+door. Stale ones are cleared as they are found, so the list tidies itself.
+
+The record carries the lobby's password when it has one. The player was
+admitted with it once already, and asking again on the way back would be
+theatre.
+
 ## Lobbies
 
 Three ways into a game, all of which resolve a lobby before the game screen is

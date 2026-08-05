@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 import { Link } from 'react-router';
 import { SignInPanel } from '../features/auth/sign-in-panel';
 import { GameList } from '../features/catalog/game-list';
+import { ResumePanel } from '../features/catalog/resume-panel';
 import { useSession } from '../session/use-session';
 
 export function HomeRoute(): ReactNode {
@@ -28,6 +29,7 @@ export function HomeRoute(): ReactNode {
           You are playing as a guest. <Link to="/profile">Secure your account</Link> to keep it.
         </p>
       )}
+      <ResumePanel />
       <GameList />
     </section>
   );

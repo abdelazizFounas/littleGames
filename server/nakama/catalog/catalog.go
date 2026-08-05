@@ -111,7 +111,7 @@ func Seed(ctx context.Context, logger runtime.Logger, nk runtime.NakamaModule) e
 // that a code cannot be minted, harvested or brute-forced from the outside.
 // Stats a player may read but never write: a record they could edit would be a
 // claim rather than a fact.
-var GuardedCollections = []string{Collection, "invites", "stats"}
+var GuardedCollections = []string{Collection, "invites", "stats", "active"}
 
 func isGuarded(collection string) bool {
 	for _, guarded := range GuardedCollections {

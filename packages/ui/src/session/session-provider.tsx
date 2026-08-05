@@ -13,6 +13,7 @@ import {
   joinMatch as joinMatchOnServer,
   linkEmail,
   listLobbies,
+  listMyMatches as listMyMatchesOnServer,
   persistSession,
   resolveInvitation as resolveInvitationOnServer,
   restoreSession,
@@ -22,6 +23,7 @@ import {
   type Invitation,
   type LeaderboardEntry,
   type LobbySummary,
+  type ResumableMatch,
   type MatchConnection,
   type MatchListeners,
   type PlayerProfile,
@@ -185,6 +187,13 @@ export function SessionProvider({ children }: { readonly children: ReactNode }):
     return listLobbies(client, internal.session);
   }, [client, internal]);
 
+  const listMyMatches = useCallback(async (): Promise<ResumableMatch[]> => {
+    if (internal.status !== 'signed-in') {
+      throw new Error('Sign in to see your games.');
+    }
+    return listMyMatchesOnServer(client, internal.session);
+  }, [client, internal]);
+
   const createInvitation = useCallback(
     async (matchId?: string): Promise<Invitation> => {
       if (internal.status !== 'signed-in') {
@@ -255,12 +264,14 @@ export function SessionProvider({ children }: { readonly children: ReactNode }):
       findOpenLobby,
       openLobby,
       listOpenLobbies,
+      listMyMatches,
     }),
     [
       changeDisplayName,
       createInvitation,
       findOpenLobby,
       joinMatch,
+      listMyMatches,
       listOpenLobbies,
       loadCatalog,
       loadLeaderboard,

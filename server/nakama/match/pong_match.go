@@ -22,6 +22,13 @@ const PongName = "pong"
 // cannot tick at a rate the physics was not written for.
 const TickRate = pong.TickRate
 
+// ActiveCollection remembers, per player, the matches they are part of.
+//
+// Readable by its owner and writable by nobody, so a player sees their own
+// games and cannot invent one. It is what lets someone who walked away come
+// back to a match still in progress.
+const ActiveCollection = "active"
+
 // Lobby states, as they appear in the label listings are filtered on.
 const (
 	StateWaiting = "waiting"
@@ -99,6 +106,9 @@ type matchState struct {
 	// What this lobby advertises, and the secret it does not.
 	label    Label
 	password string
+
+	// This match's own id, learned on the first join.
+	matchID string
 
 	// Whether the result has been written. The match keeps ticking after it
 	// finishes, so without this it would be recorded thirty times a second.
@@ -189,10 +199,10 @@ func (m *PongMatch) MatchJoinAttempt(
 }
 
 func (m *PongMatch) MatchJoin(
-	_ context.Context,
+	ctx context.Context,
 	logger runtime.Logger,
 	_ *sql.DB,
-	_ runtime.NakamaModule,
+	nk runtime.NakamaModule,
 	dispatcher runtime.MatchDispatcher,
 	_ int64,
 	state interface{},
@@ -201,6 +211,12 @@ func (m *PongMatch) MatchJoin(
 	current, ok := state.(*matchState)
 	if !ok {
 		return state
+	}
+
+	if current.matchID == "" {
+		if id, ok := ctx.Value(runtime.RUNTIME_CTX_MATCH_ID).(string); ok {
+			current.matchID = id
+		}
 	}
 
 	for _, presence := range presences {
@@ -217,6 +233,7 @@ func (m *PongMatch) MatchJoin(
 			side:     current.freeSide(),
 		}
 		logger.Info("Player %s joined the match", presence.GetUsername())
+		current.rememberFor(ctx, logger, nk, presence.GetUserId())
 	}
 
 	current.rebuildTargets()
@@ -322,6 +339,9 @@ func (m *PongMatch) MatchLoop(
 		// Taken out of the listings straight away, so nobody looking for a game
 		// is sent to a table that has already been won.
 		current.relabel(logger, dispatcher, StateOver)
+		// And out of everyone's resume list: a finished game is not one to
+		// come back to.
+		current.forgetAll(ctx, logger, nk)
 	}
 
 	// Long enough to read the score, then gone. A finished match left running
@@ -395,6 +415,68 @@ func (s *matchState) applyInputs(logger runtime.Logger, messages []runtime.Match
 		participant.lastProcessedSeq = input.GetSeq()
 		participant.up = input.GetUp()
 		participant.down = input.GetDown()
+	}
+}
+
+// activeRecord is what a player is told about a match they can return to.
+//
+// The password is included because it is the player's own record, readable by
+// nobody else, and they were admitted with it once already. Without it a locked
+// lobby could be left but never rejoined.
+type activeRecord struct {
+	MatchID  string `json:"matchId"`
+	Game     string `json:"game"`
+	Host     string `json:"host"`
+	Password string `json:"password"`
+}
+
+// rememberFor records that this player belongs to this match.
+func (s *matchState) rememberFor(
+	ctx context.Context,
+	logger runtime.Logger,
+	nk runtime.NakamaModule,
+	userID string,
+) {
+	value, err := json.Marshal(activeRecord{
+		MatchID:  s.matchID,
+		Game:     s.label.Game,
+		Host:     s.label.Host,
+		Password: s.password,
+	})
+	if err != nil {
+		return
+	}
+	if _, err := nk.StorageWrite(ctx, []*runtime.StorageWrite{{
+		Collection:      ActiveCollection,
+		Key:             s.matchID,
+		UserID:          userID,
+		Value:           string(value),
+		PermissionRead:  1,
+		PermissionWrite: 0,
+	}}); err != nil {
+		logger.Error("Failed to remember a match for a player: %v", err)
+	}
+}
+
+// forgetAll drops this match from every seated player's resume list.
+func (s *matchState) forgetAll(
+	ctx context.Context,
+	logger runtime.Logger,
+	nk runtime.NakamaModule,
+) {
+	deletes := make([]*runtime.StorageDelete, 0, len(s.players))
+	for userID := range s.players {
+		deletes = append(deletes, &runtime.StorageDelete{
+			Collection: ActiveCollection,
+			Key:        s.matchID,
+			UserID:     userID,
+		})
+	}
+	if len(deletes) == 0 {
+		return
+	}
+	if err := nk.StorageDelete(ctx, deletes); err != nil {
+		logger.Error("Failed to clear a finished match from resume lists: %v", err)
 	}
 }
 

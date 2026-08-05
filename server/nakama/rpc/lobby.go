@@ -170,10 +170,99 @@ func registerLobbies(initializer runtime.Initializer) error {
 		AutoLobbyID:   autoLobby,
 		CreateLobbyID: createLobby,
 		ListLobbiesID: listLobbies,
+		MyMatchesID:   myMatches,
 	} {
 		if err := initializer.RegisterRpc(id, fn); err != nil {
 			return fmt.Errorf("register %s: %w", id, err)
 		}
 	}
 	return nil
+}
+
+type myMatch struct {
+	MatchID  string `json:"matchId"`
+	Game     string `json:"game"`
+	Host     string `json:"host"`
+	Password string `json:"password"`
+	Players  int    `json:"players"`
+}
+
+type myMatchesResponse struct {
+	Matches []myMatch `json:"matches"`
+}
+
+// MyMatchesID lists the matches the caller can return to.
+const MyMatchesID = "lobby.mine"
+
+const myMatchesLimit = 20
+
+// myMatches reports the matches this player belongs to and can go back into.
+//
+// Each one is checked against the server before being offered: a record can
+// outlive the match it names — the game ended while the player was away, or
+// nobody came back to it — and offering a door that opens onto nothing is worse
+// than offering none. Stale records are cleared as they are found, so the list
+// tidies itself rather than needing a sweep.
+func myMatches(
+	ctx context.Context,
+	logger runtime.Logger,
+	_ *sql.DB,
+	nk runtime.NakamaModule,
+	_ string,
+) (string, error) {
+	userID, _ := ctx.Value(runtime.RUNTIME_CTX_USER_ID).(string)
+	if userID == "" {
+		return "", runtime.NewError("sign in first", codeInvalidArgument)
+	}
+
+	objects, _, err := nk.StorageList(ctx, userID, userID, match.ActiveCollection, myMatchesLimit, "")
+	if err != nil {
+		logger.Error("Failed to list a player's matches: %v", err)
+		return "", runtime.NewError("could not list your games", codeInternal)
+	}
+
+	mine := make([]myMatch, 0, len(objects))
+	stale := make([]*runtime.StorageDelete, 0)
+
+	for _, object := range objects {
+		var record struct {
+			MatchID  string `json:"matchId"`
+			Game     string `json:"game"`
+			Host     string `json:"host"`
+			Password string `json:"password"`
+		}
+		if err := json.Unmarshal([]byte(object.GetValue()), &record); err != nil {
+			continue
+		}
+
+		live, err := nk.MatchGet(ctx, record.MatchID)
+		if err != nil || live == nil {
+			stale = append(stale, &runtime.StorageDelete{
+				Collection: match.ActiveCollection,
+				Key:        object.GetKey(),
+				UserID:     userID,
+			})
+			continue
+		}
+
+		mine = append(mine, myMatch{
+			MatchID:  record.MatchID,
+			Game:     record.Game,
+			Host:     record.Host,
+			Password: record.Password,
+			Players:  int(live.GetSize()),
+		})
+	}
+
+	if len(stale) > 0 {
+		if err := nk.StorageDelete(ctx, stale); err != nil {
+			logger.Warn("Failed to clear stale match records: %v", err)
+		}
+	}
+
+	response, err := json.Marshal(myMatchesResponse{Matches: mine})
+	if err != nil {
+		return "", runtime.NewError("could not encode the response", codeInternal)
+	}
+	return string(response), nil
 }
