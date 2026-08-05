@@ -1,0 +1,19 @@
+{
+  "name": "@littlegames/renderer-headless",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "A GameRenderer that draws nothing, so a match can be played in a test with no browser.",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --build"
+  },
+  "dependencies": {
+    "@littlegames/core": "workspace:*"
+  },
+  "devDependencies": {
+    "@littlegames/pong-logic": "workspace:*"
+  }
+}
