@@ -7,9 +7,9 @@ authoritative match logic in Go.
 The whole repository — code, identifiers, comments, UI strings, commit
 messages — is written in English.
 
-> **Status: phase 0 (infrastructure).** The stack boots, Nakama loads a
-> compiled Go runtime module, and the monorepo type-checks, lints and runs
-> tests. No gameplay yet.
+> **Status: phase 1 (authentication and shell).** The stack boots, Nakama loads
+> a compiled Go runtime module, and you can sign in as a guest, pick a display
+> name and upgrade the account with an email. No gameplay yet.
 
 ## Architecture in one paragraph
 
@@ -55,8 +55,8 @@ Versions are re-checked at the start of each phase with `pnpm outdated` and
 | pixi.js | `8.19.0` | `npm view pixi.js dist-tags` |
 | @heroiclabs/nakama-js | `2.8.0` | `npm view @heroiclabs/nakama-js version` |
 
-Packages not yet installed are the ones whose phase has not started; the
-versions above are the ones that will be pinned when they are.
+`pixi.js` is not installed yet: its phase has not started. The version above is
+the one that will be pinned when it is.
 
 ### Quality and build
 
@@ -116,7 +116,13 @@ cp .env.example .env
 
 # 3. Build the Go module and start Nakama, PostgreSQL and Caddy
 pnpm server:up
+
+# 4. In another terminal, start the web client
+pnpm dev
 ```
+
+The client is then on `http://localhost:5173`. Click **Play as guest** and the
+home screen greets you by name.
 
 `.env` is git-ignored, and no secret is ever hard-coded anywhere else.
 
@@ -165,6 +171,8 @@ the server binary.
 ```
 packages/
   core/            Shared contracts and protocol. Zero runtime dependencies.
+  net/             Nakama client, session lifecycle, account access.
+  ui/              React shell: routing, authentication, profile.
 server/
   nakama/          Go runtime module (match handlers, RPCs, hooks)
   docker/          Compose stack, plugin build, Caddy and Nakama config
@@ -172,3 +180,22 @@ server/
 
 Packages arrive as their phase begins, so that nothing in the tree is a
 placeholder.
+
+`net` is the only package that imports the Nakama SDK. It re-exports what the
+shell needs, so no screen talks to the backend directly and swapping the
+backend stays a change to one package.
+
+## Configuration
+
+Everything comes from a single `.env` at the repository root, which the Vite
+build also reads.
+
+Variables prefixed with `VITE_` are embedded verbatim in the browser bundle, so
+none of them may hold a secret. The Nakama server key is the one value both
+sides need: it is declared once as `NAKAMA_SOCKET_SERVER_KEY` and injected into
+the bundle at build time, so the client and the server cannot drift apart. It is
+public by design and authorises nothing beyond opening a session.
+
+In development the client is served by Vite, which proxies `/v2` and `/ws` to
+Caddy. Development is therefore same-origin exactly as production is, and no
+CORS rule has to exist purely for the dev server.
