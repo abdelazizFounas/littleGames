@@ -101,7 +101,11 @@ the one that will be pinned when it is.
 ## Prerequisites
 
 - Docker with Compose v2 or later
-- Node `24.19.0` and pnpm `11.20.0` (`nvm use` picks up `.nvmrc`)
+- Node `24.19.0` — `nvm use` picks it up from `.nvmrc`
+- pnpm `11.20.0` — no manual install needed: Corepack ships with Node and
+  resolves the exact version from the `packageManager` field, which is what
+  guarantees everyone builds with the pinned one. `corepack install` pre-caches
+  it if you would rather not be prompted on first use.
 
 Go is **not** required locally.
 
