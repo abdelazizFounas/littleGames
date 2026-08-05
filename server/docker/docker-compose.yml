@@ -1,0 +1,97 @@
+name: littlegames
+
+# Secrets are handed to the containers through `environment:` and expanded by
+# the shell inside them. The `$$` escapes stop Compose from interpolating them
+# at parse time, so the resolved values never get inlined into the rendered
+# entrypoint. They are still visible as container environment variables, which
+# is the trade-off of a self-hosted single-node setup; a managed secret store
+# is the answer once this leaves a development machine.
+
+services:
+  postgres:
+    image: postgres:18.4-trixie
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:?set POSTGRES_DB in .env, see .env.example}
+      POSTGRES_USER: ${POSTGRES_USER:?set POSTGRES_USER in .env, see .env.example}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env, see .env.example}
+    volumes:
+      # PostgreSQL 18+ official images store data in a major-version-specific
+      # subdirectory, and expect a single mount at /var/lib/postgresql. Mounting
+      # the older /var/lib/postgresql/data path makes the container refuse to
+      # start.
+      - postgres-data:/var/lib/postgresql
+    expose:
+      - '5432'
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U "$$POSTGRES_USER" -d "$$POSTGRES_DB"']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  nakama:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.pluginbuilder
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:?set POSTGRES_DB in .env, see .env.example}
+      POSTGRES_USER: ${POSTGRES_USER:?set POSTGRES_USER in .env, see .env.example}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env, see .env.example}
+      NAKAMA_SOCKET_SERVER_KEY: ${NAKAMA_SOCKET_SERVER_KEY:?set NAKAMA_SOCKET_SERVER_KEY in .env}
+      NAKAMA_SESSION_ENCRYPTION_KEY: ${NAKAMA_SESSION_ENCRYPTION_KEY:?set NAKAMA_SESSION_ENCRYPTION_KEY in .env}
+      NAKAMA_SESSION_REFRESH_ENCRYPTION_KEY: ${NAKAMA_SESSION_REFRESH_ENCRYPTION_KEY:?set NAKAMA_SESSION_REFRESH_ENCRYPTION_KEY in .env}
+      NAKAMA_RUNTIME_HTTP_KEY: ${NAKAMA_RUNTIME_HTTP_KEY:?set NAKAMA_RUNTIME_HTTP_KEY in .env}
+      NAKAMA_CONSOLE_USERNAME: ${NAKAMA_CONSOLE_USERNAME:?set NAKAMA_CONSOLE_USERNAME in .env}
+      NAKAMA_CONSOLE_PASSWORD: ${NAKAMA_CONSOLE_PASSWORD:?set NAKAMA_CONSOLE_PASSWORD in .env}
+    entrypoint:
+      - /bin/sh
+      - -ec
+      - |
+        DB_ADDRESS="$${POSTGRES_USER}:$${POSTGRES_PASSWORD}@postgres:5432/$${POSTGRES_DB}"
+        /nakama/nakama migrate up --database.address "$$DB_ADDRESS"
+        exec /nakama/nakama \
+          --config /nakama/data/nakama.yml \
+          --database.address "$$DB_ADDRESS" \
+          --socket.server_key "$${NAKAMA_SOCKET_SERVER_KEY}" \
+          --session.encryption_key "$${NAKAMA_SESSION_ENCRYPTION_KEY}" \
+          --session.refresh_encryption_key "$${NAKAMA_SESSION_REFRESH_ENCRYPTION_KEY}" \
+          --runtime.http_key "$${NAKAMA_RUNTIME_HTTP_KEY}" \
+          --console.username "$${NAKAMA_CONSOLE_USERNAME}" \
+          --console.password "$${NAKAMA_CONSOLE_PASSWORD}"
+    expose:
+      - '7349'
+      - '7350'
+      - '7351'
+    healthcheck:
+      test: ['CMD', '/nakama/nakama', 'healthcheck']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  caddy:
+    image: caddy:2.11.4
+    restart: unless-stopped
+    depends_on:
+      nakama:
+        condition: service_healthy
+    environment:
+      CADDY_SITE_ADDRESS: ${CADDY_SITE_ADDRESS:?set CADDY_SITE_ADDRESS in .env, see .env.example}
+      CADDY_CONSOLE_ADDRESS: ${CADDY_CONSOLE_ADDRESS:?set CADDY_CONSOLE_ADDRESS in .env, see .env.example}
+    ports:
+      - '80:80'
+      - '443:443'
+      - '8080:8080'
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+
+volumes:
+  postgres-data:
+  caddy-data:
+  caddy-config:

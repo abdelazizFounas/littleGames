@@ -1,0 +1,42 @@
+# Non-secret Nakama configuration.
+#
+# Nakama does not interpolate environment variables inside this file, so every
+# secret (database address, server key, session keys, console credentials) is
+# passed as a command-line flag from docker-compose.yml instead, where values
+# do come from the environment. Flags take precedence over this file.
+
+# Node name, unique per server instance. Nakama rejects anything longer than
+# 16 characters.
+name: littlegames-1
+data_dir: '/nakama/data'
+
+logger:
+  level: 'INFO'
+  stdout: true
+
+runtime:
+  # Directory Nakama scans for compiled Go modules. The plugin built by
+  # Dockerfile.pluginbuilder is copied here.
+  path: '/nakama/data/modules'
+
+socket:
+  port: 7350
+  # A Pong input is a couple of booleans and a sequence number; the default
+  # 4 KiB ceiling is already generous.
+  max_message_size_bytes: 4096
+  # Detect a dropped mobile connection quickly enough that the 30 s
+  # reconnection grace period of a match still has room to work.
+  # Nakama refuses to start unless ping_period_ms < pong_wait_ms.
+  ping_period_ms: 8000
+  pong_wait_ms: 10000
+
+session:
+  token_expiry_sec: 7200
+  refresh_token_expiry_sec: 604800
+
+console:
+  port: 7351
+
+match:
+  input_queue_size: 128
+  call_queue_size: 128

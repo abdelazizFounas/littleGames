@@ -1,0 +1,16 @@
+# Client API and realtime socket.
+#
+# Caddy negotiates WebSocket upgrades through reverse_proxy without any extra
+# directive, so the Nakama socket works over this route as-is.
+#
+# On a real hostname Caddy provisions and renews TLS certificates on its own.
+# Locally the address is plain http, so no certificate is issued.
+{$CADDY_SITE_ADDRESS} {
+	reverse_proxy nakama:7350
+}
+
+# Nakama developer console, served on its own address so that no path rewriting
+# is needed.
+{$CADDY_CONSOLE_ADDRESS} {
+	reverse_proxy nakama:7351
+}

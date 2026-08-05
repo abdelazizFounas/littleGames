@@ -1,0 +1,31 @@
+# syntax=docker/dockerfile:1
+
+# Builds the LittleGames runtime module as a Go plugin, then bakes it into the
+# Nakama runtime image.
+#
+# Both stages are pinned to the same Nakama version on purpose. A Go plugin is
+# only loadable when it was compiled by the exact same Go toolchain, against
+# the exact same versions of the dependencies it shares with the host binary.
+# The pluginbuilder image is what guarantees that, which is why the module is
+# never compiled with a locally installed Go.
+#
+# Bump both tags together, never one alone.
+
+FROM heroiclabs/nakama-pluginbuilder:3.40.0 AS builder
+
+WORKDIR /backend
+
+# Dependencies first, so edits to the Go sources do not invalidate this layer.
+COPY nakama/go.mod nakama/go.sum ./
+RUN go mod download
+
+COPY nakama/ ./
+
+# --trimpath keeps absolute build paths out of the object, which makes the
+# build reproducible across machines.
+RUN go build --trimpath --buildmode=plugin -o ./build/littlegames.so
+
+FROM heroiclabs/nakama:3.40.0
+
+COPY --from=builder /backend/build/littlegames.so /nakama/data/modules/
+COPY docker/nakama/nakama.yml /nakama/data/nakama.yml
