@@ -3,6 +3,7 @@ import { Link, Navigate, useParams, useSearchParams } from 'react-router';
 import { useCatalog } from '../features/catalog/use-catalog';
 import { InvitePanel } from '../features/game/invite-panel';
 import { PongStage } from '../features/game/pong-stage';
+import { RecordPanel } from '../features/stats/record-panel';
 import { useSession } from '../session/use-session';
 
 function Frame({ children }: { readonly children: ReactNode }): ReactNode {
@@ -91,6 +92,8 @@ export function GameLobbyRoute(): ReactNode {
       />
 
       <InvitePanel matchId={joinedMatchId} />
+
+      <RecordPanel gameId={game.id} />
 
       <Link className="link-button" to="/">
         Back to the games

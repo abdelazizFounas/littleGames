@@ -109,7 +109,9 @@ func Seed(ctx context.Context, logger runtime.Logger, nk runtime.NakamaModule) e
 // The catalogue is public information a client must not be able to rewrite.
 // Invitations are the opposite: private, and readable only by the server, so
 // that a code cannot be minted, harvested or brute-forced from the outside.
-var GuardedCollections = []string{Collection, "invites"}
+// Stats a player may read but never write: a record they could edit would be a
+// claim rather than a fact.
+var GuardedCollections = []string{Collection, "invites", "stats"}
 
 func isGuarded(collection string) bool {
 	for _, guarded := range GuardedCollections {

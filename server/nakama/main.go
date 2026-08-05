@@ -12,9 +12,11 @@ import (
 	"fmt"
 
 	"github.com/heroiclabs/nakama-common/runtime"
+	"littlegames.local/nakama/analytics"
 	"littlegames.local/nakama/catalog"
 	"littlegames.local/nakama/match"
 	"littlegames.local/nakama/rpc"
+	"littlegames.local/nakama/stats"
 )
 
 // InitModule is the entry point Nakama calls once, at server startup, after
@@ -48,7 +50,15 @@ func InitModule(
 		return fmt.Errorf("register the %s match handler: %w", match.PongName, err)
 	}
 
+	if err := stats.EnsureLeaderboard(ctx, logger, nk); err != nil {
+		return err
+	}
+
 	if err := rpc.Register(initializer); err != nil {
+		return err
+	}
+
+	if err := analytics.Register(logger, initializer); err != nil {
 		return err
 	}
 

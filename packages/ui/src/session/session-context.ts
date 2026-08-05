@@ -1,9 +1,11 @@
 import type {
   GameSummary,
   Invitation,
+  LeaderboardEntry,
   MatchConnection,
   MatchListeners,
   PlayerProfile,
+  PlayerStats,
 } from '@littlegames/net';
 import { createContext } from 'react';
 
@@ -48,6 +50,10 @@ export interface SessionContextValue {
   readonly createInvitation: (matchId?: string) => Promise<Invitation>;
   /** Turns a code back into the match it points at. */
   readonly resolveInvitation: (code: string) => Promise<string>;
+  /** The signed-in player's record for a game. */
+  readonly loadStats: (gameId: string) => Promise<PlayerStats>;
+  /** This week's board. */
+  readonly loadLeaderboard: () => Promise<LeaderboardEntry[]>;
 }
 
 export const SessionContext = createContext<SessionContextValue | null>(null);

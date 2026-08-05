@@ -51,3 +51,6 @@ export { createSnapshotBuffer } from './snapshot-buffer';
 
 export type { InputHistory, Sequenced } from './prediction';
 export { createInputHistory, reconcile } from './prediction';
+
+export type { LeaderboardEntry, PlayerStats } from './stats';
+export { fetchLeaderboard, fetchPlayerStats } from './stats';

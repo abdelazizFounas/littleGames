@@ -8,6 +8,7 @@ import (
 	"github.com/heroiclabs/nakama-common/runtime"
 	"google.golang.org/protobuf/proto"
 	"littlegames.local/nakama/pong"
+	"littlegames.local/nakama/stats"
 	matchv1 "littlegames.local/nakama/protocol/matchv1"
 )
 
@@ -47,6 +48,10 @@ type matchState struct {
 
 	// The authoritative simulation. The server owns the only copy that counts.
 	sim pong.State
+
+	// Whether the result has been written. The match keeps ticking after it
+	// finishes, so without this it would be recorded thirty times a second.
+	recorded bool
 
 	// Presence list rebuilt whenever membership changes, so the loop does not
 	// allocate one every tick.
@@ -202,10 +207,10 @@ func (m *PongMatch) MatchLeave(
 }
 
 func (m *PongMatch) MatchLoop(
-	_ context.Context,
+	ctx context.Context,
 	logger runtime.Logger,
 	_ *sql.DB,
-	_ runtime.NakamaModule,
+	nk runtime.NakamaModule,
 	dispatcher runtime.MatchDispatcher,
 	tick int64,
 	state interface{},
@@ -217,7 +222,13 @@ func (m *PongMatch) MatchLoop(
 	}
 
 	current.applyInputs(logger, messages)
+	before := current.sim.Phase
 	current.sim = pong.Step(current.sim, current.inputs())
+
+	if current.sim.Phase == pong.PhaseFinished && before != pong.PhaseFinished && !current.recorded {
+		current.recorded = true
+		stats.RecordMatch(ctx, logger, nk, PongName, current.outcomes())
+	}
 
 	if err := current.broadcastSnapshot(dispatcher, tick); err != nil {
 		logger.Error("Failed to broadcast snapshot: %v", err)
@@ -284,6 +295,25 @@ func (s *matchState) applyInputs(logger runtime.Logger, messages []runtime.Match
 		participant.up = input.GetUp()
 		participant.down = input.GetDown()
 	}
+}
+
+// outcomes turns the finished simulation into one result per player.
+func (s *matchState) outcomes() []stats.Outcome {
+	results := make([]stats.Outcome, 0, len(s.players))
+	for _, participant := range s.players {
+		own, other := s.sim.Score.Left, s.sim.Score.Right
+		if participant.side == pong.SideRight {
+			own, other = other, own
+		}
+		results = append(results, stats.Outcome{
+			UserID:        participant.presence.GetUserId(),
+			Username:      participant.presence.GetUsername(),
+			Won:           s.sim.Winner == participant.side,
+			PointsFor:     own,
+			PointsAgainst: other,
+		})
+	}
+	return results
 }
 
 // inputs collects what each side is pressing for this tick.

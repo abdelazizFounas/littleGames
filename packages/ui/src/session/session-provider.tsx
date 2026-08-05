@@ -5,6 +5,8 @@ import {
   createInvitation as createInvitationOnServer,
   createNakamaClient,
   fetchGameCatalog,
+  fetchLeaderboard,
+  fetchPlayerStats,
   findMatch,
   fetchPlayerProfile,
   joinMatch as joinMatchOnServer,
@@ -16,9 +18,11 @@ import {
   updateDisplayName,
   type GameSummary,
   type Invitation,
+  type LeaderboardEntry,
   type MatchConnection,
   type MatchListeners,
   type PlayerProfile,
+  type PlayerStats,
   type PlayerSession,
 } from '@littlegames/net';
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
@@ -162,6 +166,23 @@ export function SessionProvider({ children }: { readonly children: ReactNode }):
     [client, internal],
   );
 
+  const loadStats = useCallback(
+    async (gameId: string): Promise<PlayerStats> => {
+      if (internal.status !== 'signed-in') {
+        throw new Error('Sign in to see your record.');
+      }
+      return fetchPlayerStats(client, internal.session, gameId);
+    },
+    [client, internal],
+  );
+
+  const loadLeaderboard = useCallback(async (): Promise<LeaderboardEntry[]> => {
+    if (internal.status !== 'signed-in') {
+      throw new Error('Sign in to see the board.');
+    }
+    return fetchLeaderboard(client, internal.session);
+  }, [client, internal]);
+
   const signOutPlayer = useCallback(async (): Promise<void> => {
     if (internal.status !== 'signed-in') {
       return;
@@ -190,12 +211,16 @@ export function SessionProvider({ children }: { readonly children: ReactNode }):
       joinMatch,
       createInvitation,
       resolveInvitation,
+      loadStats,
+      loadLeaderboard,
     }),
     [
       changeDisplayName,
       createInvitation,
       joinMatch,
       loadCatalog,
+      loadLeaderboard,
+      loadStats,
       resolveInvitation,
       signInAsGuest,
       signInWithEmail,

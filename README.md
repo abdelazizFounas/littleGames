@@ -7,9 +7,9 @@ authoritative match logic in Go.
 The whole repository — code, identifiers, comments, UI strings, commit
 messages — is written in English.
 
-> **Status: phase 6 (invitations).** Pong is playable by two people, and you
-> can open a match and send someone a link to it. Opening that link signs a
-> newcomer in as a guest and drops them straight into the match.
+> **Status: phase 7 (persistence).** Finished matches are recorded: a weekly
+> wins board, a per-player record, and a notification either way. Everything is
+> written server-side.
 
 ## Architecture in one paragraph
 
@@ -331,6 +331,33 @@ its socket, so there is no server-side party to mint a code for. The code
 therefore points at the authoritative match itself, which needs no ready-screen
 handshake and no transfer of a party into a match. The ready screen the brief
 describes is not built.
+
+## What a finished match leaves behind
+
+Written by the server alone, from the state it simulated. A score the client
+reported would be a score the client could choose.
+
+| Where | What | Who may write it |
+|---|---|---|
+| Leaderboard `pong_wins_weekly` | wins, reset every Monday | server |
+| Storage `stats` | played, won, lost, points for and against | server |
+| Notification | the result, persistent | server |
+
+A player may read their own record and nobody else's, and may write neither.
+The same hook that protects the catalogue and the invitations refuses client
+writes here, and reads are limited to the owner by the permission on the object
+itself.
+
+Recording is guarded against repeating: a match keeps ticking after it ends, so
+without that the result would be written thirty times a second.
+
+Notifications are persistent, and sent whether the player is connected or not.
+Someone whose opponent walked off, or who closed the tab on the last point,
+still wants to know how it ended.
+
+The analytics observers are `after` hooks throughout. An analytics failure must
+never be able to refuse a player something they asked for, and a `before` hook
+can.
 
 ## Repository layout
 

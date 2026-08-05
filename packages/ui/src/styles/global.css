@@ -457,3 +457,51 @@ body {
   font-size: 0.8125rem;
   overflow-wrap: anywhere;
 }
+
+/* --- Record and board --------------------------------------------------- */
+
+.facts--grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(7rem, 1fr));
+  gap: 0.75rem 1.5rem;
+}
+
+.facts--grid > div {
+  display: block;
+}
+
+.board {
+  margin: 0.5rem 0 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: none;
+}
+
+.board li {
+  display: flex;
+  gap: 1rem;
+  align-items: baseline;
+  padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.board__self {
+  background: var(--surface-sunken);
+  font-weight: 700;
+}
+
+.board__rank {
+  min-width: 2rem;
+  color: var(--text-muted);
+  font-family: ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
+}
+
+.board__name {
+  flex: 1;
+  overflow-wrap: anywhere;
+}
+
+.board__wins {
+  font-family: ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
+  font-weight: 700;
+}
