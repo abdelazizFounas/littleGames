@@ -1,4 +1,9 @@
-import type { GameSummary, PlayerProfile } from '@littlegames/net';
+import type {
+  GameSummary,
+  MatchConnection,
+  MatchListeners,
+  PlayerProfile,
+} from '@littlegames/net';
 import { createContext } from 'react';
 
 /**
@@ -32,6 +37,12 @@ export interface SessionContextValue {
   readonly signOutPlayer: () => Promise<void>;
   /** Loads the playable games. Requires a signed-in player. */
   readonly loadCatalog: () => Promise<GameSummary[]>;
+  /**
+   * Finds a match with room to spare and joins it.
+   *
+   * The caller owns the returned connection and must leave it.
+   */
+  readonly joinMatch: (listeners: MatchListeners) => Promise<MatchConnection>;
 }
 
 export const SessionContext = createContext<SessionContextValue | null>(null);

@@ -4,13 +4,17 @@ import {
   createBrowserKeyValueStore,
   createNakamaClient,
   fetchGameCatalog,
+  findMatch,
   fetchPlayerProfile,
+  joinMatch as joinMatchOnServer,
   linkEmail,
   persistSession,
   restoreSession,
   signOut,
   updateDisplayName,
   type GameSummary,
+  type MatchConnection,
+  type MatchListeners,
   type PlayerProfile,
   type PlayerSession,
 } from '@littlegames/net';
@@ -28,7 +32,8 @@ export function SessionProvider({ children }: { readonly children: ReactNode }):
   // Both are built once and never rebuilt: a new client would drop in-flight
   // requests, and a new store would hand out a new device id, orphaning the
   // guest account bound to the previous one.
-  const [client] = useState(() => createNakamaClient(readNakamaConfig()));
+  const [config] = useState(readNakamaConfig);
+  const [client] = useState(() => createNakamaClient(config));
   const [store] = useState(() => createBrowserKeyValueStore());
   const [internal, setInternal] = useState<InternalState>({ status: 'loading' });
 
@@ -122,6 +127,17 @@ export function SessionProvider({ children }: { readonly children: ReactNode }):
     return fetchGameCatalog(client, internal.session);
   }, [client, internal]);
 
+  const joinMatch = useCallback(
+    async (listeners: MatchListeners): Promise<MatchConnection> => {
+      if (internal.status !== 'signed-in') {
+        throw new Error('Sign in before joining a match.');
+      }
+      const matchId = await findMatch(client, internal.session);
+      return joinMatchOnServer(client, config, internal.session, matchId, listeners);
+    },
+    [client, config, internal],
+  );
+
   const signOutPlayer = useCallback(async (): Promise<void> => {
     if (internal.status !== 'signed-in') {
       return;
@@ -147,9 +163,11 @@ export function SessionProvider({ children }: { readonly children: ReactNode }):
       changeDisplayName,
       signOutPlayer,
       loadCatalog,
+      joinMatch,
     }),
     [
       changeDisplayName,
+      joinMatch,
       loadCatalog,
       signInAsGuest,
       signInWithEmail,
