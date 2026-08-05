@@ -123,6 +123,14 @@ func (m *PongMatch) MatchJoin(
 	}
 
 	for _, presence := range presences {
+		if seated, alreadyIn := current.players[presence.GetUserId()]; alreadyIn {
+			// Same player on a new socket — a reload, or a reconnection. They
+			// keep their side and their acknowledged input; only the socket to
+			// send to changes.
+			seated.presence = presence
+			logger.Info("Player %s rejoined on a new socket", presence.GetUsername())
+			continue
+		}
 		current.players[presence.GetUserId()] = &player{
 			presence: presence,
 			side:     current.freeSide(),
@@ -168,6 +176,15 @@ func (m *PongMatch) MatchLeave(
 	}
 
 	for _, presence := range presences {
+		seated, stillIn := current.players[presence.GetUserId()]
+		// Only the socket actually holding the seat can vacate it. A player who
+		// opened a second one — a reload, or a client that mounts twice — would
+		// otherwise have their live session evicted by the departure of the one
+		// they already replaced, and would sit there receiving nothing.
+		if !stillIn || seated.presence.GetSessionId() != presence.GetSessionId() {
+			logger.Info("Ignored a leave from a socket that no longer holds a seat")
+			continue
+		}
 		delete(current.players, presence.GetUserId())
 		logger.Info("Player %s left the match", presence.GetUsername())
 	}

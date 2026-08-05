@@ -144,6 +144,7 @@ export async function startPongSession(
         // at join time instead meant announcing a default, which was wrong for
         // whichever player took the other side.
         if (announcedSide !== next.side) {
+          clearTimeout(firstSnapshotDeadline);
           announcedSide = next.side;
           // The match is reported alongside the side so an invitation can be
           // minted for the match actually being played, rather than a new one.
@@ -165,6 +166,18 @@ export async function startPongSession(
   }
 
   joinedMatchId = connection.matchId;
+
+  // Joining can succeed while no state ever follows — a seat lost to a race,
+  // a socket that went quiet. Without this the screen sits on "joining" for
+  // ever, which tells the player nothing and offers them nothing.
+  const firstSnapshotDeadline = setTimeout(() => {
+    if (announcedSide === null) {
+      onStatus({
+        kind: 'failed',
+        message: 'The match did not send any state. Try joining again.',
+      });
+    }
+  }, 8000);
 
   const tick = (now: number): void => {
     if (!running) {
@@ -223,6 +236,7 @@ export async function startPongSession(
   return {
     stop() {
       running = false;
+      clearTimeout(firstSnapshotDeadline);
       cancelAnimationFrame(frame);
       input.stop();
       resizeObserver.disconnect();
