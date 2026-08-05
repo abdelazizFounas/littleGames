@@ -11,13 +11,12 @@ import {
   type PongState,
 } from '@littlegames/pong-logic';
 import { Application, Container, Graphics, Text, TextStyle } from 'pixi.js';
+import { drawNumber } from './segment-digits.ts';
 
 function messageFor(state: PongState): string {
   switch (state.phase) {
     case 'waiting':
       return 'Waiting for an opponent';
-    case 'countdown':
-      return String(Math.ceil(state.phaseTicks / TICK_RATE));
     case 'finished':
       return state.winner === 'left' ? 'Left wins' : 'Right wins';
     default:
@@ -47,21 +46,19 @@ export function createPongPixiRenderer(): GameRenderer<PongState> {
   const rightPaddle = new Graphics();
   const ball = new Graphics();
 
-  const scoreStyle = new TextStyle({
-    fill: FOREGROUND,
-    fontFamily: 'system-ui, sans-serif',
-    fontSize: 72,
-    fontWeight: '700',
+  // Scores and the countdown are drawn as bars, not typeset. Words are the one
+  // thing no arrangement of rectangles renders legibly, so they stay text, in a
+  // monospace stack for want of anything squarer that is always installed.
+  const numbers = new Graphics();
+  const message = new Text({
+    text: '',
+    style: new TextStyle({
+      fill: FOREGROUND,
+      fontFamily: 'ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace',
+      fontSize: 32,
+      fontWeight: '600',
+    }),
   });
-  const messageStyle = new TextStyle({
-    fill: FOREGROUND,
-    fontFamily: 'system-ui, sans-serif',
-    fontSize: 36,
-    fontWeight: '600',
-  });
-  const leftScore = new Text({ text: '0', style: scoreStyle });
-  const rightScore = new Text({ text: '0', style: scoreStyle });
-  const message = new Text({ text: '', style: messageStyle });
 
   let mounted = false;
   let lastWidth = 0;
@@ -82,9 +79,7 @@ export function createPongPixiRenderer(): GameRenderer<PongState> {
       paddle.clear();
       // Drawn around its own origin so that positioning it is a single
       // assignment to `y` per frame.
-      paddle
-        .roundRect(-PADDLE_WIDTH / 2, -PADDLE_HEIGHT / 2, PADDLE_WIDTH, PADDLE_HEIGHT, 4)
-        .fill(FOREGROUND);
+      paddle.rect(-PADDLE_WIDTH / 2, -PADDLE_HEIGHT / 2, PADDLE_WIDTH, PADDLE_HEIGHT).fill(FOREGROUND);
       paddle.x = x;
     }
 
@@ -93,11 +88,6 @@ export function createPongPixiRenderer(): GameRenderer<PongState> {
     // radius, which is the more forgiving of the two and keeps the corners from
     // clipping a paddle the ball only just reached.
     ball.rect(-BALL_RADIUS, -BALL_RADIUS, BALL_RADIUS * 2, BALL_RADIUS * 2).fill(FOREGROUND);
-
-    leftScore.anchor.set(0.5);
-    rightScore.anchor.set(0.5);
-    leftScore.position.set(FIELD_WIDTH / 2 - 80, 70);
-    rightScore.position.set(FIELD_WIDTH / 2 + 80, 70);
 
     message.anchor.set(0.5);
     message.position.set(FIELD_WIDTH / 2, FIELD_HEIGHT / 2 + 120);
@@ -126,7 +116,7 @@ export function createPongPixiRenderer(): GameRenderer<PongState> {
         })
         .then(() => {
           drawStatics();
-          field.addChild(board, leftPaddle, rightPaddle, ball, leftScore, rightScore, message);
+    field.addChild(board, leftPaddle, rightPaddle, ball, numbers, message);
           app.stage.addChild(field);
           container.append(app.canvas);
           mounted = true;
@@ -146,8 +136,22 @@ export function createPongPixiRenderer(): GameRenderer<PongState> {
       // reading as a live ball nobody can reach.
       ball.visible = state.phase === 'playing';
 
-      leftScore.text = String(state.score.left);
-      rightScore.text = String(state.score.right);
+      // One clear and one fill for every number on screen, so a score change
+      // costs a single draw call rather than a text relayout.
+      numbers.clear();
+      drawNumber(numbers, state.score.left, FIELD_WIDTH / 2 - 90, 48, 84);
+      drawNumber(numbers, state.score.right, FIELD_WIDTH / 2 + 90, 48, 84);
+      if (state.phase === 'countdown') {
+        drawNumber(
+          numbers,
+          Math.ceil(state.phaseTicks / TICK_RATE),
+          FIELD_WIDTH / 2,
+          FIELD_HEIGHT / 2 - 60,
+          120,
+        );
+      }
+      numbers.fill(FOREGROUND);
+
       message.text = messageFor(state);
 
       app.renderer.render(app.stage);

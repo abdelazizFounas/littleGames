@@ -1,3 +1,6 @@
+/* Nothing in this interface is rounded. Square corners throughout, to match
+   the game, which is drawn entirely from straight-edged rectangles. */
+
 :root {
   --surface: #ffffff;
   --surface-sunken: #f4f5f7;
@@ -57,7 +60,6 @@ body {
   max-width: 26rem;
   padding: 2rem;
   border: 1px solid var(--border);
-  border-radius: 1rem;
   background: var(--surface);
 }
 
@@ -114,7 +116,6 @@ h2 {
   min-height: 2.75rem;
   padding: 0 1.25rem;
   border: 1px solid var(--border);
-  border-radius: 0.625rem;
   background: var(--surface);
   color: var(--text);
   font: inherit;
@@ -178,7 +179,6 @@ h2 {
   min-height: 2.75rem;
   padding: 0 0.75rem;
   border: 1px solid var(--border);
-  border-radius: 0.625rem;
   background: var(--surface-sunken);
   color: var(--text);
   /* 16px minimum stops iOS Safari from zooming in on focus. */
@@ -258,7 +258,6 @@ body {
   gap: 0.25rem;
   padding: 1rem;
   border: 1px solid var(--border);
-  border-radius: 0.75rem;
   background: var(--surface-sunken);
   color: var(--text);
   text-decoration: none;
@@ -340,7 +339,6 @@ body {
   align-items: baseline;
   padding: 0.625rem 0.75rem;
   border: 1px solid var(--border);
-  border-radius: 0.5rem;
   background: var(--surface-sunken);
 }
 
@@ -369,7 +367,6 @@ body {
 .stage__frame {
   background: #101319;
   border: 1px solid var(--border);
-  border-radius: 0.75rem;
   overflow: hidden;
 }
 
@@ -395,7 +392,6 @@ body {
   align-items: center;
   justify-content: center;
   border: 0;
-  border-radius: 0;
 }
 
 /* In fullscreen the surface takes the whole screen and the renderer
