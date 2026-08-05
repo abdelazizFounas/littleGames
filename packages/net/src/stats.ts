@@ -1,7 +1,6 @@
 import type { Client, Session } from '@heroiclabs/nakama-js';
 
 const STATS_COLLECTION = 'stats';
-const LEADERBOARD_ID = 'pong_wins_weekly';
 const LEADERBOARD_PAGE_SIZE = 20;
 
 /** What a player has done in one game. */
@@ -70,10 +69,13 @@ export async function fetchPlayerStats(
 export async function fetchLeaderboard(
   client: Client,
   session: Session,
+  gameId: string,
 ): Promise<LeaderboardEntry[]> {
   const page = await client.listLeaderboardRecords(
     session,
-    LEADERBOARD_ID,
+    // One board per game, named after it. A win at one says nothing about who
+    // is good at another.
+    `${gameId}_wins_weekly`,
     undefined,
     LEADERBOARD_PAGE_SIZE,
   );

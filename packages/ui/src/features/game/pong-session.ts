@@ -88,11 +88,11 @@ function toFrame(snapshot: ProtocolSnapshot, userId: string): AuthoritativeFrame
 export async function startPongSession(
   container: HTMLElement,
   userId: string,
-  matchId: string | undefined,
+  matchId: string,
   password: string,
   joinMatch: (
     listeners: MatchListeners,
-    matchId?: string,
+    matchId: string,
     password?: string,
   ) => Promise<MatchConnection>,
   onStatus: (status: SessionStatus) => void,

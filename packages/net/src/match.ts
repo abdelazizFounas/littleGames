@@ -6,9 +6,6 @@ import {
   Snapshot as SnapshotCodec,
 } from './protocol/generated/littlegames/match/v1/match';
 
-/** Server function that hands back a match with room to spare. */
-const FIND_MATCH_RPC = 'match.find';
-
 /** Where the connection to a match stands. */
 export type ConnectionState =
   /** Connected and receiving. */
@@ -54,27 +51,6 @@ export interface MatchConnection {
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
-}
-
-/**
- * Asks the server for a match to play in.
- *
- * The id comes from the server rather than the client, because a client that
- * could name its own match could drop itself into somebody else's game.
- */
-export async function findMatch(
-  client: Client,
-  session: Session,
-  fresh = false,
-): Promise<string> {
-  const response = await client.rpc(session, FIND_MATCH_RPC, fresh ? { fresh: true } : {});
-  const payload: unknown = response.payload;
-
-  if (!isRecord(payload) || typeof payload['matchId'] !== 'string') {
-    throw new Error('The server did not return a match id.');
-  }
-
-  return payload['matchId'];
 }
 
 /**
@@ -214,17 +190,22 @@ function matchIdOf(payload: unknown): string {
 }
 
 /** Joins the first open lobby with room, or opens one when there is none. */
-export async function autoLobby(client: Client, session: Session): Promise<string> {
-  return matchIdOf((await client.rpc(session, 'lobby.auto', {})).payload);
+export async function autoLobby(
+  client: Client,
+  session: Session,
+  game: string,
+): Promise<string> {
+  return matchIdOf((await client.rpc(session, 'lobby.auto', { game })).payload);
 }
 
 /** Opens a lobby. An empty password means anyone may walk in. */
 export async function createLobby(
   client: Client,
   session: Session,
+  game: string,
   password: string,
 ): Promise<string> {
-  return matchIdOf((await client.rpc(session, 'lobby.create', { password })).payload);
+  return matchIdOf((await client.rpc(session, 'lobby.create', { game, password })).payload);
 }
 
 /**
@@ -233,8 +214,12 @@ export async function createLobby(
  * Locked ones are included: knowing a game is there and needing a password to
  * enter is the point. The password itself is never part of this.
  */
-export async function listLobbies(client: Client, session: Session): Promise<LobbySummary[]> {
-  const payload: unknown = (await client.rpc(session, 'lobby.list', {})).payload;
+export async function listLobbies(
+  client: Client,
+  session: Session,
+  game: string,
+): Promise<LobbySummary[]> {
+  const payload: unknown = (await client.rpc(session, 'lobby.list', { game })).payload;
   if (!isRecord(payload) || !Array.isArray(payload['lobbies'])) {
     return [];
   }

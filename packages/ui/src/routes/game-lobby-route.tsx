@@ -93,7 +93,7 @@ export function GameLobbyRoute(): ReactNode {
       ) : (
         <PongStage
         userId={state.profile.userId}
-        matchId={searchParams.get('match') ?? undefined}
+        matchId={searchParams.get('match') ?? ''}
         password={searchParams.get('key') ?? undefined}
           onJoined={onJoined}
         />

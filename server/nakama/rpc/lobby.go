@@ -23,14 +23,48 @@ const (
 
 const lobbyListLimit = 50
 
+// How many candidate lobbies to weigh before opening one.
+const lobbyCandidates = 10
+
+// KnownGames are the match handlers a lobby may be opened for.
+//
+// Checked rather than trusted: the game id names a registered handler and goes
+// into a search query, and neither is somewhere to put whatever a client sent.
+var KnownGames = map[string]bool{match.PongName: true}
+
 // Only lobbies still waiting are worth listing. A match already under way
 // cannot be joined, and one that is over is no longer a lobby at all.
-const waitingUnlockedQuery = "+label.game:pong +label.state:waiting +label.locked:no"
-const waitingQuery = "+label.game:pong +label.state:waiting"
+func waitingQueryFor(gameID string, unlockedOnly bool) string {
+	query := fmt.Sprintf("+label.game:%s +label.state:%s", gameID, match.StateWaiting)
+	if unlockedOnly {
+		query += " +label.locked:no"
+	}
+	return query
+}
+
+// gameRequest is the shape every lobby call shares.
+type gameRequest struct {
+	Game string `json:"game"`
+}
 
 type createLobbyRequest struct {
+	Game string `json:"game"`
 	// Empty means an open lobby anyone may walk into.
 	Password string `json:"password"`
+}
+
+// gameFrom reads and checks the game a request names.
+func gameFrom(payload string) (string, error) {
+	var request gameRequest
+	if payload != "" {
+		if err := json.Unmarshal([]byte(payload), &request); err != nil {
+			return "", runtime.NewError("that request is not readable", codeInvalidArgument)
+		}
+	}
+	if !KnownGames[request.Game] {
+		return "", runtime.NewError("no such game", codeInvalidArgument)
+	}
+	return request.Game, nil
 }
 
 type lobbyResponse struct {
@@ -59,10 +93,12 @@ func callerName(ctx context.Context) string {
 func openLobby(
 	ctx context.Context,
 	nk runtime.NakamaModule,
+	gameID string,
 	host string,
 	password string,
 ) (string, error) {
-	return nk.MatchCreate(ctx, match.PongName, map[string]interface{}{
+	return nk.MatchCreate(ctx, gameID, map[string]interface{}{
+		"game":     gameID,
 		"host":     host,
 		"password": password,
 	})
@@ -85,9 +121,14 @@ func autoLobby(
 	logger runtime.Logger,
 	_ *sql.DB,
 	nk runtime.NakamaModule,
-	_ string,
+	payload string,
 ) (string, error) {
-	matches, err := nk.MatchList(ctx, findMatchCandidates, true, "", nil, nil, waitingUnlockedQuery)
+	gameID, err := gameFrom(payload)
+	if err != nil {
+		return "", err
+	}
+
+	matches, err := nk.MatchList(ctx, lobbyCandidates, true, "", nil, nil, waitingQueryFor(gameID, true))
 	if err != nil {
 		logger.Error("Failed to list lobbies: %v", err)
 		return "", runtime.NewError("could not look for a game", codeInternal)
@@ -97,7 +138,7 @@ func autoLobby(
 		return encodeLobby(matches[0].GetMatchId())
 	}
 
-	matchID, err := openLobby(ctx, nk, callerName(ctx), "")
+	matchID, err := openLobby(ctx, nk, gameID, callerName(ctx), "")
 	if err != nil {
 		logger.Error("Failed to open a lobby: %v", err)
 		return "", runtime.NewError("could not open a lobby", codeInternal)
@@ -113,14 +154,17 @@ func createLobby(
 	nk runtime.NakamaModule,
 	payload string,
 ) (string, error) {
-	var request createLobbyRequest
-	if payload != "" {
-		if err := json.Unmarshal([]byte(payload), &request); err != nil {
-			return "", runtime.NewError("that request is not readable", codeInvalidArgument)
-		}
+	gameID, err := gameFrom(payload)
+	if err != nil {
+		return "", err
 	}
 
-	matchID, err := openLobby(ctx, nk, callerName(ctx), request.Password)
+	var request createLobbyRequest
+	if err := json.Unmarshal([]byte(payload), &request); err != nil {
+		return "", runtime.NewError("that request is not readable", codeInvalidArgument)
+	}
+
+	matchID, err := openLobby(ctx, nk, gameID, callerName(ctx), request.Password)
 	if err != nil {
 		logger.Error("Failed to open a lobby: %v", err)
 		return "", runtime.NewError("could not open a lobby", codeInternal)
@@ -137,9 +181,14 @@ func listLobbies(
 	logger runtime.Logger,
 	_ *sql.DB,
 	nk runtime.NakamaModule,
-	_ string,
+	payload string,
 ) (string, error) {
-	matches, err := nk.MatchList(ctx, lobbyListLimit, true, "", nil, nil, waitingQuery)
+	gameID, err := gameFrom(payload)
+	if err != nil {
+		return "", err
+	}
+
+	matches, err := nk.MatchList(ctx, lobbyListLimit, true, "", nil, nil, waitingQueryFor(gameID, false))
 	if err != nil {
 		logger.Error("Failed to list lobbies: %v", err)
 		return "", runtime.NewError("could not list the lobbies", codeInternal)

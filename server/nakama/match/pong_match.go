@@ -137,6 +137,12 @@ func (m *PongMatch) MatchInit(
 	if host == "" {
 		host = "someone"
 	}
+	game, _ := params["game"].(string)
+	if game == "" {
+		// A match created without going through a lobby still has to name
+		// itself, or it would be invisible to every listing.
+		game = PongName
+	}
 
 	locked := "no"
 	if password != "" {
@@ -152,7 +158,7 @@ func (m *PongMatch) MatchInit(
 		emptySince:       -1,
 		finishedAt:       -1,
 		password:         password,
-		label:            Label{Game: PongName, State: StateWaiting, Locked: locked, Host: host},
+		label:            Label{Game: game, State: StateWaiting, Locked: locked, Host: host},
 	}
 
 	// The label is what listings search on, and all a lobby says about itself.
@@ -334,7 +340,7 @@ func (m *PongMatch) MatchLoop(
 	if current.sim.Phase == pong.PhaseFinished && before != pong.PhaseFinished && !current.recorded {
 		current.recorded = true
 		current.finishedAt = tick
-		stats.RecordMatch(ctx, logger, nk, PongName, current.outcomes())
+		stats.RecordMatch(ctx, logger, nk, current.label.Game, current.outcomes())
 
 		// Taken out of the listings straight away, so nobody looking for a game
 		// is sent to a table that has already been won.

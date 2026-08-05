@@ -21,8 +21,13 @@ const (
 	permissionNoWrite   = 0
 )
 
-// LeaderboardID is the board a game's scores are written to.
-const LeaderboardID = "pong_wins_weekly"
+// LeaderboardFor names the weekly board a game's wins are written to.
+//
+// One per game rather than one overall: a win at Pong says nothing about who is
+// good at anything else, and a single board would rank them against each other.
+func LeaderboardFor(gameID string) string {
+	return gameID + "_wins_weekly"
+}
 
 // Nakama's cron for "every Monday at midnight UTC". Weekly, as the brief asks.
 const leaderboardResetSchedule = "0 0 * * 1"
@@ -45,15 +50,21 @@ type Record struct {
 //
 // Safe to call on every start: Nakama treats a second create of the same id as
 // a no-op rather than an error, which is what makes this idempotent.
-func EnsureLeaderboard(ctx context.Context, logger runtime.Logger, nk runtime.NakamaModule) error {
+func EnsureLeaderboard(
+	ctx context.Context,
+	logger runtime.Logger,
+	nk runtime.NakamaModule,
+	gameID string,
+) error {
+	id := LeaderboardFor(gameID)
 	// Descending, incrementing: a player's score is their running number of
 	// wins this week, so each win adds one rather than replacing the total.
 	if err := nk.LeaderboardCreate(
-		ctx, LeaderboardID, true, "desc", "incr", leaderboardResetSchedule, nil, true,
+		ctx, id, true, "desc", "incr", leaderboardResetSchedule, nil, true,
 	); err != nil {
-		return fmt.Errorf("create leaderboard %q: %w", LeaderboardID, err)
+		return fmt.Errorf("create leaderboard %q: %w", id, err)
 	}
-	logger.Info("Leaderboard %q ready", LeaderboardID)
+	logger.Info("Leaderboard %q ready", id)
 	return nil
 }
 
@@ -84,7 +95,7 @@ func RecordMatch(
 
 		if outcome.Won {
 			if _, err := nk.LeaderboardRecordWrite(
-				ctx, LeaderboardID, outcome.UserID, outcome.Username, 1, 0, nil, nil,
+				ctx, LeaderboardFor(gameID), outcome.UserID, outcome.Username, 1, 0, nil, nil,
 			); err != nil {
 				logger.Error("Failed to write a leaderboard record for %s: %v", outcome.Username, err)
 			}

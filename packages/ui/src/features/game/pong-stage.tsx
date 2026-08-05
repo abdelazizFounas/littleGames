@@ -17,8 +17,8 @@ export function PongStage({
   onJoined,
 }: {
   readonly userId: string;
-  /** Set when arriving from an invitation; otherwise any match with room. */
-  readonly matchId?: string | undefined;
+  /** The lobby this screen is for; always known before it is reached. */
+  readonly matchId: string;
   /** Password for a locked lobby, from the list or from an invitation. */
   readonly password?: string | undefined;
   /** Called with the match actually joined, so it can be invited into. */

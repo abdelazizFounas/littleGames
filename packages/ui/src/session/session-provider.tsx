@@ -143,20 +143,17 @@ export function SessionProvider({ children }: { readonly children: ReactNode }):
   const joinMatch = useCallback(
     async (
       listeners: MatchListeners,
-      matchId?: string,
+      matchId: string,
       password?: string,
     ): Promise<MatchConnection> => {
       if (internal.status !== 'signed-in') {
         throw new Error('Sign in before joining a match.');
       }
-      // A named lobby comes from the list or an invitation; without one, take
-      // whatever open lobby there is.
-      const target = matchId ?? (await autoLobby(client, internal.session));
       return joinMatchOnServer(
         client,
         config,
         internal.session,
-        target,
+        matchId,
         listeners,
         password ?? '',
       );
@@ -164,29 +161,35 @@ export function SessionProvider({ children }: { readonly children: ReactNode }):
     [client, config, internal],
   );
 
-  const findOpenLobby = useCallback(async (): Promise<string> => {
-    if (internal.status !== 'signed-in') {
-      throw new Error('Sign in before looking for a game.');
-    }
-    return autoLobby(client, internal.session);
-  }, [client, internal]);
-
-  const openLobby = useCallback(
-    async (password: string): Promise<string> => {
+  const findOpenLobby = useCallback(
+    async (game: string): Promise<string> => {
       if (internal.status !== 'signed-in') {
-        throw new Error('Sign in before opening a lobby.');
+        throw new Error('Sign in before looking for a game.');
       }
-      return createLobby(client, internal.session, password);
+      return autoLobby(client, internal.session, game);
     },
     [client, internal],
   );
 
-  const listOpenLobbies = useCallback(async (): Promise<LobbySummary[]> => {
-    if (internal.status !== 'signed-in') {
-      throw new Error('Sign in to see the lobbies.');
-    }
-    return listLobbies(client, internal.session);
-  }, [client, internal]);
+  const openLobby = useCallback(
+    async (game: string, password: string): Promise<string> => {
+      if (internal.status !== 'signed-in') {
+        throw new Error('Sign in before opening a lobby.');
+      }
+      return createLobby(client, internal.session, game, password);
+    },
+    [client, internal],
+  );
+
+  const listOpenLobbies = useCallback(
+    async (game: string): Promise<LobbySummary[]> => {
+      if (internal.status !== 'signed-in') {
+        throw new Error('Sign in to see the lobbies.');
+      }
+      return listLobbies(client, internal.session, game);
+    },
+    [client, internal],
+  );
 
   const checkLobby = useCallback(
     async (matchId: string, password: string): Promise<void> => {
@@ -235,12 +238,15 @@ export function SessionProvider({ children }: { readonly children: ReactNode }):
     [client, internal],
   );
 
-  const loadLeaderboard = useCallback(async (): Promise<LeaderboardEntry[]> => {
-    if (internal.status !== 'signed-in') {
-      throw new Error('Sign in to see the board.');
-    }
-    return fetchLeaderboard(client, internal.session);
-  }, [client, internal]);
+  const loadLeaderboard = useCallback(
+    async (gameId: string): Promise<LeaderboardEntry[]> => {
+      if (internal.status !== 'signed-in') {
+        throw new Error('Sign in to see the board.');
+      }
+      return fetchLeaderboard(client, internal.session, gameId);
+    },
+    [client, internal],
+  );
 
   const signOutPlayer = useCallback(async (): Promise<void> => {
     if (internal.status !== 'signed-in') {

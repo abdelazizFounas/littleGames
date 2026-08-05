@@ -47,17 +47,23 @@ export interface SessionContextValue {
    *
    * The caller owns the returned connection and must leave it.
    */
+  /**
+   * Joins a named match.
+   *
+   * The match is always named: every way into a game resolves a lobby first, so
+   * the game screen is never reached without knowing which one it is for.
+   */
   readonly joinMatch: (
     listeners: MatchListeners,
-    matchId?: string,
+    matchId: string,
     password?: string,
   ) => Promise<MatchConnection>;
   /** Joins an open lobby, or opens one when there is none. */
-  readonly findOpenLobby: () => Promise<string>;
+  readonly findOpenLobby: (game: string) => Promise<string>;
   /** Opens a lobby. An empty password means anyone may walk in. */
-  readonly openLobby: (password: string) => Promise<string>;
+  readonly openLobby: (game: string, password: string) => Promise<string>;
   /** The lobbies still waiting for an opponent. */
-  readonly listOpenLobbies: () => Promise<LobbySummary[]>;
+  readonly listOpenLobbies: (game: string) => Promise<LobbySummary[]>;
   /** Matches this player walked away from and can return to. */
   readonly listMyMatches: () => Promise<ResumableMatch[]>;
   /** Rejects a wrong password before the game screen is ever reached. */
@@ -71,7 +77,7 @@ export interface SessionContextValue {
   /** The signed-in player's record for a game. */
   readonly loadStats: (gameId: string) => Promise<PlayerStats>;
   /** This week's board. */
-  readonly loadLeaderboard: () => Promise<LeaderboardEntry[]>;
+  readonly loadLeaderboard: (gameId: string) => Promise<LeaderboardEntry[]>;
 }
 
 export const SessionContext = createContext<SessionContextValue | null>(null);

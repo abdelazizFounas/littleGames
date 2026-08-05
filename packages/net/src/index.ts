@@ -55,7 +55,6 @@ export {
   checkLobby,
   createInvitation,
   createLobby,
-  findMatch,
   joinMatch,
   listLobbies,
   listMyMatches,

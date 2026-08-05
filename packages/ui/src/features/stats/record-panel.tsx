@@ -14,7 +14,8 @@ export function RecordPanel({ gameId }: { readonly gameId: string }): ReactNode 
   // every render triggers another load, which triggers another render.
   const load = useCallback(() => loadStats(gameId), [gameId, loadStats]);
   const stats = useAsyncData(load, 'Could not load your record.');
-  const board = useAsyncData(loadLeaderboard, 'Could not load the board.');
+  const loadBoard = useCallback(() => loadLeaderboard(gameId), [gameId, loadLeaderboard]);
+  const board = useAsyncData(loadBoard, 'Could not load the board.');
 
   return (
     <section className="form">

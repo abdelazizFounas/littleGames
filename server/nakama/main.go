@@ -50,8 +50,11 @@ func InitModule(
 		return fmt.Errorf("register the %s match handler: %w", match.PongName, err)
 	}
 
-	if err := stats.EnsureLeaderboard(ctx, logger, nk); err != nil {
-		return err
+	// One weekly board per game. A win at one says nothing about the other.
+	for game := range rpc.KnownGames {
+		if err := stats.EnsureLeaderboard(ctx, logger, nk, game); err != nil {
+			return err
+		}
 	}
 
 	if err := rpc.Register(initializer); err != nil {

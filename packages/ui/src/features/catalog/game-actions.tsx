@@ -41,7 +41,7 @@ export function GameActions({ gameId }: { readonly gameId: string }): ReactNode 
           disabled={action.pending}
           onClick={() => {
             action.run(async () => {
-              enter(await findOpenLobby(), '');
+              enter(await findOpenLobby(gameId), '');
             });
           }}
         >
@@ -64,7 +64,7 @@ export function GameActions({ gameId }: { readonly gameId: string }): ReactNode 
             setPanel('list');
             setChallenged(null);
             action.run(async () => {
-              setLobbies(await listOpenLobbies());
+              setLobbies(await listOpenLobbies(gameId));
             });
           }}
         >
@@ -84,7 +84,7 @@ export function GameActions({ gameId }: { readonly gameId: string }): ReactNode 
           onSubmit={(event) => {
             event.preventDefault();
             action.run(async () => {
-              const matchId = await openLobby(password);
+              const matchId = await openLobby(gameId, password);
               enter(matchId, password);
             });
           }}
