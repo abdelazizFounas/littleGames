@@ -116,6 +116,10 @@ export async function startPongSession(
 
   await renderer.mount(container);
   resizeToContainer();
+  // One frame before anything has arrived from the server. Without it the
+  // canvas stays blank until the first snapshot, which reads as the game
+  // having failed rather than as it being about to start.
+  renderer.render(createInitialState(), 0);
   // Watching the element rather than the window catches every reason it can
   // change size — entering fullscreen, rotating a phone, the layout reflowing —
   // with one listener instead of one per cause.

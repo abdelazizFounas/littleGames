@@ -374,6 +374,14 @@ body {
 }
 
 .stage__surface {
+  /* The canvas is positioned against this box, and taken out of flow, so it
+     can never push the box taller. Left in flow it did exactly that: PixiJS
+     sets a pixel height on the canvas, that height grew the container, the
+     resize observer saw the growth and asked for a bigger canvas again. The
+     field ran away down the page until the canvas passed the size a browser
+     will allocate, and then went black. */
+  position: relative;
+  overflow: hidden;
   width: 100%;
   /* The field is 4:3 in logical units; matching it here means the renderer
      letterboxes nothing on a well-sized screen. */
@@ -393,12 +401,22 @@ body {
 /* In fullscreen the surface takes the whole screen and the renderer
    letterboxes inside it, so the field keeps its shape on any display. */
 .stage__frame:fullscreen .stage__surface {
+  /* The canvas is positioned against this box, and taken out of flow, so it
+     can never push the box taller. Left in flow it did exactly that: PixiJS
+     sets a pixel height on the canvas, that height grew the container, the
+     resize observer saw the growth and asked for a bigger canvas again. The
+     field ran away down the page until the canvas passed the size a browser
+     will allocate, and then went black. */
+  position: relative;
+  overflow: hidden;
   width: 100%;
   height: 100%;
   aspect-ratio: auto;
 }
 
 .stage__surface canvas {
+  position: absolute;
+  inset: 0;
   display: block;
   width: 100%;
   height: 100%;

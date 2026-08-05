@@ -64,6 +64,8 @@ export function createPongPixiRenderer(): GameRenderer<PongState> {
   const message = new Text({ text: '', style: messageStyle });
 
   let mounted = false;
+  let lastWidth = 0;
+  let lastHeight = 0;
 
   function drawStatics(): void {
     board.clear();
@@ -109,9 +111,12 @@ export function createPongPixiRenderer(): GameRenderer<PongState> {
         .init({
           background: BACKGROUND,
           antialias: true,
-          // Matching the device pixel ratio is what keeps edges crisp on phones
-          // and on high-density laptop displays.
-          resolution: globalThis.devicePixelRatio,
+          // Matching the device pixel ratio keeps edges crisp on phones and
+          // high-density laptops. Capped at 2: beyond that the backing store
+          // grows quadratically for a difference nobody can see, and on a
+          // three-times display in fullscreen it approaches the largest canvas
+          // a browser will allocate.
+          resolution: Math.min(globalThis.devicePixelRatio, 2),
           autoDensity: true,
           width: FIELD_WIDTH,
           height: FIELD_HEIGHT,
@@ -152,6 +157,14 @@ export function createPongPixiRenderer(): GameRenderer<PongState> {
       if (!mounted) {
         return;
       }
+      // A collapsed or unchanged box is not worth reallocating a drawing
+      // surface for, and refusing to act on one is also what stops a resize
+      // from feeding itself.
+      if (width <= 0 || height <= 0 || (width === lastWidth && height === lastHeight)) {
+        return;
+      }
+      lastWidth = width;
+      lastHeight = height;
       app.renderer.resize(width, height);
 
       // Letterboxed rather than stretched: the field is a fixed shape, and
@@ -169,6 +182,8 @@ export function createPongPixiRenderer(): GameRenderer<PongState> {
         return;
       }
       mounted = false;
+      lastWidth = 0;
+      lastHeight = 0;
       // Releasing the GPU context matters on mobile, where a leaked one can
       // cost the next match its renderer entirely.
       app.destroy({ removeView: true }, { children: true });
