@@ -11,6 +11,9 @@
       "path": "./packages/games/battleship/logic"
     },
     {
+      "path": "./packages/games/battleship/renderer-pixi"
+    },
+    {
       "path": "./packages/games/pong/logic"
     },
     {

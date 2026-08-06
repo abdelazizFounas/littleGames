@@ -46,6 +46,17 @@
       "rules": {
         "no-console": "off"
       }
+    },
+    {
+      // PixiJS closes a shape with `graphics.fill({ color, alpha })`. The rule
+      // is about `Array#fill` handing every slot the same object, which needs
+      // an array to go wrong, and there is none here.
+      "files": [
+        "packages/games/*/renderer-pixi/**/*.ts"
+      ],
+      "rules": {
+        "unicorn/no-array-fill-with-reference-type": "off"
+      }
     }
   ]
 }
