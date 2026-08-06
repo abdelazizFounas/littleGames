@@ -30,7 +30,11 @@ const lobbyCandidates = 10
 //
 // Checked rather than trusted: the game id names a registered handler and goes
 // into a search query, and neither is somewhere to put whatever a client sent.
-var KnownGames = map[string]bool{match.PongName: true, match.BattleshipName: true}
+var KnownGames = map[string]bool{
+	match.PongName:       true,
+	match.BattleshipName: true,
+	match.ArenaName:      true,
+}
 
 // Only lobbies still waiting are worth listing. A match already under way
 // cannot be joined, and one that is over is no longer a lobby at all.

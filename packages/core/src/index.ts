@@ -19,3 +19,13 @@ export {
   BattleshipPhase,
   BattleshipShotResult,
 } from './protocol';
+
+export type {
+  ArenaBody,
+  ArenaPlayerInput,
+  ArenaPlayerState,
+  ArenaShotEvent,
+  ArenaSnapshot,
+  ArenaVector3,
+} from './protocol';
+export { ArenaOpCode, ArenaPhase, ArenaSeat } from './protocol';

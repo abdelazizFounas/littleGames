@@ -27,3 +27,17 @@ export {
   Phase as BattleshipPhase,
   ShotResult as BattleshipShotResult,
 } from './generated/littlegames/battleship/v1/battleship';
+
+export type {
+  Body as ArenaBody,
+  PlayerInput as ArenaPlayerInput,
+  PlayerState as ArenaPlayerState,
+  ShotEvent as ArenaShotEvent,
+  Snapshot as ArenaSnapshot,
+  Vector3 as ArenaVector3,
+} from './generated/littlegames/arena/v1/arena';
+export {
+  OpCode as ArenaOpCode,
+  Phase as ArenaPhase,
+  Seat as ArenaSeat,
+} from './generated/littlegames/arena/v1/arena';

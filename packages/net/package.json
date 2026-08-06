@@ -10,7 +10,8 @@
   "scripts": {
     "typecheck": "tsc --build",
     "verify:match": "node scripts/verify-match.ts",
-    "verify:battleship": "node scripts/verify-battleship.ts"
+    "verify:battleship": "node scripts/verify-battleship.ts",
+    "verify:arena": "node scripts/verify-arena.ts"
   },
   "dependencies": {
     "@bufbuild/protobuf": "2.13.0",

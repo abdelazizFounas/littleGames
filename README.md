@@ -12,6 +12,15 @@ messages — is written in English.
 > placement, turns, per-recipient snapshots and a PixiJS board of its own. It is
 > the first real test of the claim the architecture was built on — that the
 > second game would be cheap.
+>
+> A third is being built in five phases of its own: **Arena**, a 1v1
+> server-authoritative FPS. Two of the five are done — the rules, and the
+> protocol, the Go port and the authoritative handler — so a whole match can be
+> played to a win over two real sockets today, by a script rather than by a
+> person. It has no renderer yet; that is the phase this game exists for,
+> because Babylon.js arriving without touching logic, networking or the lobby is
+> the claim `SPEC.md` §3 has been making since day one and has never been asked
+> to prove.
 
 ## Architecture in one paragraph
 
@@ -215,6 +224,7 @@ with a server holding the only authoritative copy. With the stack up:
 set -a && . ./.env && set +a
 pnpm --filter @littlegames/net verify:match        # Pong
 pnpm --filter @littlegames/net verify:battleship   # Battleship
+pnpm --filter @littlegames/net verify:arena        # Arena
 ```
 
 The first signs in two players, puts them in one match, sends input from one
@@ -228,6 +238,16 @@ whole exercise — that no cell of the opponent's waters ever appears in a
 snapshot the recipient had not already fired at. Not only in the last snapshot:
 in every snapshot either player ever received.
 
+The third plays an Arena round to its winning score, one player shooting and
+the other never firing, and asks what a client can get away with. It sends a
+movement vector twice as long as full deflection and measures what the server
+did with it: 5.500 m/s over 36 ticks, which is the cap exactly — honoured
+rather than rejected, and shortened rather than obeyed. It sends an aim a
+thousand times out of range and gets a unit vector back. It measures the
+snapshot rate, which is 60 Hz because the physics was written for 60 Hz. And it
+counts the shots the server resolved against the shots it was told about,
+because those travel in a trailing window rather than one frame at a time.
+
 ### Two clocks, not one
 
 A match has two counters and they start at different moments, which is easy to
@@ -237,6 +257,12 @@ misread when watching a snapshot:
 |---|---|
 | Nakama's `tick` | when the match is **created**, before anyone joins |
 | The Pong countdown | when the **second** player joins |
+
+Arena's snapshot carries the **simulation's** tick rather than Nakama's loop
+counter, which is the one place the two are deliberately not interchangeable: a
+client echoes that number back as the moment it drew, and the server measures
+every rewind from it. Two clocks would put lag compensation off by however long
+the lobby sat waiting for its second player.
 
 A match therefore ticks, and broadcasts nothing, while it waits for an
 opponent. `match.max_empty_sec` stops one that stays empty: the handler already
@@ -274,6 +300,7 @@ trusted to stay in step by review:
 ```sh
 pnpm --filter @littlegames/pong-logic vectors        # regenerate after a rules change
 pnpm --filter @littlegames/battleship-logic vectors  # the same, for Battleship
+pnpm --filter @littlegames/arena-logic vectors       # and for Arena
 pnpm test                                            # TypeScript replays them
 ./tools/scripts/test-go.sh                           # Go replays the same files
 ```
@@ -313,6 +340,42 @@ drift to guard against — but the vectors still tie the two copies together, an
 the TypeScript one earns its place beyond testing: it checks a placement
 locally, so dropping a ship somewhere illegal is refused under the cursor
 rather than after a round trip.
+
+### What an FPS does to that contract
+
+Arena needs angles, and angles are exactly what the rule above bans. Three
+things make it work, and they are worth stating because they are what the whole
+game rests on.
+
+**Angles never reach the simulation.** The client resolves its own yaw and
+pitch into a world-space move vector and a world-space aim vector and sends
+those, so `sin` and `cos` stay in the input source, which is presentation. It
+gives nothing away: a client that can look anywhere could already move
+anywhere, and the only thing four direction bits ever bought was a speed cap,
+which the server applies to the vector directly. `verify:arena` sends a vector
+twice as long as a stick goes and measures 5.500 m/s coming back.
+
+**The wire carries integers, not floats.** Quantised on powers of two — 1/1024
+for movement, 1/8192 for aim — so dequantising is an exponent adjustment that
+lands on the identical double in both languages. The client predicts from the
+integers it sent rather than from the floats it computed them out of, which is
+the difference between a prediction that settles and one that drifts by a hair
+every tick. State travels the other way as exact doubles, whole bodies
+including vertical speed and crouch, because a snapshot is where prediction
+restarts from.
+
+**Two orderings are load-bearing**, and the vectors were checked to bite on
+both. Colliders are visited in slice order — never a map, since Go randomises
+map iteration by design — and axes resolve X, then Z, then Y. Nudging Go's
+gravity by one part in ten million fails `verticality` at tick 30; swapping the
+X and Z passes fails `crateHug` at tick 390.
+
+One thing Pong did not need: every product that feeds an addition in
+`server/nakama/arena` is wrapped in an explicit `float64` conversion. The Go
+specification allows an implementation to fuse a multiply and an add into a
+single operation with one rounding, and the compiler does exactly that on
+arm64. Without the conversion this port would agree with the client on an x86
+server and disagree on an ARM one, which is the worst shape a bug can have.
 
 ### Proving the rules are free of the renderer
 
@@ -681,6 +744,8 @@ packages/
     pong/renderer-pixi        The field, the paddles and the ball.
     battleship/logic          Battleship rules: placement, firing, victory.
     battleship/renderer-pixi  The two grids, the water and what lands on it.
+    arena/logic               Arena rules: movement, collision, shooting, rounds,
+                              and the arena itself as data.
   renderer-headless A renderer that draws nothing, for headless matches.
   ui/              React shell: routing, authentication, profile, catalogue.
 server/

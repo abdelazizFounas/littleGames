@@ -66,6 +66,9 @@ export {
 export type { BattleshipConnection, BattleshipMatchListeners } from './battleship-match';
 export { joinBattleshipMatch } from './battleship-match';
 
+export type { ArenaConnection, ArenaMatchListeners } from './arena-match';
+export { joinArenaMatch } from './arena-match';
+
 export type { InterpolationWindow, SnapshotBuffer, SnapshotBufferOptions } from './snapshot-buffer';
 export { createSnapshotBuffer } from './snapshot-buffer';
 

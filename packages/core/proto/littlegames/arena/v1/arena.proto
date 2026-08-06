@@ -1,0 +1,182 @@
+syntax = "proto3";
+
+// Everything sent over an Arena match socket.
+//
+// Go and TypeScript are both generated from this file. Two things here are
+// unlike the other games and are the whole reason this protocol is worth
+// reading: intent travels as quantised integers rather than as floats, and
+// state comes back as exact doubles.
+//
+// The direction is deliberate. A client predicts its own body by replaying the
+// commands it sent, so it must replay the very numbers the server executed —
+// integers on power-of-two scales dequantise to the identical double in both
+// languages, where a float would arrive rounded differently and drift a hair
+// every tick. State travels the other way and is never re-derived: a snapshot
+// is where prediction restarts from, so it carries the body bit for bit.
+package littlegames.arena.v1;
+
+option go_package = "littlegames.local/nakama/protocol/arenav1;arenav1";
+
+enum OpCode {
+  OP_CODE_UNSPECIFIED = 0;
+
+  // Client to server.
+  OP_CODE_PLAYER_INPUT = 1;
+
+  // Server to client.
+  OP_CODE_SNAPSHOT = 2;
+}
+
+enum Phase {
+  PHASE_UNSPECIFIED = 0;
+  PHASE_WAITING = 1;
+  PHASE_COUNTDOWN = 2;
+  PHASE_PLAYING = 3;
+  PHASE_FINISHED = 4;
+}
+
+// Which half of the arena a player holds.
+enum Seat {
+  SEAT_UNSPECIFIED = 0;
+  SEAT_NORTH = 1;
+  SEAT_SOUTH = 2;
+}
+
+// One tick of intent, sent from client to server.
+//
+// No angle appears anywhere: the client resolves its own yaw and pitch into
+// world-space directions and sends those, which is what keeps sine and cosine
+// out of a simulation that has to agree with a second implementation to the
+// last bit. It gives nothing away — a client that can look anywhere could
+// already move in any direction, and the only thing direction bits ever bought
+// was a speed cap, which the server applies to this vector directly.
+message PlayerInput {
+  // Monotonically increasing, assigned by the client.
+  //
+  // Echoed back in the snapshot, which is what lets the client drop
+  // acknowledged commands and replay the rest on top of authoritative state.
+  uint32 seq = 1;
+
+  // Movement intent across and along the arena, on a scale of 1024. At most
+  // unit length once dequantised; anything longer is shortened by the server.
+  sint32 move_x = 2;
+  sint32 move_z = 3;
+
+  // Where the player is looking, as a world-space vector on a scale of 8192.
+  // Normalised by the server, so its length carries no meaning.
+  sint32 aim_x = 4;
+  sint32 aim_y = 5;
+  sint32 aim_z = 6;
+
+  bool jump = 7;
+  bool crouch = 8;
+
+  // Aiming down the sights. Nothing in the rules reads it; it travels so the
+  // opponent can be drawn doing it.
+  bool zoomed = 9;
+
+  // Newest server tick this client had drawn when it sampled this command.
+  //
+  // How far the server rewinds the target to judge a shot. Clamped against the
+  // ticks the server knows it broadcast, so it cannot buy time by claiming to
+  // have seen the distant past; claiming to have seen less than it did is
+  // allowed and only makes the shot resolve against fresher positions.
+  uint32 seen_tick = 10;
+
+  // How many shots this client has fired in total, ever.
+  //
+  // A counter rather than a flag, for the same reason `seq` is one: a duplicate
+  // delivery re-sends a number the server has already reached and fires
+  // nothing, and a lost command is made good by the next one that arrives
+  // rather than costing a shot. A flag would do neither.
+  uint32 shots_fired = 11;
+}
+
+// A body, as the server holds it. Exact doubles, in metres.
+//
+// Every field the simulation needs to advance from here is present, because
+// this is where a client's prediction restarts: replaying unacknowledged
+// commands from a body missing its vertical speed would put the player back on
+// the ground mid-jump.
+message Body {
+  // Feet, not eyes.
+  double x = 1;
+  double y = 2;
+  double z = 3;
+  // Vertical speed. There is no horizontal inertia to carry.
+  double vy = 4;
+  bool grounded = 5;
+  bool crouching = 6;
+}
+
+// A unit vector.
+message Vector3 {
+  double x = 1;
+  double y = 2;
+  double z = 3;
+}
+
+// One player, as the server sees them.
+message PlayerState {
+  string user_id = 1;
+  string username = 2;
+  Seat seat = 3;
+
+  // Highest input sequence number the server has applied for this player.
+  uint32 last_processed_seq = 4;
+
+  Body body = 5;
+  Vector3 aim = 6;
+
+  bool alive = 7;
+  uint32 score = 8;
+  // Ticks left before this player is put back at their spawn.
+  uint32 respawn_ticks = 9;
+  // Ticks left before they may fire again.
+  uint32 cooldown_ticks = 10;
+
+  // Bumped every time this player respawns.
+  //
+  // The server refuses to rewind a target across one, so nobody is killed a
+  // beat after reappearing. The client throws away its unacknowledged commands
+  // when its own changes, so it does not replay a dead player's movement onto a
+  // fresh spawn and skate out of it.
+  uint32 spawn_epoch = 11;
+
+  bool zoomed = 12;
+}
+
+// A shot the server resolved, for the client to draw.
+message ShotEvent {
+  // Unique and increasing within a match, so a client can tell a shot it has
+  // already drawn from one it has not.
+  uint32 id = 1;
+  Seat shooter = 2;
+  Vector3 origin = 3;
+  // Where it stopped: a body, a wall, or the end of its range.
+  Vector3 endpoint = 4;
+  bool hit_player = 5;
+}
+
+// The authoritative state, broadcast once per tick.
+message Snapshot {
+  // Server tick this state was produced on.
+  uint32 tick = 1;
+
+  Phase phase = 2;
+  // Ticks left in the countdown, zero outside it.
+  uint32 phase_ticks = 3;
+
+  repeated PlayerState players = 4;
+
+  // Set once the match is over.
+  Seat winner = 5;
+
+  // The last few shots fired, not only this tick's.
+  //
+  // Snapshots travel unreliably, and a tracer that appeared in one frame alone
+  // would sometimes never be seen at all. A window of them means a client that
+  // dropped a snapshot still draws the shot, and the ids tell it which ones it
+  // has already drawn.
+  repeated ShotEvent shots = 6;
+}

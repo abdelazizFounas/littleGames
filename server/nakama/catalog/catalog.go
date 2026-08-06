@@ -58,6 +58,16 @@ var seedEntries = []Game{
 		MinPlayers: 2,
 		MaxPlayers: 2,
 	},
+	{
+		ID:      "arena",
+		Name:    "Arena",
+		Tagline: "One arena, two players, first to seven.",
+		Description: "A duel across a ravine you cannot cross and bullets can. " +
+			"Crates to climb, cover to crouch behind, and a server that " +
+			"rewinds time to judge every shot.",
+		MinPlayers: 2,
+		MaxPlayers: 2,
+	},
 }
 
 // Seed creates the catalogue entries that do not exist yet.
