@@ -23,7 +23,15 @@ if (serverKey === undefined) {
   throw new Error('NAKAMA_SOCKET_SERVER_KEY is required');
 }
 
-const client = new Client(serverKey, 'localhost', '80', false);
+// Defaults to the development stack. Pointed at a deployment by exporting the
+// three below, so the same checks can be run against the thing players are
+// actually using — which is the only place some faults exist.
+const host = process.env['NAKAMA_HOST'] ?? 'localhost';
+const port = process.env['NAKAMA_PORT'] ?? '80';
+const useSSL = process.env['NAKAMA_USE_SSL'] === 'true';
+
+const client = new Client(serverKey, host, port, useSSL);
+console.log(`against ${useSSL ? 'https' : 'http'}://${host}:${port}\n`);
 
 const GAME = 'battleship';
 const SHIP_LENGTHS = [5, 4, 3, 3, 2];
@@ -113,7 +121,7 @@ interface Player {
 }
 
 async function seat(name: string, session: Session, matchId: string): Promise<Player> {
-  const socket = client.createSocket(false);
+  const socket = client.createSocket(useSSL);
   const snapshots: Snapshot[] = [];
 
   socket.onmatchdata = (data) => {

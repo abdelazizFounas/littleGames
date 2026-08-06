@@ -19,7 +19,14 @@ if (serverKey === undefined) {
   throw new Error('NAKAMA_SOCKET_SERVER_KEY is required');
 }
 
-const client = new Client(serverKey, 'localhost', '80', false);
+// Defaults to the development stack. Pointed at a deployment by exporting the
+// three below, so the same checks can be run against the thing players are
+// actually using.
+const host = process.env['NAKAMA_HOST'] ?? 'localhost';
+const port = process.env['NAKAMA_PORT'] ?? '80';
+const useSSL = process.env['NAKAMA_USE_SSL'] === 'true';
+
+const client = new Client(serverKey, host, port, useSSL);
 
 const authenticate = async (label: string) => {
   const session = await client.authenticateDevice(crypto.randomUUID(), true);
@@ -72,8 +79,8 @@ console.log(`  bob   -> ${bobMatch}`);
 console.log(`  same match: ${String(aliceMatch === bobMatch)}`);
 
 console.log('\n=== 3. both join over a socket ===');
-const aliceSocket = client.createSocket(false);
-const bobSocket = client.createSocket(false);
+const aliceSocket = client.createSocket(useSSL);
+const bobSocket = client.createSocket(useSSL);
 
 const bobSnapshots: Snapshot[] = [];
 bobSocket.onmatchdata = (data) => {
@@ -138,7 +145,7 @@ console.log(`  ~${perSecond.toFixed(1)} snapshots/second (server is configured f
 
 console.log('\n=== 6. a third player must be turned away (capacity 2) ===');
 const carol = await authenticate('carol');
-const carolSocket = client.createSocket(false);
+const carolSocket = client.createSocket(useSSL);
 await carolSocket.connect(carol, false);
 try {
   await carolSocket.joinMatch(aliceMatch);

@@ -32,27 +32,7 @@
 }
 
 {$CADDY_SITE_ADDRESS} {
-	# Nakama's REST API, realtime socket and health probe. Caddy negotiates the
-	# WebSocket upgrade through reverse_proxy with no extra directive.
-	@nakama path /v2/* /ws /healthcheck
-	reverse_proxy @nakama nakama:7350
-
-	# Everything else is the web client.
-	root * /srv/www
 	encode zstd gzip
-
-	# The client is a single-page app: /profile and /join/ABC123 are its routes,
-	# not files on disk, so anything without a file behind it gets the shell and
-	# the router takes it from there.
-	try_files {path} /index.html
-	file_server
-
-	# The hashed asset names make these safe to keep for a year; index.html and
-	# the service worker must never be, or a deploy would not reach anybody.
-	@immutable path /assets/*
-	header @immutable Cache-Control "public, max-age=31536000, immutable"
-	@volatile path /index.html /sw.js /registerSW.js /manifest.webmanifest
-	header @volatile Cache-Control "no-cache"
 
 	# Sent on every response rather than per-route: they cost nothing and the
 	# one that matters, nosniff, only helps if it is never forgotten.
@@ -67,6 +47,39 @@
 		X-Frame-Options DENY
 		Strict-Transport-Security "max-age=31536000; includeSubDomains"
 		-Server
+	}
+
+	# The two halves of the origin are `handle` blocks, which are mutually
+	# exclusive and taken in the order written here. Written as bare directives
+	# instead, Caddy would sort them into its own order, and `try_files` sorts
+	# ahead of `reverse_proxy`: every API call would have its path rewritten to
+	# /index.html before the proxy ever saw it, and the client would be handed
+	# its own HTML in answer to a login.
+
+	# Nakama's REST API, realtime socket and health probe. Caddy negotiates the
+	# WebSocket upgrade through reverse_proxy with no extra directive.
+	@nakama path /v2/* /ws /healthcheck
+	handle @nakama {
+		reverse_proxy nakama:7350
+	}
+
+	# Everything else is the web client.
+	handle {
+		root * /srv/www
+
+		# The hashed asset names make these safe to keep for a year; index.html
+		# and the service worker must never be, or a deploy would not reach
+		# anybody who had already visited.
+		@immutable path /assets/*
+		header @immutable Cache-Control "public, max-age=31536000, immutable"
+		@volatile path /index.html /sw.js /registerSW.js /manifest.webmanifest
+		header @volatile Cache-Control "no-cache"
+
+		# A single-page app: /profile and /join/ABC123 are its routes, not files
+		# on disk, so anything without a file behind it gets the shell and the
+		# router takes it from there.
+		try_files {path} /index.html
+		file_server
 	}
 }
 
