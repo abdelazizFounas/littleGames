@@ -1,21 +1,13 @@
-import type { Client, Session, Socket } from '@heroiclabs/nakama-js';
+import type { Client, Session } from '@heroiclabs/nakama-js';
 import { OpCode, type PlayerInput, type Snapshot } from '@littlegames/core';
 import type { NakamaConfig } from './config';
+import { openMatchSocket, type ConnectionState } from './match-socket';
 import {
   PlayerInput as PlayerInputCodec,
   Snapshot as SnapshotCodec,
 } from './protocol/generated/littlegames/match/v1/match';
 
-/** Where the connection to a match stands. */
-export type ConnectionState =
-  /** Connected and receiving. */
-  | 'live'
-  /** Dropped, and trying to get back in. */
-  | 'reconnecting'
-  /** Given up. Nothing further will arrive. */
-  | 'lost';
-
-/** What a joined match reports back to the screen driving it. */
+/** What a joined Pong match reports back to the screen driving it. */
 export interface MatchListeners {
   /** A new authoritative state arrived. Fires once per server tick. */
   onSnapshot: (snapshot: Snapshot) => void;
@@ -31,16 +23,7 @@ export interface MatchListeners {
   onError: (error: unknown) => void;
 }
 
-/**
- * Backoff between attempts to get back in, in milliseconds.
- *
- * It starts short because most drops are momentary — a tunnel, a handover from
- * Wi-Fi to mobile data — and grows because one that is not momentary should not
- * be met with a flood of attempts.
- */
-const RECONNECT_DELAYS_MS = [250, 500, 1000, 2000, 4000, 8000, 8000, 8000];
-
-/** A live match, from the client's side. */
+/** A live Pong match, from the client's side. */
 export interface MatchConnection {
   readonly matchId: string;
   /** Sends what this player is pressing. Intent only, never a position. */
@@ -54,7 +37,7 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 }
 
 /**
- * Opens a socket and joins the given match.
+ * Opens a socket and joins the given Pong match.
  *
  * The socket is owned by the returned connection and closed when it leaves, so
  * a screen that mounts and unmounts cannot leak one.
@@ -67,110 +50,36 @@ export async function joinMatch(
   listeners: MatchListeners,
   password = '',
 ): Promise<MatchConnection> {
-  let socket: Socket = client.createSocket(config.useSSL);
-  let leaving = false;
-  let attempt = 0;
-
-  const attach = (target: Socket): void => {
-    target.onmatchdata = (matchData) => {
-      if (matchData.op_code !== OpCode.OP_CODE_SNAPSHOT) {
-        return;
-      }
-      try {
-        listeners.onSnapshot(SnapshotCodec.decode(matchData.data));
-      } catch (cause) {
-        // A frame we cannot decode means client and server disagree about the
-        // protocol. Reporting it beats rendering a silently empty match.
-        listeners.onError(cause);
-      }
-    };
-
-    target.ondisconnect = () => {
-      if (leaving) {
-        return;
-      }
-      listeners.onConnectionChange('reconnecting');
-      void reconnect();
-    };
-
-    // The Nakama socket is not an EventTarget: it exposes assignable `on*`
-    // properties and no addEventListener, so this is the only way to observe it.
-    // oxlint-disable-next-line unicorn/prefer-add-event-listener
-    target.onerror = (event) => {
-      listeners.onError(event);
-    };
-  };
-
-  /**
-   * Rebuilds the socket and takes the seat back.
-   *
-   * The seat survives because the server lets a player return on a new socket,
-   * which is what makes a handover between networks a pause rather than a
-   * forfeit.
-   */
-  const reconnect = async (): Promise<void> => {
-    // `leaving` is set from outside, by a caller that decided to stop while an
-    // attempt was in flight. Observing it here is the whole point of the flag.
-    // oxlint-disable-next-line eslint/no-unmodified-loop-condition
-    while (!leaving && attempt < RECONNECT_DELAYS_MS.length) {
-      const delay = RECONNECT_DELAYS_MS[attempt] ?? 8000;
-      attempt += 1;
-      // Sequential on purpose: each attempt must wait out its own backoff and
-      // learn whether it worked before the next is considered. Running them
-      // together would be the flood the backoff exists to prevent.
-      // oxlint-disable-next-line eslint/no-await-in-loop
-      await new Promise((resolve) => setTimeout(resolve, delay));
-      if (leaving) {
-        return;
-      }
-      try {
-        const replacement = client.createSocket(config.useSSL);
-        attach(replacement);
-        // oxlint-disable-next-line eslint/no-await-in-loop
-        await replacement.connect(session, false);
-        // oxlint-disable-next-line eslint/no-await-in-loop
-        await replacement.joinMatch(matchId, undefined, password === '' ? undefined : { password });
-        socket = replacement;
-        attempt = 0;
-        listeners.onConnectionChange('live');
-        return;
-      } catch {
-        // Kept quiet on purpose: a failed attempt is expected while the network
-        // is still down, and reporting each one would bury the one outcome that
-        // matters.
-      }
-    }
-    if (!leaving) {
-      listeners.onConnectionChange('lost');
-    }
-  };
-
-  attach(socket);
-  // `false` keeps the player out of the global status feed: presence inside a
-  // match is tracked by the match itself.
-  await socket.connect(session, false);
-  await socket.joinMatch(matchId, undefined, password === '' ? undefined : { password });
-  listeners.onConnectionChange('live');
+  const socket = await openMatchSocket(
+    client,
+    config,
+    session,
+    matchId,
+    {
+      onData: (opCode, data) => {
+        if (opCode !== OpCode.OP_CODE_SNAPSHOT) {
+          return;
+        }
+        try {
+          listeners.onSnapshot(SnapshotCodec.decode(data));
+        } catch (cause) {
+          // A frame we cannot decode means client and server disagree about the
+          // protocol. Reporting it beats rendering a silently empty match.
+          listeners.onError(cause);
+        }
+      },
+      onConnectionChange: listeners.onConnectionChange,
+      onError: listeners.onError,
+    },
+    password,
+  );
 
   return {
-    matchId,
+    matchId: socket.matchId,
     sendInput: async (input) => {
-      await socket.sendMatchState(
-        matchId,
-        OpCode.OP_CODE_PLAYER_INPUT,
-        PlayerInputCodec.encode(input).finish(),
-      );
+      await socket.send(OpCode.OP_CODE_PLAYER_INPUT, PlayerInputCodec.encode(input).finish());
     },
-    leave: async () => {
-      leaving = true;
-      try {
-        await socket.leaveMatch(matchId);
-      } finally {
-        // Closing without firing the disconnect event: this departure is
-        // deliberate, and the screen already knows it is leaving.
-        socket.disconnect(false);
-      }
-    },
+    leave: socket.leave,
   };
 }
 

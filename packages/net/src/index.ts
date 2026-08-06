@@ -42,8 +42,10 @@ export {
   updateDisplayName,
 } from './account';
 
+export type { ConnectionState, MatchSocket, MatchSocketListeners } from './match-socket';
+export { openMatchSocket } from './match-socket';
+
 export type {
-  ConnectionState,
   LobbySummary,
   MatchConnection,
   MatchListeners,
@@ -60,6 +62,9 @@ export {
   listMyMatches,
   resolveInvitation,
 } from './match';
+
+export type { BattleshipConnection, BattleshipMatchListeners } from './battleship-match';
+export { joinBattleshipMatch } from './battleship-match';
 
 export type { InterpolationWindow, SnapshotBuffer, SnapshotBufferOptions } from './snapshot-buffer';
 export { createSnapshotBuffer } from './snapshot-buffer';
