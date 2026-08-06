@@ -40,9 +40,9 @@ console:
 match:
   input_queue_size: 128
   call_queue_size: 128
-  # Stop a match that nobody is in. The handler already closes a match when its
-  # last player leaves, but a match created by match.find and never joined has
-  # no leave to react to, so without this it ticks 30 times a second forever.
+  # Stop a match that nobody is in. The handlers already close a match when its
+  # last player leaves, but a lobby that is opened and never joined has no leave
+  # to react to, so without this it ticks on for as long as the server runs.
   #
   # Comfortably above the reconnection grace a match will give a dropped player,
   # so a brief disconnection cannot end the game.

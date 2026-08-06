@@ -7,9 +7,10 @@ authoritative match logic in Go.
 The whole repository — code, identifiers, comments, UI strings, commit
 messages — is written in English.
 
-> **Status: phase 8 (mobile hardening).** A dropped connection is fought for
-> rather than forfeited, a backgrounded tab resumes without replaying what it
-> missed, and the app installs as a PWA. All eight phases are done.
+> **Status: all eight phases done, and a second game on top of them.**
+> Battleship joins Pong — placement, turns, per-recipient snapshots and a
+> PixiJS board of its own. It is the first real test of the claim the
+> architecture was built on: that the second game would be cheap.
 
 ## Architecture in one paragraph
 
@@ -199,6 +200,11 @@ One `.proto` produces three artefacts, and the split is deliberate:
 | `packages/net/src/protocol` | types plus the wire codec | the codec needs a protobuf runtime, which belongs next to the socket |
 | `server/nakama/protocol` | Go types and codec | the authoritative side |
 
+Each game brings its own `.proto`. The socket, the seat and the backoff are
+shared — `openMatchSocket` in `packages/net` carries bytes and an op code and
+has no opinion about either — and each game reads those bytes with its own
+protocol on top.
+
 ### Checking two clients really talk
 
 Unit tests cannot cover this: what matters is that two separate sockets agree
@@ -206,12 +212,20 @@ with a server holding the only authoritative copy. With the stack up:
 
 ```sh
 set -a && . ./.env && set +a
-pnpm --filter @littlegames/net verify:match
+pnpm --filter @littlegames/net verify:match        # Pong
+pnpm --filter @littlegames/net verify:battleship   # Battleship
 ```
 
-It signs in two players, puts them in one match, sends input from one and reads
-the server's echo from the other, measures the tick rate, and checks that a
-third player is turned away.
+The first signs in two players, puts them in one match, sends input from one
+and reads the server's echo from the other, measures the tick rate, and checks
+that a third player is turned away.
+
+The second plays a whole game of Battleship to a win and then reads what each
+player was told. It checks that a Pong lobby does not appear in the Battleship
+list, that each player is sent their own fleet in full, and — the point of the
+whole exercise — that no cell of the opponent's waters ever appears in a
+snapshot the recipient had not already fired at. Not only in the last snapshot:
+in every snapshot either player ever received.
 
 ### Two clocks, not one
 
@@ -231,15 +245,20 @@ as long as the server runs.
 
 ### A race worth knowing about
 
-`match.find` lists open matches and creates one when it finds none. Nakama
-flushes match labels to the index that listing searches on an interval —
-`match.label_update_interval_ms`, tuned down from its 1000 ms default in
-`nakama.yml`. Two players who ask inside the same window each get their own
-match, because neither can see the other's yet.
+`lobby.auto` lists the open lobbies for a game and opens one when it finds
+none. Nakama flushes match labels to the index that listing searches on an
+interval — `match.label_update_interval_ms`, tuned down from its 1000 ms
+default in `nakama.yml`. Two players who ask inside the same window each get
+their own lobby, because neither can see the other's yet.
 
 Human clicks are never that close, but the race is real. Nakama's matchmaker is
 the race-free primitive and is what random opponent matching will use rather
 than this function.
+
+The lobby calls all take the game from the request and check it against the
+handlers actually registered: the id goes into a search query and into
+`MatchCreate`, and neither is somewhere to put whatever a client sent. A
+Pong lobby and a Battleship lobby never appear in each other's list.
 
 ## The rules exist twice
 
@@ -252,9 +271,10 @@ rendering and no networking. `server/nakama/pong` is the port. Neither is
 trusted to stay in step by review:
 
 ```sh
-pnpm --filter @littlegames/pong-logic vectors   # regenerate after a rules change
-pnpm test                                       # TypeScript replays them
-./tools/scripts/test-go.sh                      # Go replays the same file
+pnpm --filter @littlegames/pong-logic vectors        # regenerate after a rules change
+pnpm --filter @littlegames/battleship-logic vectors  # the same, for Battleship
+pnpm test                                            # TypeScript replays them
+./tools/scripts/test-go.sh                           # Go replays the same files
 ```
 
 `testdata/vectors.json` records three scenarios tick by tick, one of which
@@ -266,6 +286,13 @@ Keeping that possible constrains how the physics may be written. Only `+`, `-`,
 `*`, `/`, comparisons and square root appear in it, all exactly rounded by
 IEEE-754 in both languages. Trigonometry is not, so a bounce angle comes from a
 square root rather than a cosine.
+
+Battleship keeps the same arrangement for a much smaller price. It is integer
+arithmetic on a grid with no floating point anywhere, so there is no bit-level
+drift to guard against — but the vectors still tie the two copies together, and
+the TypeScript one earns its place beyond testing: it checks a placement
+locally, so dropping a ship somewhere illegal is refused under the cursor
+rather than after a round trip.
 
 ### Proving the rules are free of the renderer
 
@@ -299,10 +326,124 @@ about events worth a re-render, such as connecting or failing. Input is sampled
 on the server's cadence rather than the display's, so a 144 Hz screen does not
 send five times what a 60 Hz one does.
 
-`packages/games/pong/renderer-pixi` is the only place allowed to know PixiJS
-exists, and it is reached through a dynamic `import()`. The catalogue and lobby
-never carry a rendering engine: the built entry chunk contains no PixiJS at
-all, and the engine arrives in its own chunks when a match starts.
+The `renderer-pixi` package of each game is the only place allowed to know
+PixiJS exists, and both are reached through a dynamic `import()`. The catalogue
+and lobby never carry a rendering engine: the built entry chunk contains no
+PixiJS at all, and the engine arrives in its own chunks when a match starts.
+
+## The second game
+
+Battleship is the first thing built on this architecture that Pong did not pay
+for, and most of it was already there: the catalogue, lobbies, passwords,
+invitations, the resume list, stats, notifications and the reconnecting socket
+are all reused without a line changed. What the game brought of its own is a
+`.proto`, rules in TypeScript and Go, a match handler, a board to draw it on,
+and one row in the catalogue seed.
+
+Three things about it are worth reading before the code.
+
+**A client is sent only what it has discovered.** Its own fleet in full, and of
+the opponent's waters nothing but the cells it has already fired at. Sending
+the whole board and hiding it in the interface would put the answer in the
+browser, where anyone can read it — the same reasoning that keeps a lobby
+password server-side. So the snapshot is built per recipient, which is a
+departure from Pong, where both players are sent the same broadcast.
+
+**A turn-based game still has a render loop.** That was the assumption worth
+getting wrong: nothing about the match changes between turns, but the water
+does, sixty times a second, whether or not anyone has moved. So this game runs
+on exactly the shape Pong does — a plain TypeScript loop on
+`requestAnimationFrame`, with React outside it, told only about a phase
+changing or a turn passing.
+
+**Animation is presentation, never truth.** A torpedo takes half a second to
+fly; the shot it depicts was resolved by the server the instant it was fired.
+The renderer plays effects over the authoritative state rather than delaying
+it, and starts them from *transitions* in that state — a shot that was not
+there last frame, and exactly one of them. A board arriving in bulk is a
+reconnection, not news, so a player who walks back into a game in progress does
+not sit through every explosion that happened while they were away.
+
+The tick rate is 10 Hz rather than Pong's 30. Nothing moves between turns, so
+the loop exists only to pick up messages and answer them, and snapshots go out
+reliably: a lost one here is a board that stays wrong until somebody moves,
+where a lost Pong frame is replaced 33 ms later.
+
+### Laying the fleet out
+
+The five ships wait in a tray beside the board — named, drawn at the size they
+will be, longest first. Drag one onto the grid and it snaps to the squares it
+would occupy, green where it may go and red where it may not, refused under the
+cursor rather than after a round trip. Drop a ship already placed back onto the
+board to move it; pick it up by any of its cells and it stays held by that cell,
+so a five-cell ship carried by its middle does not land five squares away.
+
+While a fleet is being arranged the opponent's grid is not drawn at all. It is
+empty, nothing can be done with it, and the room it was taking is the room the
+board and the tray needed — which is the difference between comfortable and
+unusable on a telephone. It appears when the game starts, which is also the
+moment it starts meaning something.
+
+Every button is also a key, because a hand already holding a ship with the mouse
+should not have to put it down to turn it:
+
+| | |
+|---|---|
+| `T`, or `R`, or right-click | turn the ship in hand |
+| `Escape` | put it back in the tray |
+| `Enter` | confirm the fleet |
+| Arrange for me | a legal arrangement, dealt at random |
+
+You can lay your fleet out before anybody else arrives, which is the emptiest
+minute of the game and the obvious one to spend on it. The server has not opened
+placement yet at that point, so a fleet confirmed then waits on the client and
+goes the instant an opponent joins.
+
+### Clicks become arithmetic
+
+A canvas has no elements to click. The grids and the tray are drawn in fixed
+logical units, so a pointer position divides down to a row and a column, or to
+one of the ships waiting to be placed, and that division is the whole of the
+input handling. `packages/games/battleship/renderer-pixi/src/layout.ts` is the
+only place that geometry is written down, because drawing and reading have to
+agree about it down to the unit; a unit test walks every cell of every grid and
+every cell of every ship in the tray and reads each one back.
+
+That is cheap, and it is also what this trades away: keyboard play and screen
+readers came free with DOM elements and do not come free here. Worth doing
+later as an explicit piece of work rather than pretended to now.
+
+A finger gets the same gestures and two adjustments. Tapping a ship picks it up
+and tapping a square puts it down, so nothing has to be dragged under a thumb
+that hides it; and a ship that *is* dragged is carried a cell and a half above
+the finger, clear of the hand. That lift applies to the carrying and to the
+letting go, and to nothing else — what a press selects is whatever is genuinely
+under it, or every tap would land somewhere other than where it was aimed.
+
+Firing is the one irreversible thing on the screen, so a finger aims with one
+tap and fires with a second on the same cell. A mouse has already shown its aim
+on the way there and fires on the first click.
+
+### Drawn procedurally, not from art
+
+Water, hulls, torpedoes and explosions all come from `Graphics` and motion, so
+nothing binary enters the repository and the look stays of a piece with the
+sharp-edged interface around it. The waves are drawn once and then only ever
+moved: each band is a ribbon twice as wide as the grid, slid sideways under a
+mask and wrapped once it has travelled a whole grid's width, with wavelengths
+that divide that width so the wrap lands on a whole number of crests. Rebuilding
+the geometry every frame would re-tessellate some thousands of segments for a
+picture that differs from the last by a few pixels of drift.
+
+The grids stack on a screen taller than it is wide and sit side by side on one
+wider than it is tall, because stacking them on a laptop letterboxes the pair
+down to a narrow column. Arranging a fleet is a third and fourth arrangement
+again — one grid and the tray. The stylesheet and the renderer switch on the
+same thing, and the aspect ratios are asserted in the tests so they cannot
+drift apart.
+
+If sprite art ever replaces any of this, that package is the only one that
+changes — which is the rendering contract doing its job.
 
 ## Coming back to a game
 
@@ -383,9 +524,14 @@ reported would be a score the client could choose.
 
 | Where | What | Who may write it |
 |---|---|---|
-| Leaderboard `pong_wins_weekly` | wins, reset every Monday | server |
-| Storage `stats` | played, won, lost, points for and against | server |
+| Leaderboard `<game>_wins_weekly` | wins, reset every Monday | server |
+| Storage `stats`, keyed by game | played, won, lost, points for and against | server |
 | Notification | the result, persistent | server |
+
+One board and one record per game, named after it: being good at Pong says
+nothing about being good at Battleship, and a single board would have claimed
+otherwise. Points mean whatever the game counts — goals for Pong, ships sunk
+for Battleship.
 
 A player may read their own record and nobody else's, and may write neither.
 The same hook that protects the catalogue and the invitations refuses client
@@ -436,10 +582,13 @@ which is what a match wants.
 
 ```
 packages/
-  core/            Shared contracts and protocol. Zero runtime dependencies.
+  core/            Shared contracts and protocols. Zero runtime dependencies.
   net/             Nakama client, session lifecycle, accounts, match sockets.
-  games/pong/logic Pong rules and physics. Pure TypeScript, the reference.
-  games/pong/renderer-pixi  PixiJS drawing. The only package importing Pixi.
+  games/
+    pong/logic                Pong rules and physics. Pure TypeScript.
+    pong/renderer-pixi        The field, the paddles and the ball.
+    battleship/logic          Battleship rules: placement, firing, victory.
+    battleship/renderer-pixi  The two grids, the water and what lands on it.
   renderer-headless A renderer that draws nothing, for headless matches.
   ui/              React shell: routing, authentication, profile, catalogue.
 server/
@@ -448,7 +597,10 @@ server/
 ```
 
 Packages arrive as their phase begins, so that nothing in the tree is a
-placeholder.
+placeholder. The two `renderer-pixi` packages are the only ones that import
+PixiJS, and `packages/ui/src/features/game/game-stage.tsx` is the only place
+the two games are told apart at all — everything above it is the same code for
+both.
 
 `net` is the only package that imports the Nakama SDK. It re-exports what the
 shell needs, so no screen talks to the backend directly and swapping the
