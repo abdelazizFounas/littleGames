@@ -7,10 +7,11 @@ authoritative match logic in Go.
 The whole repository — code, identifiers, comments, UI strings, commit
 messages — is written in English.
 
-> **Status: all eight phases done, and a second game on top of them.**
-> Battleship joins Pong — placement, turns, per-recipient snapshots and a
-> PixiJS board of its own. It is the first real test of the claim the
-> architecture was built on: that the second game would be cheap.
+> **Status: live at [little-games.fr](https://little-games.fr).** All eight
+> phases done, and a second game on top of them: Battleship joins Pong, with
+> placement, turns, per-recipient snapshots and a PixiJS board of its own. It is
+> the first real test of the claim the architecture was built on — that the
+> second game would be cheap.
 
 ## Architecture in one paragraph
 
@@ -570,6 +571,78 @@ buffer instead of interpolating across the jump in the clock.
 
 Verified against a running server: a socket killed mid-match receives nothing
 while it is down, and is back to receiving on a rebuilt one, in the same seat.
+
+## Production
+
+Live at **https://little-games.fr**, on a single VPS running the same three
+containers as development. Only two things differ, and both are in
+`server/docker/`: the client is built and baked into the Caddy image instead of
+being proxied to a dev server, and the site addresses are hostnames instead of
+ports.
+
+```sh
+tools/scripts/deploy.sh                 # deploy the current branch's HEAD
+tools/scripts/deploy.sh main            # or a named ref
+```
+
+The server pulls the commit from GitHub rather than being rsynced from a working
+tree, so what is running is always a commit that exists and can be checked out
+again. Secrets are never sent: `/opt/littlegames/.env` was generated on the
+machine and stays there.
+
+```sh
+ssh vps2                                # a shell on the server
+ssh -L 8080:127.0.0.1:8080 vps2         # then the Nakama console at :8080
+```
+
+### HTTPS
+
+Naming a hostname in `CADDY_SITE_ADDRESS` is the whole of it. That one decision
+turns on Caddy's automatic TLS, which brings:
+
+| | |
+|---|---|
+| certificate | Let's Encrypt, over the HTTP-01 challenge on port 80 |
+| renewal | in the background, about 30 days before expiry — no cron entry, no restart |
+| http:// | permanent redirect to https:// on every route, installed by Caddy |
+| www | permanent redirect to the apex, so one origin holds the session |
+| HSTS | one year, `includeSubDomains` |
+
+The issuer is named explicitly rather than left to the default, so a failed
+issue stays a failure instead of quietly becoming a different authority.
+Certificates and the ACME account key live in the `caddy-data` volume, so a
+rebuild re-issues nothing and cannot walk into Let's Encrypt's rate limits.
+
+Port 80 must stay open. It carries the ACME challenge and the redirect, and
+nothing else.
+
+### What is exposed, and what is not
+
+| Port | Reachable from | What |
+|---|---|---|
+| 80, 443 | the internet | Caddy |
+| 8080 | `127.0.0.1` only | the Nakama console, down an SSH tunnel |
+| 5432, 7349–7351 | the compose network only | PostgreSQL and Nakama |
+
+`ufw` allows 22, 80 and 443. Password authentication over SSH is off; the server
+takes keys only. The production overlay replaces the port list rather than
+adding to it — Compose concatenates them across files, and without that the
+development mapping would put the admin console on the public internet.
+
+### Checking a deployment
+
+The two-client checks take a host, so the same ones that run against a
+development stack run against the real thing:
+
+```sh
+NAKAMA_HOST=little-games.fr NAKAMA_PORT=443 NAKAMA_USE_SSL=true \
+NAKAMA_SOCKET_SERVER_KEY=... \
+pnpm --filter @littlegames/net verify:battleship
+```
+
+Worth doing after every deploy. The routing bug that served the client's own
+HTML in answer to a login only existed in the production Caddyfile, and only
+this found it.
 
 ## Installing it
 
