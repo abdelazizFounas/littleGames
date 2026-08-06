@@ -1,8 +1,8 @@
 import { useCallback, useState, type ReactNode } from 'react';
 import { Link, Navigate, useParams, useSearchParams } from 'react-router';
 import { useCatalog } from '../features/catalog/use-catalog';
+import { GameStage } from '../features/game/game-stage';
 import { InvitePanel } from '../features/game/invite-panel';
-import { PongStage } from '../features/game/pong-stage';
 import { RecordPanel } from '../features/stats/record-panel';
 import { useSession } from '../session/use-session';
 
@@ -91,10 +91,11 @@ export function GameLobbyRoute(): ReactNode {
           <strong>List lobbies</strong> from the game list to start.
         </p>
       ) : (
-        <PongStage
-        userId={state.profile.userId}
-        matchId={searchParams.get('match') ?? ''}
-        password={searchParams.get('key') ?? undefined}
+        <GameStage
+          gameId={game.id}
+          userId={state.profile.userId}
+          matchId={searchParams.get('match') ?? ''}
+          password={searchParams.get('key') ?? undefined}
           onJoined={onJoined}
         />
       )}

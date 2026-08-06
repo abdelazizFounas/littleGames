@@ -11,6 +11,8 @@
     "typecheck": "tsc --build"
   },
   "dependencies": {
+    "@littlegames/battleship-logic": "workspace:*",
+    "@littlegames/battleship-renderer-pixi": "workspace:*",
     "@littlegames/core": "workspace:*",
     "@littlegames/net": "workspace:*",
     "@littlegames/pong-logic": "workspace:*",

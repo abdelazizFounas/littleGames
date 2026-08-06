@@ -376,6 +376,56 @@ body {
   touch-action: none;
 }
 
+/* Two grids side by side, which is the arrangement the renderer picks for a
+   box wider than it is tall. The numbers are the field it draws, so a
+   well-sized screen letterboxes nothing. */
+.stage__surface--boards {
+  aspect-ratio: 948 / 542;
+}
+
+/* Laying a fleet out is a different picture: one grid and the tray of ships,
+   because the other grid is empty and nothing can be done with it. It is a
+   different shape too, so the box takes that shape while it lasts — the change
+   happens once, when the game starts, and the alternative is a band of empty
+   water under the tray for the whole of the placement. */
+.stage__surface--placing {
+  aspect-ratio: 722 / 542;
+}
+
+/* Narrow enough that side by side would shrink each grid to a thumbnail, so
+   the grids stack instead: their waters above, your fleet below, and the tray
+   under the board while there is one. The renderer switches on the same thing
+   this query does — whether the box is wider than it is tall — so the two
+   never disagree. */
+@media (width <= 46rem) {
+  .stage__surface--boards {
+    aspect-ratio: 474 / 996;
+  }
+
+  .stage__surface--placing {
+    aspect-ratio: 474 / 698;
+  }
+}
+
+.stage__controls {
+  margin-top: 1rem;
+}
+
+/* The key that does the same thing as the button, shown on the button. A hand
+   already holding a ship with the mouse should not have to put it down to turn
+   it, and it will only know that if the button says so. */
+.key {
+  margin-left: 0.5em;
+  padding: 0.05em 0.4em;
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  background: var(--surface-sunken);
+  color: var(--text-muted);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.8125em;
+  line-height: 1.4;
+}
+
 .stage__frame:fullscreen {
   display: flex;
   align-items: center;

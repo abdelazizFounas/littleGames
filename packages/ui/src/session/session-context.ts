@@ -1,4 +1,6 @@
 import type {
+  BattleshipConnection,
+  BattleshipMatchListeners,
   GameSummary,
   Invitation,
   LeaderboardEntry,
@@ -58,6 +60,18 @@ export interface SessionContextValue {
     matchId: string,
     password?: string,
   ) => Promise<MatchConnection>;
+  /**
+   * Joins a named Battleship match.
+   *
+   * Separate from `joinMatch` because the two games speak different protocols
+   * over the same socket: one exchanges paddle inputs and broadcasts, the other
+   * fleets and shots, and a snapshot built for one recipient alone.
+   */
+  readonly joinBattleship: (
+    listeners: BattleshipMatchListeners,
+    matchId: string,
+    password?: string,
+  ) => Promise<BattleshipConnection>;
   /** Joins an open lobby, or opens one when there is none. */
   readonly findOpenLobby: (game: string) => Promise<string>;
   /** Opens a lobby. An empty password means anyone may walk in. */

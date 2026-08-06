@@ -11,6 +11,7 @@ import {
   fetchLeaderboard,
   fetchPlayerStats,
   fetchPlayerProfile,
+  joinBattleshipMatch,
   joinMatch as joinMatchOnServer,
   linkEmail,
   listLobbies,
@@ -23,6 +24,8 @@ import {
   type GameSummary,
   type Invitation,
   type LeaderboardEntry,
+  type BattleshipConnection,
+  type BattleshipMatchListeners,
   type LobbySummary,
   type ResumableMatch,
   type MatchConnection,
@@ -161,6 +164,27 @@ export function SessionProvider({ children }: { readonly children: ReactNode }):
     [client, config, internal],
   );
 
+  const joinBattleship = useCallback(
+    async (
+      listeners: BattleshipMatchListeners,
+      matchId: string,
+      password?: string,
+    ): Promise<BattleshipConnection> => {
+      if (internal.status !== 'signed-in') {
+        throw new Error('Sign in before joining a match.');
+      }
+      return joinBattleshipMatch(
+        client,
+        config,
+        internal.session,
+        matchId,
+        listeners,
+        password ?? '',
+      );
+    },
+    [client, config, internal],
+  );
+
   const findOpenLobby = useCallback(
     async (game: string): Promise<string> => {
       if (internal.status !== 'signed-in') {
@@ -274,6 +298,7 @@ export function SessionProvider({ children }: { readonly children: ReactNode }):
       signOutPlayer,
       loadCatalog,
       joinMatch,
+      joinBattleship,
       createInvitation,
       resolveInvitation,
       loadStats,
@@ -289,6 +314,7 @@ export function SessionProvider({ children }: { readonly children: ReactNode }):
       checkLobby,
       createInvitation,
       findOpenLobby,
+      joinBattleship,
       joinMatch,
       listMyMatches,
       listOpenLobbies,

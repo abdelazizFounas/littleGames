@@ -34,6 +34,18 @@ importers:
 
   packages/games/battleship/logic: {}
 
+  packages/games/battleship/renderer-pixi:
+    dependencies:
+      '@littlegames/battleship-logic':
+        specifier: workspace:*
+        version: link:../logic
+      '@littlegames/core':
+        specifier: workspace:*
+        version: link:../../../core
+      pixi.js:
+        specifier: 8.19.0
+        version: 8.19.0
+
   packages/games/pong/logic: {}
 
   packages/games/pong/renderer-pixi:
@@ -72,6 +84,12 @@ importers:
 
   packages/ui:
     dependencies:
+      '@littlegames/battleship-logic':
+        specifier: workspace:*
+        version: link:../games/battleship/logic
+      '@littlegames/battleship-renderer-pixi':
+        specifier: workspace:*
+        version: link:../games/battleship/renderer-pixi
       '@littlegames/core':
         specifier: workspace:*
         version: link:../core

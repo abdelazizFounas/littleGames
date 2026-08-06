@@ -27,6 +27,12 @@
       "path": "../net"
     },
     {
+      "path": "../games/battleship/logic"
+    },
+    {
+      "path": "../games/battleship/renderer-pixi"
+    },
+    {
       "path": "../games/pong/logic"
     },
     {
