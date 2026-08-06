@@ -1,0 +1,50 @@
+# Production overlay. Applied on top of docker-compose.yml:
+#
+#     docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
+#
+# Only what differs between a development machine and a public server is here,
+# so the two cannot drift apart on the parts that are the same — the database,
+# the Nakama entrypoint and the plugin build are read from the base file
+# unchanged.
+
+services:
+  postgres:
+    # Nothing outside the compose network has any business reaching the
+    # database, and on a public address `expose` is not the same promise as not
+    # publishing a port at all.
+    expose:
+      - '5432'
+
+  nakama:
+    # Reached only through Caddy. The base file already publishes nothing.
+    expose:
+      - '7349'
+      - '7350'
+      - '7351'
+
+  caddy:
+    build:
+      context: ../..
+      dockerfile: server/docker/Dockerfile.web
+      args:
+        VITE_NAKAMA_HOST: ${VITE_NAKAMA_HOST:?set VITE_NAKAMA_HOST in .env}
+        VITE_NAKAMA_PORT: ${VITE_NAKAMA_PORT:?set VITE_NAKAMA_PORT in .env}
+        VITE_NAKAMA_USE_SSL: ${VITE_NAKAMA_USE_SSL:?set VITE_NAKAMA_USE_SSL in .env}
+        NAKAMA_SOCKET_SERVER_KEY: ${NAKAMA_SOCKET_SERVER_KEY:?set NAKAMA_SOCKET_SERVER_KEY in .env}
+    image: littlegames-web:latest
+    environment:
+      CADDY_SITE_ADDRESS: ${CADDY_SITE_ADDRESS:?set CADDY_SITE_ADDRESS in .env}
+      CADDY_ALIAS_ADDRESS: ${CADDY_ALIAS_ADDRESS:?set CADDY_ALIAS_ADDRESS in .env}
+      CADDY_CONSOLE_ADDRESS: ${CADDY_CONSOLE_ADDRESS:?set CADDY_CONSOLE_ADDRESS in .env}
+      CADDY_ACME_EMAIL: ${CADDY_ACME_EMAIL:?set CADDY_ACME_EMAIL in .env}
+    # Replaced rather than added to: Compose concatenates port lists across
+    # files, so without this the development mapping of 8080 on every interface
+    # would survive and put the Nakama console on the public internet.
+    ports: !override
+      - '80:80'
+      - '443:443'
+      - '127.0.0.1:8080:8080'
+    volumes: !override
+      - ./Caddyfile.prod:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config

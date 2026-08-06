@@ -1,0 +1,86 @@
+# Production routing. The development Caddyfile sits next to this one and
+# differs in exactly one thing: there, everything that is not the API is proxied
+# to the Vite dev server; here it is served from the bundle baked into the image.
+#
+# HTTPS, in full, is the three lines in the block below plus a hostname instead
+# of a port in the site addresses. Naming a hostname is what turns Caddy's
+# automatic TLS on, and that one decision brings:
+#
+#   - a Let's Encrypt certificate, fetched over the HTTP-01 challenge on port 80
+#     the first time the hostname is served;
+#   - renewal in the background, attempted from a third of the certificate's
+#     lifetime before it expires — about 30 days out on a 90-day certificate,
+#     retried with a backoff, with no cron entry and no restart;
+#   - a permanent redirect from http:// to https:// on every route, installed by
+#     Caddy itself. That is why port 80 must stay open: it carries the challenge
+#     and the redirect, and nothing else.
+#
+# The certificates and the ACME account key live in the `caddy-data` volume, so
+# a rebuild or a reboot does not re-issue anything and cannot walk into Let's
+# Encrypt's rate limits.
+
+{
+	# A real address, so Let's Encrypt has somewhere to write if a renewal keeps
+	# failing — which is the only warning before a certificate actually expires.
+	email {$CADDY_ACME_EMAIL}
+
+	# Let's Encrypt, named rather than left to the default. Caddy would otherwise
+	# try ZeroSSL as a fallback when an issue fails; being explicit means the
+	# certificate always comes from the authority this is documented as using,
+	# and a failure is a failure rather than a silent change of issuer.
+	acme_ca https://acme-v02.api.letsencrypt.org/directory
+}
+
+{$CADDY_SITE_ADDRESS} {
+	# Nakama's REST API, realtime socket and health probe. Caddy negotiates the
+	# WebSocket upgrade through reverse_proxy with no extra directive.
+	@nakama path /v2/* /ws /healthcheck
+	reverse_proxy @nakama nakama:7350
+
+	# Everything else is the web client.
+	root * /srv/www
+	encode zstd gzip
+
+	# The client is a single-page app: /profile and /join/ABC123 are its routes,
+	# not files on disk, so anything without a file behind it gets the shell and
+	# the router takes it from there.
+	try_files {path} /index.html
+	file_server
+
+	# The hashed asset names make these safe to keep for a year; index.html and
+	# the service worker must never be, or a deploy would not reach anybody.
+	@immutable path /assets/*
+	header @immutable Cache-Control "public, max-age=31536000, immutable"
+	@volatile path /index.html /sw.js /registerSW.js /manifest.webmanifest
+	header @volatile Cache-Control "no-cache"
+
+	# Sent on every response rather than per-route: they cost nothing and the
+	# one that matters, nosniff, only helps if it is never forgotten.
+	#
+	# HSTS tells a browser that has been here once to go straight to https next
+	# time, without the plaintext request that the redirect above answers. A year
+	# is the usual figure; it is also a year of being unable to serve this
+	# hostname over plain http, which is the commitment it is meant to be.
+	header {
+		X-Content-Type-Options nosniff
+		Referrer-Policy strict-origin-when-cross-origin
+		X-Frame-Options DENY
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		-Server
+	}
+}
+
+# One canonical address. Two hostnames serving the same app would split the
+# stored session, which is keyed by origin, and a player who typed the other one
+# would be asked to sign in again.
+{$CADDY_ALIAS_ADDRESS} {
+	redir https://{$CADDY_SITE_ADDRESS}{uri} permanent
+}
+
+# Nakama's developer console. Published on the loopback interface only, so it is
+# reached down an SSH tunnel and never from the internet:
+#
+#     ssh -L 8080:127.0.0.1:8080 vps2
+{$CADDY_CONSOLE_ADDRESS} {
+	reverse_proxy nakama:7351
+}

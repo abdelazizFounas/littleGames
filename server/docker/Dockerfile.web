@@ -1,0 +1,46 @@
+# Builds the web client and hands it to Caddy to serve.
+#
+# In development Caddy proxies the Vite dev server; there is no dev server in
+# production, so the built client has to come from somewhere. Baking it into the
+# Caddy image is the smallest arrangement that works: one thing to build, one
+# thing to run, and no volume whose contents can silently disagree with the
+# image that filled it.
+#
+# The Caddyfile stays a mounted file rather than being copied in, so the routing
+# can be corrected without rebuilding the client.
+
+FROM node:24.19.0-alpine AS build
+
+WORKDIR /app
+
+# Everything prefixed with VITE_ is embedded verbatim in the bundle, so none of
+# it may be a secret. The Nakama server key is the one value that looks like one
+# and is not: it only authorises opening a session, and it ships in the browser
+# either way. It is passed here rather than repeated in a VITE_ variable so that
+# the client and the server cannot disagree about it.
+ARG VITE_NAKAMA_HOST
+ARG VITE_NAKAMA_PORT
+ARG VITE_NAKAMA_USE_SSL
+ARG NAKAMA_SOCKET_SERVER_KEY
+
+ENV VITE_NAKAMA_HOST=$VITE_NAKAMA_HOST \
+    VITE_NAKAMA_PORT=$VITE_NAKAMA_PORT \
+    VITE_NAKAMA_USE_SSL=$VITE_NAKAMA_USE_SSL \
+    NAKAMA_SOCKET_SERVER_KEY=$NAKAMA_SOCKET_SERVER_KEY
+
+# corepack pins pnpm to the version in package.json, so the lockfile is read by
+# the tool that wrote it.
+RUN corepack enable
+
+COPY package.json pnpm-workspace.yaml pnpm-lock.yaml ./
+COPY packages ./packages
+
+# Frozen: a deploy that quietly resolves a different dependency tree than the
+# one committed is a deploy of something nobody tested.
+RUN pnpm install --frozen-lockfile --ignore-scripts
+
+RUN pnpm build
+
+FROM caddy:2.11.4
+
+COPY --from=build /app/packages/ui/dist /srv/www
