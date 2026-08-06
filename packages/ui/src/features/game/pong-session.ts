@@ -10,6 +10,7 @@ import {
   type Side,
 } from '@littlegames/pong-logic';
 import { combineInputs, createKeyboardInput, createTouchInput, type PongCommand } from './input-sources';
+import { composeFrame, type AuthoritativeFrame } from './pong-frame';
 
 /** How far behind live the opponent and the ball are drawn. */
 const INTERPOLATION_DELAY_MS = 100;
@@ -25,13 +26,6 @@ export interface PongSession {
   stop: () => void;
 }
 
-/** Snapshot as this client keeps it: the rules' state plus who we are in it. */
-interface AuthoritativeFrame {
-  readonly state: PongState;
-  readonly side: Side;
-  readonly acknowledgedSeq: number;
-}
-
 type ProtocolSnapshot = Parameters<MatchListeners['onSnapshot']>[0];
 
 const PHASES: Record<number, PongState['phase']> = {
@@ -41,10 +35,6 @@ const PHASES: Record<number, PongState['phase']> = {
   4: 'pointScored',
   5: 'finished',
 };
-
-function lerp(from: number, to: number, alpha: number): number {
-  return from + (to - from) * alpha;
-}
 
 /** Rebuilds the rules' state from a wire snapshot, for this player's seat. */
 function toFrame(snapshot: ProtocolSnapshot, userId: string): AuthoritativeFrame | null {
@@ -253,21 +243,7 @@ export async function startPongSession(
     // snapshots that bracket that moment, which is what turns thirty updates a
     // second into continuous motion.
     const { from, to, alpha } = interpolation;
-    const interpolatedLeft = lerp(from.state.left.y, to.state.left.y, alpha);
-    const interpolatedRight = lerp(from.state.right.y, to.state.right.y, alpha);
-
-    const drawn: PongState = {
-      ...latest.state,
-      left: { y: latest.side === 'left' ? predictedY : interpolatedLeft },
-      right: { y: latest.side === 'right' ? predictedY : interpolatedRight },
-      ball: {
-        ...latest.state.ball,
-        x: lerp(from.state.ball.x, to.state.ball.x, alpha),
-        y: lerp(from.state.ball.y, to.state.ball.y, alpha),
-      },
-    };
-
-    renderer.render(drawn, alpha);
+    renderer.render(composeFrame(from, to, alpha, latest.side, predictedY), alpha);
   };
 
   frame = requestAnimationFrame(tick);

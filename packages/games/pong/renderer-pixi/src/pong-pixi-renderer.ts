@@ -121,7 +121,13 @@ export function createPongPixiRenderer(): GameRenderer<PongState> {
         })
         .then(() => {
           drawStatics();
-    field.addChild(board, leftPaddle, rightPaddle, ball, numbers, message);
+          // The ball goes in beneath the paddles, which is the order two solid
+          // objects are in. A ball that gets past a paddle keeps travelling to
+          // the wall behind it and keeps climbing, and one time in ten it
+          // crosses the paddle's own rectangle on the way. Drawn over the top it
+          // reads as having gone straight through it; drawn under, it slides
+          // behind the paddle, which is what actually happened.
+          field.addChild(board, ball, leftPaddle, rightPaddle, numbers, message);
           app.stage.addChild(field);
           container.append(app.canvas);
           mounted = true;
