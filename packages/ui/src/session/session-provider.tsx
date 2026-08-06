@@ -8,9 +8,11 @@ import {
   createLobby,
   createNakamaClient,
   fetchGameCatalog,
+  fetchGameSettings,
   fetchLeaderboard,
   fetchPlayerStats,
   fetchPlayerProfile,
+  joinArenaMatch,
   joinBattleshipMatch,
   joinMatch as joinMatchOnServer,
   linkEmail,
@@ -19,8 +21,11 @@ import {
   persistSession,
   resolveInvitation as resolveInvitationOnServer,
   restoreSession,
+  saveGameSettings as saveGameSettingsOnServer,
   signOut,
   updateDisplayName,
+  type ArenaConnection,
+  type ArenaMatchListeners,
   type GameSummary,
   type Invitation,
   type LeaderboardEntry,
@@ -33,6 +38,7 @@ import {
   type PlayerProfile,
   type PlayerStats,
   type PlayerSession,
+  type StoredSettings,
 } from '@littlegames/net';
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { readNakamaConfig } from './nakama-config';
@@ -185,6 +191,20 @@ export function SessionProvider({ children }: { readonly children: ReactNode }):
     [client, config, internal],
   );
 
+  const joinArena = useCallback(
+    async (
+      listeners: ArenaMatchListeners,
+      matchId: string,
+      password?: string,
+    ): Promise<ArenaConnection> => {
+      if (internal.status !== 'signed-in') {
+        throw new Error('Sign in before joining a match.');
+      }
+      return joinArenaMatch(client, config, internal.session, matchId, listeners, password ?? '');
+    },
+    [client, config, internal],
+  );
+
   const findOpenLobby = useCallback(
     async (game: string): Promise<string> => {
       if (internal.status !== 'signed-in') {
@@ -272,6 +292,30 @@ export function SessionProvider({ children }: { readonly children: ReactNode }):
     [client, internal],
   );
 
+  const loadGameSettings = useCallback(
+    async (gameId: string): Promise<StoredSettings | null> => {
+      if (internal.status !== 'signed-in') {
+        return null;
+      }
+      return fetchGameSettings(client, internal.session, gameId);
+    },
+    [client, internal],
+  );
+
+  const saveGameSettings = useCallback(
+    async (
+      gameId: string,
+      settings: Record<string, unknown>,
+      updatedAt: number,
+    ): Promise<void> => {
+      if (internal.status !== 'signed-in') {
+        return;
+      }
+      await saveGameSettingsOnServer(client, internal.session, gameId, settings, updatedAt);
+    },
+    [client, internal],
+  );
+
   const signOutPlayer = useCallback(async (): Promise<void> => {
     if (internal.status !== 'signed-in') {
       return;
@@ -299,10 +343,13 @@ export function SessionProvider({ children }: { readonly children: ReactNode }):
       loadCatalog,
       joinMatch,
       joinBattleship,
+      joinArena,
       createInvitation,
       resolveInvitation,
       loadStats,
       loadLeaderboard,
+      loadGameSettings,
+      saveGameSettings,
       findOpenLobby,
       openLobby,
       listOpenLobbies,
@@ -314,14 +361,17 @@ export function SessionProvider({ children }: { readonly children: ReactNode }):
       checkLobby,
       createInvitation,
       findOpenLobby,
+      joinArena,
       joinBattleship,
       joinMatch,
       listMyMatches,
       listOpenLobbies,
       loadCatalog,
+      loadGameSettings,
       loadLeaderboard,
       loadStats,
       openLobby,
+      saveGameSettings,
       resolveInvitation,
       signInAsGuest,
       signInWithEmail,

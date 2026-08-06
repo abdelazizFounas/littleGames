@@ -101,6 +101,9 @@ importers:
 
   packages/ui:
     dependencies:
+      '@littlegames/arena-logic':
+        specifier: workspace:*
+        version: link:../games/arena/logic
       '@littlegames/arena-renderer-babylon':
         specifier: workspace:*
         version: link:../games/arena/renderer-babylon

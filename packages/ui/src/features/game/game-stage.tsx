@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { ArenaStage } from './arena-stage';
 import { BattleshipStage } from './battleship-stage';
 import { PongStage } from './pong-stage';
 
@@ -30,6 +31,12 @@ export function GameStage({
     // No user id: every snapshot is built for its recipient alone, so this
     // client never has to find itself in a broadcast meant for both players.
     return <BattleshipStage matchId={matchId} password={password} onJoined={onJoined} />;
+  }
+
+  if (gameId === 'arena') {
+    return (
+      <ArenaStage userId={userId} matchId={matchId} password={password} onJoined={onJoined} />
+    );
   }
 
   if (gameId === 'pong') {

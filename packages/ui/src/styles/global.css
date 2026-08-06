@@ -598,8 +598,253 @@ body {
   border-bottom: 1px solid var(--border);
 }
 
+/* --- Arena -------------------------------------------------------------- */
+
 /* The arena is first person, so its surface is the shape of a screen rather
    than of Pong's field. */
 .stage__surface--arena {
   aspect-ratio: 16 / 9;
+  background: #0b0d12;
+  cursor: crosshair;
+}
+
+/* Everything below renders inside .stage__frame, which is the element that
+   goes fullscreen. Anything outside it is not merely mispositioned while
+   fullscreen is active — it is not on the screen at all. Sizes are relative to
+   the surface rather than fixed in pixels, so a panel on a 27-inch display in
+   fullscreen is a panel rather than a postage stamp. */
+
+.arena-overlay,
+.arena-settings {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2vmin;
+  background: rgb(11 13 18 / 78%);
+  backdrop-filter: blur(2px);
+}
+
+.arena-overlay__card {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(0.5rem, 1.5vmin, 1rem);
+  align-items: center;
+  padding: clamp(1rem, 4vmin, 2.5rem);
+  text-align: center;
+  color: #eef0f4;
+  background: rgb(22 26 34 / 92%);
+  border: 1px solid rgb(255 255 255 / 12%);
+  border-radius: 0.5rem;
+}
+
+.arena-overlay__title {
+  margin: 0;
+  font-size: clamp(1.1rem, 3vmin, 2rem);
+  font-weight: 700;
+}
+
+.arena-settings {
+  align-items: stretch;
+  justify-content: stretch;
+}
+
+.arena-settings__panel {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(0.75rem, 2vmin, 1.5rem);
+  width: 100%;
+  padding: clamp(0.75rem, 3vmin, 2rem);
+  overflow-y: auto;
+  font-size: clamp(0.8rem, 1.8vmin, 1.1rem);
+  color: #eef0f4;
+  background: rgb(16 19 25 / 96%);
+  border: 1px solid rgb(255 255 255 / 12%);
+  border-radius: 0.5rem;
+}
+
+.arena-settings__panel h2 {
+  margin: 0;
+  font-size: clamp(1.1rem, 3vmin, 2rem);
+}
+
+.arena-settings__panel h3 {
+  margin: 0 0 0.5em;
+  font-size: clamp(0.9rem, 2.2vmin, 1.3rem);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  opacity: 0.7;
+}
+
+.arena-settings__header,
+.arena-settings__footer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.arena-settings__warning {
+  margin: 0;
+  padding: 0.5em 0.75em;
+  color: #ffd08a;
+  background: rgb(255 160 40 / 12%);
+  border-left: 3px solid #ffa028;
+  border-radius: 0.25rem;
+}
+
+.arena-settings__group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4em;
+}
+
+.arena-settings__row {
+  display: grid;
+  grid-template-columns: minmax(8em, 14em) 1fr minmax(3.5em, auto);
+  gap: 0.75em;
+  align-items: center;
+}
+
+.arena-settings__row--toggle {
+  grid-template-columns: auto 1fr;
+}
+
+.arena-settings__row input[type='range'] {
+  width: 100%;
+}
+
+.arena-settings__value {
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  opacity: 0.8;
+}
+
+.arena-settings__keys {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(11em, 1fr));
+  gap: 0.5em;
+}
+
+.arena-settings__key {
+  display: flex;
+  gap: 0.75em;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.5em 0.75em;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  background: rgb(255 255 255 / 6%);
+  border: 1px solid rgb(255 255 255 / 12%);
+  border-radius: 0.3rem;
+}
+
+.arena-settings__key--capturing {
+  border-color: #ffa028;
+  box-shadow: 0 0 0 1px #ffa028;
+}
+
+.arena-settings__key kbd {
+  padding: 0.15em 0.5em;
+  font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  background: rgb(0 0 0 / 35%);
+  border-radius: 0.2rem;
+}
+
+/* --- Touch controls, built by the input source --------------------------- */
+
+.arena-touch {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  /* The look surface below claims what it wants; this layer itself is not a
+     target, or it would swallow every gesture meant for the game. */
+  pointer-events: none;
+  touch-action: none;
+  user-select: none;
+}
+
+.arena-touch__look {
+  position: absolute;
+  inset: 0;
+  pointer-events: auto;
+}
+
+.arena-touch__stick {
+  position: absolute;
+  bottom: 4%;
+  left: 4%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--stick-size, 16vmin);
+  aspect-ratio: 1;
+  pointer-events: auto;
+  background: rgb(255 255 255 / 8%);
+  border: 2px solid rgb(255 255 255 / 25%);
+  border-radius: 50%;
+}
+
+.arena-touch--left-handed .arena-touch__stick {
+  right: 4%;
+  left: auto;
+}
+
+.arena-touch__knob {
+  width: 40%;
+  aspect-ratio: 1;
+  background: rgb(255 255 255 / 55%);
+  border-radius: 50%;
+}
+
+.arena-touch__buttons {
+  position: absolute;
+  right: 4%;
+  bottom: 4%;
+  display: grid;
+  grid-template-areas:
+    'zoom fire'
+    'crouch jump';
+  gap: 1.5vmin;
+  pointer-events: none;
+}
+
+.arena-touch--left-handed .arena-touch__buttons {
+  right: auto;
+  left: 4%;
+}
+
+.arena-touch__button {
+  width: 11vmin;
+  aspect-ratio: 1;
+  font-size: 2vmin;
+  color: #eef0f4;
+  pointer-events: auto;
+  background: rgb(255 255 255 / 10%);
+  border: 2px solid rgb(255 255 255 / 25%);
+  border-radius: 50%;
+}
+
+.arena-touch__button--fire {
+  grid-area: fire;
+  width: 15vmin;
+  background: rgb(255 93 93 / 25%);
+  border-color: rgb(255 93 93 / 55%);
+}
+
+.arena-touch__button--jump {
+  grid-area: jump;
+}
+
+.arena-touch__button--crouch {
+  grid-area: crouch;
+}
+
+.arena-touch__button--zoom {
+  grid-area: zoom;
 }

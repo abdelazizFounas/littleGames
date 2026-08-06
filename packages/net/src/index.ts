@@ -77,3 +77,6 @@ export { createInputHistory, reconcile } from './prediction';
 
 export type { LeaderboardEntry, PlayerStats } from './stats';
 export { fetchLeaderboard, fetchPlayerStats } from './stats';
+
+export type { StoredSettings } from './settings';
+export { fetchGameSettings, saveGameSettings } from './settings';

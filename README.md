@@ -14,10 +14,11 @@ messages — is written in English.
 > second game would be cheap.
 >
 > A third is being built in five phases of its own: **Arena**, a 1v1
-> server-authoritative FPS. Three of the five are done — the rules, the
-> authoritative server, and now the arena itself in Babylon.js. A whole match
-> can be played to a win over two real sockets, by a script rather than by a
-> person, and the arena can be looked at while it happens to nobody.
+> server-authoritative FPS. Four of the five are done — the rules, the
+> authoritative server, the arena in Babylon.js, and now the controls: pointer
+> lock, mouse look, client-side prediction of your own body, an interpolated
+> opponent, and settings that follow your account rather than your browser. Two
+> people can duel.
 >
 > The third phase is the one this game exists for. Adding a second rendering
 > engine took **one new package and one line in the version table**: no change to
@@ -430,6 +431,81 @@ camera flying a fixed path through it. A debug camera that clipped through a
 crate would read as a fault in the renderer, so the path is a pure function of
 time and a test walks the whole loop asserting it never enters anything that is
 drawn.
+
+### Playing it in first person
+
+Everything the player touches is in `packages/ui/src/features/game/`, and the
+parts worth arguing about are pulled out of the loop so they can be tested
+without a browser: `arena-settings.ts` holds the preferences and the rebinding,
+`arena-view.ts` decides what a frame contains.
+
+**The client predicts its own body and nothing else.** It replays the commands
+the server has not acknowledged through the very same `stepBody`, from the very
+same integers it put on the wire, so the answer is what the server will itself
+compute. The opponent is the opposite: drawn from the past, interpolated between
+the two snapshots that bracket the moment — except across a respawn, which would
+otherwise slide them back from where they died to their spawn through every wall
+in between.
+
+**The delay it draws them at is the rules' own constant, not a number chosen
+here.** The server adds `INTERP_DELAY_TICKS` to every rewind when it judges a
+shot, because a shooter aimed at what their screen showed. A client drawing
+further behind than the server compensates would be under-compensated by the
+difference, and its shots would miss a target that was, on its own screen, dead
+centre. Pong's 100 ms became 50 ms here for exactly that reason: at 60 Hz, three
+ticks of jitter buffer costs half what it does at 30.
+
+**A correction moves the camera, and the camera is the player.** When a snapshot
+disagrees with the prediction, the difference is kept as a render-only offset
+and halved every 60 ms, so it is never fed back into the simulated state.
+Corrections over a metre and a half are taken at once instead — that is not
+drift to be blended away, it is the client having been wrong, and gliding
+smoothly to the truth would leave the player shooting from somewhere they are
+not for the whole glide. On a respawn the offset is dropped outright.
+
+**Keys are stored by physical position** (`event.code`), so `KeyW`/`KeyA`/
+`KeyS`/`KeyD` is already ZQSD on an AZERTY keyboard with no second mapping and
+no layout guess. Rebinding captures the next key, swallows it, and refuses one
+another action already holds rather than stealing it silently.
+
+### Settings follow the account
+
+They live in Nakama's storage under a `settings` collection keyed by game and
+owned by the player, with `permission_write: 1` — the only collection in this
+project a client writes directly. The reason is in
+`server/nakama/catalog/catalog.go` beside the list it is deliberately absent
+from: preferences are nobody's business but the player's, a player can only
+reach their own object, and the worst they can do is corrupt their own controls,
+which "reset to defaults" undoes.
+
+Local storage stays as a cache rather than as the record, so the controls are
+right on the first frame instead of a round trip later. The copy with the newer
+timestamp wins. A guest who later adds an email keeps their settings, because it
+is the same account; a guest starting fresh on another machine is a different
+account and starts from defaults, which is inherent to guest accounts.
+
+Loading validates **per field**: a blob written by an older build, hand-edited in
+the console or truncated by a quota costs the player the one setting that is
+broken, not every setting they have.
+
+### Pointer lock, and the overlay every browser shooter needs
+
+A browser will not let a page keep pointer lock through Escape, and that cannot
+be intercepted. Losing it therefore raises a resume overlay — clicking anywhere
+on it takes the mouse back, which is what everyone tries first, with a real
+button underneath for the keyboard. **P** opens the settings and releases the
+lock so the mouse can reach the panel; releasing the pointer does not leave
+fullscreen, so the panel appears over the game where it belongs.
+
+The panel renders inside `.stage__frame`. That is a structural requirement
+rather than a styling one: `requestFullscreen` is called on that element, and
+anything outside it is not on the screen at all while fullscreen is active.
+Sizes are `vmin`-based so the panel is a panel on a large display rather than a
+postage stamp marooned in the middle of one.
+
+**The match does not pause, and the panel says so.** This is a live duel: the
+opponent is still playing, and a player reading the settings is standing still
+and can be shot.
 
 ## How the picture is built
 

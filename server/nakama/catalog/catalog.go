@@ -131,6 +131,15 @@ func Seed(ctx context.Context, logger runtime.Logger, nk runtime.NakamaModule) e
 // that a code cannot be minted, harvested or brute-forced from the outside.
 // Stats a player may read but never write: a record they could edit would be a
 // claim rather than a fact.
+//
+// "settings" is deliberately absent, and the reason belongs here rather than
+// in a commit message. A player's preferences are nobody's business but their
+// own: they are written by the client straight into that player's own object,
+// which nobody else can reach, and the worst thing anyone can do with that
+// permission is corrupt their own controls — which "reset to defaults" undoes.
+// Nothing in there is a claim about a game, so nothing in there needs an RPC to
+// check it. Guarding it would mean a round trip through the server for a
+// sensitivity slider.
 var GuardedCollections = []string{Collection, "invites", "stats", "active"}
 
 func isGuarded(collection string) bool {

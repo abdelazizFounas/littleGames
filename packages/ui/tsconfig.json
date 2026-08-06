@@ -28,6 +28,9 @@
       "path": "../net"
     },
     {
+      "path": "../games/arena/logic"
+    },
+    {
       "path": "../games/arena/renderer-babylon"
     },
     {

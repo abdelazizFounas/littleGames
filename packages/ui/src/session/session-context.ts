@@ -1,4 +1,6 @@
 import type {
+  ArenaConnection,
+  ArenaMatchListeners,
   BattleshipConnection,
   BattleshipMatchListeners,
   GameSummary,
@@ -10,6 +12,7 @@ import type {
   MatchListeners,
   PlayerProfile,
   PlayerStats,
+  StoredSettings,
 } from '@littlegames/net';
 import { createContext } from 'react';
 
@@ -72,6 +75,17 @@ export interface SessionContextValue {
     matchId: string,
     password?: string,
   ) => Promise<BattleshipConnection>;
+  /**
+   * Joins a named Arena match.
+   *
+   * A third protocol over the same socket: quantised intent up, whole bodies
+   * down, and a trailing window of the shots the server resolved.
+   */
+  readonly joinArena: (
+    listeners: ArenaMatchListeners,
+    matchId: string,
+    password?: string,
+  ) => Promise<ArenaConnection>;
   /** Joins an open lobby, or opens one when there is none. */
   readonly findOpenLobby: (game: string) => Promise<string>;
   /** Opens a lobby. An empty password means anyone may walk in. */
@@ -92,6 +106,16 @@ export interface SessionContextValue {
   readonly loadStats: (gameId: string) => Promise<PlayerStats>;
   /** This week's board. */
   readonly loadLeaderboard: (gameId: string) => Promise<LeaderboardEntry[]>;
+  /**
+   * The player's own settings for a game, or null when they have never saved
+   * any. Kept against the account, so they follow the player between machines.
+   */
+  readonly loadGameSettings: (gameId: string) => Promise<StoredSettings | null>;
+  readonly saveGameSettings: (
+    gameId: string,
+    settings: Record<string, unknown>,
+    updatedAt: number,
+  ) => Promise<void>;
 }
 
 export const SessionContext = createContext<SessionContextValue | null>(null);
