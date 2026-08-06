@@ -42,7 +42,9 @@ const reasonOf = (error: unknown): string => {
 };
 
 const rpcMatchId = async (session: Awaited<ReturnType<typeof authenticate>>) => {
-  const response = await client.rpc(session, 'match.find', {});
+  // `lobby.auto` takes the game from the request, which is what replaced the
+  // Pong-only `match.find` when the lobby layer stopped assuming one game.
+  const response = await client.rpc(session, 'lobby.auto', { game: 'pong' });
   const payload: unknown = response.payload;
   if (typeof payload !== 'object' || payload === null || !('matchId' in payload)) {
     throw new Error('the server returned no match id');
@@ -60,9 +62,10 @@ const bob = await authenticate('bob');
 
 console.log('\n=== 2. both ask the server for a match ===');
 const aliceMatch = await rpcMatchId(alice);
-// Two humans never click within the same label-index refresh window. Waiting
-// one window reproduces real timing instead of a race no player can hit.
-await new Promise((resolve) => setTimeout(resolve, 400));
+// A lobby is not listable the instant it exists: the label index is refreshed
+// on a timer, and two humans never click inside one refresh anyway. Waiting a
+// window reproduces real timing instead of a race no player can hit.
+await new Promise((resolve) => setTimeout(resolve, 1500));
 const bobMatch = await rpcMatchId(bob);
 console.log(`  alice -> ${aliceMatch}`);
 console.log(`  bob   -> ${bobMatch}`);
