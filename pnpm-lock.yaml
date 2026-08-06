@@ -32,6 +32,8 @@ importers:
 
   packages/core: {}
 
+  packages/games/arena/logic: {}
+
   packages/games/battleship/logic: {}
 
   packages/games/battleship/renderer-pixi:
@@ -78,6 +80,9 @@ importers:
         specifier: workspace:*
         version: link:../core
     devDependencies:
+      '@littlegames/arena-logic':
+        specifier: workspace:*
+        version: link:../games/arena/logic
       '@littlegames/pong-logic':
         specifier: workspace:*
         version: link:../games/pong/logic

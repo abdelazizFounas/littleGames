@@ -14,6 +14,7 @@
     "@littlegames/core": "workspace:*"
   },
   "devDependencies": {
+    "@littlegames/arena-logic": "workspace:*",
     "@littlegames/pong-logic": "workspace:*"
   }
 }

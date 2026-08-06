@@ -1,0 +1,14 @@
+{
+  "name": "@littlegames/arena-logic",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Arena rules: movement, collision, shooting, rounds. Pure TypeScript, no rendering, no networking.",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --build",
+    "vectors": "node scripts/write-vectors.ts"
+  }
+}

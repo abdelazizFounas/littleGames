@@ -8,5 +8,9 @@
     "tsBuildInfoFile": "./dist/tsconfig.tsbuildinfo"
   },
   "include": ["src/**/*.ts", "test/**/*.ts"],
-  "references": [{ "path": "../core" }, { "path": "../games/pong/logic" }]
+  "references": [
+    { "path": "../core" },
+    { "path": "../games/arena/logic" },
+    { "path": "../games/pong/logic" }
+  ]
 }
