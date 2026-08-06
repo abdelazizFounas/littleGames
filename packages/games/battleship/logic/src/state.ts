@@ -1,4 +1,4 @@
-import { FLEET_SIZE, SHIP_LENGTHS } from './constants.ts';
+import { FLEET_SIZE, SHIP_LENGTHS, SHIP_NAMES } from './constants.ts';
 
 /** Which of the two seats a player holds. */
 export type Side = 'a' | 'b';
@@ -65,6 +65,11 @@ export function opponentOf(side: Side): Side {
 /** Length of the ship at a given index in the fleet. */
 export function shipLength(index: number): number {
   return SHIP_LENGTHS[index] ?? 0;
+}
+
+/** What the ship at a given index in the fleet is called. */
+export function shipName(index: number): string {
+  return SHIP_NAMES[index] ?? 'ship';
 }
 
 export { FLEET_SIZE };

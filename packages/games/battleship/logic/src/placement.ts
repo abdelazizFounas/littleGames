@@ -51,15 +51,102 @@ export function checkFleet(fleet: readonly Placement[]): PlacementProblem | null
   return null;
 }
 
-/** Every cell a fleet occupies, as a set of `row * GRID_SIZE + column` keys. */
-export function occupiedCells(fleet: readonly Placement[]): Set<number> {
+/**
+ * A ship that carries its own length.
+ *
+ * A complete fleet does not need this: its ships are in fleet order, so the
+ * index gives the length. One being arranged does, because ships can be laid
+ * down and picked back up in any order, and then a position in a list means
+ * nothing.
+ */
+export interface SeatedShip {
+  readonly placement: Placement;
+  readonly length: number;
+}
+
+/** Every cell a set of ships occupies, as `row * GRID_SIZE + column` keys. */
+export function cellsTakenBy(ships: readonly SeatedShip[]): Set<number> {
   const taken = new Set<number>();
-  for (const [index, placement] of fleet.entries()) {
-    for (const cell of cellsOf(placement, shipLength(index))) {
+  for (const ship of ships) {
+    for (const cell of cellsOf(ship.placement, ship.length)) {
       taken.add(cell.row * GRID_SIZE + cell.column);
     }
   }
   return taken;
+}
+
+/** Every cell a complete fleet occupies, taking each length from its order. */
+export function occupiedCells(fleet: readonly Placement[]): Set<number> {
+  return cellsTakenBy(
+    fleet.map((placement, index) => ({ placement, length: shipLength(index) })),
+  );
+}
+
+/**
+ * Whether one more ship can go here, alongside the ships already down.
+ *
+ * `checkFleet` answers for a complete fleet and nothing less, which is the
+ * right question for the server. A player laying ships out one at a time asks a
+ * different one, on a fleet that is still half empty — and asks it on every
+ * pointer move, which is what makes an illegal spot refuse itself under the
+ * cursor rather than after a round trip.
+ */
+export function fits(
+  alongside: readonly SeatedShip[],
+  placement: Placement,
+  length: number,
+): boolean {
+  const taken = cellsTakenBy(alongside);
+  return cellsOf(placement, length).every(
+    (cell) =>
+      cell.row >= 0 &&
+      cell.row < GRID_SIZE &&
+      cell.column >= 0 &&
+      cell.column < GRID_SIZE &&
+      !taken.has(cell.row * GRID_SIZE + cell.column),
+  );
+}
+
+/** How many tries one ship gets before the whole arrangement is restarted. */
+const PLACEMENT_ATTEMPTS = 200;
+
+/**
+ * A legal fleet, laid out at random.
+ *
+ * Longest first, for the reason `SHIP_LENGTHS` is ordered that way: the long
+ * ships are the ones with nowhere left to go once the board is busy. Even so a
+ * run can still corner itself, so a ship that cannot be seated after enough
+ * tries throws the arrangement away and starts over rather than returning a
+ * fleet with a hole in it.
+ *
+ * The source of randomness is injected so a test can pin it down.
+ */
+export function randomFleet(random: () => number = Math.random): Placement[] {
+  for (;;) {
+    const fleet: SeatedShip[] = [];
+
+    for (const length of SHIP_LENGTHS) {
+      let seated = false;
+      for (let attempt = 0; attempt < PLACEMENT_ATTEMPTS && !seated; attempt += 1) {
+        const placement: Placement = {
+          row: Math.floor(random() * GRID_SIZE),
+          column: Math.floor(random() * GRID_SIZE),
+          orientation: random() < 0.5 ? 'horizontal' : 'vertical',
+        };
+        if (fits(fleet, placement, length)) {
+          fleet.push({ placement, length });
+          seated = true;
+        }
+      }
+      if (!seated) {
+        break;
+      }
+    }
+
+    if (fleet.length === SHIP_LENGTHS.length) {
+      return fleet.map((ship) => ship.placement);
+    }
+  }
 }
 
 export { SHIP_LENGTHS };

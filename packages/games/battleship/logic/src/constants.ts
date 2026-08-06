@@ -16,6 +16,16 @@ export const ROW_LABELS = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'] as 
  */
 export const SHIP_LENGTHS = [5, 4, 3, 3, 2] as const;
 
+/**
+ * What each ship is called, in the same order.
+ *
+ * Presentation only — the rules never look at a name, and neither does the
+ * server. They exist so that a screen can say "place your carrier" instead of
+ * "place your ship of five", and so the ships waiting to be placed can be told
+ * apart by more than their length.
+ */
+export const SHIP_NAMES = ['carrier', 'battleship', 'cruiser', 'submarine', 'destroyer'] as const;
+
 export const FLEET_SIZE = SHIP_LENGTHS.length;
 
 /** How many hits sink an entire fleet, and so win the game. */
