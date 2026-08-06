@@ -288,6 +288,25 @@ Keeping that possible constrains how the physics may be written. Only `+`, `-`,
 IEEE-754 in both languages. Trigonometry is not, so a bounce angle comes from a
 square root rather than a cosine.
 
+### Why the ball is caught mid-tick
+
+A tick is a thirty-second of a second, and the ball is checked against the
+paddle by asking whether it crossed the paddle's plane during it — not whether
+it overlaps the paddle at the end, which at speed it never would.
+
+Crossing the plane is only half the question. The other half is whether the
+paddle was in front of it *at that moment*, and the moment is somewhere inside
+the tick. At top speed and the steepest angle a paddle can impart, the ball
+climbs 24 units in one tick against a paddle reach of 56, and the paddle itself
+travels 14. Asking where either of them ended up is wrong about **one arrival in
+twenty**: 2.9% of the time the ball goes through solid material, and 2.3% of the
+time it comes back off thin air.
+
+Both are therefore wound back to the instant of contact, which is exact — both
+move at a constant velocity across the tick, so it is one multiplication each.
+Winding the ball back also means folding it off a wall it may have met on the
+way, since the trajectory is a straight line only until it does.
+
 Battleship keeps the same arrangement for a much smaller price. It is integer
 arithmetic on a grid with no floating point anywhere, so there is no bit-level
 drift to guard against — but the vectors still tie the two copies together, and

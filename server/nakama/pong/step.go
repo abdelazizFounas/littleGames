@@ -45,11 +45,14 @@ func movePaddle(paddle Paddle, input PaddleInput) Paddle {
 // because square root is exactly rounded by IEEE-754 in both languages, while
 // trigonometry is not, and this has to agree with the TypeScript reference to
 // the last bit.
-func deflect(ball Ball, paddleY float64, towards string) Ball {
-	offset := clamp((ball.Y-paddleY)/halfPaddle, -1, 1)
+//
+// Both positions are the ones held at the moment of contact, not at the end of
+// the tick the contact happened in.
+func deflect(contactY, paddleY, speed float64, towards string) Ball {
+	offset := clamp((contactY-paddleY)/halfPaddle, -1, 1)
 	verticalRatio := offset * MaxBounceRatio
 	horizontalRatio := math.Sqrt(1 - verticalRatio*verticalRatio)
-	speed := math.Min(ball.Speed*BallSpeedGain, BallMaxSpeed)
+	next := math.Min(speed*BallSpeedGain, BallMaxSpeed)
 
 	horizontalSign := -1.0
 	x := rightContact
@@ -60,10 +63,10 @@ func deflect(ball Ball, paddleY float64, towards string) Ball {
 
 	return Ball{
 		X:     x,
-		Y:     ball.Y,
-		VX:    horizontalSign * horizontalRatio * speed,
-		VY:    verticalRatio * speed,
-		Speed: speed,
+		Y:     contactY,
+		VX:    horizontalSign * horizontalRatio * next,
+		VY:    verticalRatio * next,
+		Speed: next,
 	}
 }
 
@@ -84,20 +87,39 @@ func serve(pointsPlayed int, towards string) Ball {
 	}
 }
 
-func bounceOffWalls(ball Ball) Ball {
-	if ball.Y < BallRadius {
-		// Mirror the overshoot back into the field rather than snapping to the
-		// wall, so a fast ball keeps the distance it actually travelled.
-		ball.Y = BallRadius + (BallRadius - ball.Y)
-		ball.VY = -ball.VY
-		return ball
+// foldIntoField mirrors a y coordinate back inside the field.
+//
+// The overshoot is reflected rather than snapped to the wall, so a fast ball
+// keeps the distance it actually travelled. One reflection is enough: at the
+// ball's top speed a tick carries it a twenty-fifth of the field's height, so it
+// cannot reach one wall and then the other.
+func foldIntoField(y float64) float64 {
+	if y < BallRadius {
+		return BallRadius + (BallRadius - y)
 	}
 	bottom := FieldHeight - BallRadius
-	if ball.Y > bottom {
-		ball.Y = bottom - (ball.Y - bottom)
-		ball.VY = -ball.VY
+	if y > bottom {
+		return bottom - (y - bottom)
 	}
+	return y
+}
+
+func bounceOffWalls(ball Ball) Ball {
+	folded := foldIntoField(ball.Y)
+	if folded == ball.Y {
+		return ball
+	}
+	ball.Y = folded
+	ball.VY = -ball.VY
 	return ball
+}
+
+// crossingFraction reports where in the tick the ball's centre reached a plane.
+//
+// Only asked once the two ends of the tick are known to straddle the plane, so
+// the travel cannot be zero and the answer is always within [0, 1].
+func crossingFraction(previousX, x, plane float64) float64 {
+	return (plane - previousX) / (x - previousX)
 }
 
 // blockedByPaddle reports the deflected ball if a paddle blocked it this tick.
@@ -105,15 +127,39 @@ func bounceOffWalls(ball Ball) Ball {
 // The test is on crossing a plane between the previous position and this one,
 // not on overlapping it: at speed the ball covers more than its own diameter in
 // a tick, and an overlap test would let it tunnel through the paddle.
-func blockedByPaddle(ball Ball, previousX float64, left, right Paddle) (Ball, bool) {
-	if ball.VX < 0 && previousX >= leftContact && ball.X <= leftContact {
-		if math.Abs(ball.Y-left.Y) <= contactReach {
-			return deflect(ball, left.Y, SideRight), true
+//
+// Crossing the plane is only half the question, though. The other half is
+// whether the paddle was in front of the ball at that moment, and the moment is
+// somewhere inside the tick rather than at the end of it. At full speed and the
+// steepest angle the ball climbs twenty-four units in one tick — nearly half the
+// paddle's reach — and the paddle itself travels fourteen. Asking where either
+// of them ended up is how a ball goes through solid material, and how one that
+// was never in reach gets returned.
+//
+// So both are wound back to the instant of contact. Both move at a constant
+// velocity across the tick, so that is one multiplication each and no
+// approximation.
+func blockedByPaddle(
+	ball, previous Ball,
+	previousLeft, previousRight, left, right Paddle,
+) (Ball, bool) {
+	if ball.VX < 0 && previous.X >= leftContact && ball.X <= leftContact {
+		at := crossingFraction(previous.X, ball.X, leftContact)
+		// From the pre-bounce velocity, then folded: the ball may have met a
+		// wall on its way to the paddle, and the trajectory is a straight line
+		// only until it does.
+		contactY := foldIntoField(previous.Y + previous.VY*TickSeconds*at)
+		paddleY := previousLeft.Y + (left.Y-previousLeft.Y)*at
+		if math.Abs(contactY-paddleY) <= contactReach {
+			return deflect(contactY, paddleY, ball.Speed, SideRight), true
 		}
 	}
-	if ball.VX > 0 && previousX <= rightContact && ball.X >= rightContact {
-		if math.Abs(ball.Y-right.Y) <= contactReach {
-			return deflect(ball, right.Y, SideLeft), true
+	if ball.VX > 0 && previous.X <= rightContact && ball.X >= rightContact {
+		at := crossingFraction(previous.X, ball.X, rightContact)
+		contactY := foldIntoField(previous.Y + previous.VY*TickSeconds*at)
+		paddleY := previousRight.Y + (right.Y-previousRight.Y)*at
+		if math.Abs(contactY-paddleY) <= contactReach {
+			return deflect(contactY, paddleY, ball.Speed, SideLeft), true
 		}
 	}
 	return ball, false
@@ -141,6 +187,8 @@ func Step(state State, inputs Inputs) State {
 
 	// Paddles answer during the countdown and the pause after a point too, so a
 	// player can take position before the serve.
+	previousLeft := state.Left
+	previousRight := state.Right
 	left := movePaddle(state.Left, inputs.Left)
 	right := movePaddle(state.Right, inputs.Right)
 	state.Left = left
@@ -157,12 +205,14 @@ func Step(state State, inputs Inputs) State {
 		return state
 	}
 
-	previousX := state.Ball.X
+	previous := state.Ball
 	ball := state.Ball
 	ball.X = ball.X + ball.VX*TickSeconds
 	ball.Y = ball.Y + ball.VY*TickSeconds
 	ball = bounceOffWalls(ball)
-	if deflected, hit := blockedByPaddle(ball, previousX, left, right); hit {
+	if deflected, hit := blockedByPaddle(
+		ball, previous, previousLeft, previousRight, left, right,
+	); hit {
 		ball = deflected
 	}
 	state.Ball = ball

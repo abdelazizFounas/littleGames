@@ -61,20 +61,23 @@ export function movePaddle(paddle: Paddle, input: PaddleInput): Paddle {
  * comes from a square root rather than a cosine on purpose — square root is
  * exactly rounded by IEEE-754 in both languages, while trigonometry is not, and
  * the Go port has to agree with this to the last bit.
+ *
+ * Both positions are the ones held at the moment of contact, not at the end of
+ * the tick the contact happened in.
  */
-function deflect(ball: Ball, paddleY: number, towards: Side): Ball {
-  const offset = clamp((ball.y - paddleY) / HALF_PADDLE, -1, 1);
+function deflect(contactY: number, paddleY: number, speed: number, towards: Side): Ball {
+  const offset = clamp((contactY - paddleY) / HALF_PADDLE, -1, 1);
   const verticalRatio = offset * MAX_BOUNCE_RATIO;
   const horizontalRatio = Math.sqrt(1 - verticalRatio * verticalRatio);
-  const speed = Math.min(ball.speed * BALL_SPEED_GAIN, BALL_MAX_SPEED);
+  const next = Math.min(speed * BALL_SPEED_GAIN, BALL_MAX_SPEED);
   const horizontalSign = towards === 'right' ? 1 : -1;
 
   return {
     x: towards === 'right' ? LEFT_CONTACT_X : RIGHT_CONTACT_X,
-    y: ball.y,
-    vx: horizontalSign * horizontalRatio * speed,
-    vy: verticalRatio * speed,
-    speed,
+    y: contactY,
+    vx: horizontalSign * horizontalRatio * next,
+    vy: verticalRatio * next,
+    speed: next,
   };
 }
 
@@ -93,18 +96,36 @@ function serve(pointsPlayed: number, towards: Side): Ball {
   };
 }
 
-/** Reflects the ball off the top and bottom walls. */
-function bounceOffWalls(ball: Ball): Ball {
-  if (ball.y < BALL_RADIUS) {
-    // Mirror the overshoot back into the field rather than snapping to the
-    // wall, so a fast ball keeps the distance it actually travelled.
-    return { ...ball, y: BALL_RADIUS + (BALL_RADIUS - ball.y), vy: -ball.vy };
+/**
+ * Mirrors a y coordinate back inside the field.
+ *
+ * The overshoot is reflected rather than snapped to the wall, so a fast ball
+ * keeps the distance it actually travelled. One reflection is enough: at the
+ * ball's top speed a tick carries it a twenty-fifth of the field's height, so
+ * it cannot reach one wall and then the other.
+ */
+function foldIntoField(y: number): number {
+  if (y < BALL_RADIUS) {
+    return BALL_RADIUS + (BALL_RADIUS - y);
   }
   const bottom = FIELD_HEIGHT - BALL_RADIUS;
-  if (ball.y > bottom) {
-    return { ...ball, y: bottom - (ball.y - bottom), vy: -ball.vy };
-  }
-  return ball;
+  return y > bottom ? bottom - (y - bottom) : y;
+}
+
+/** Reflects the ball off the top and bottom walls. */
+function bounceOffWalls(ball: Ball): Ball {
+  const folded = foldIntoField(ball.y);
+  return folded === ball.y ? ball : { ...ball, y: folded, vy: -ball.vy };
+}
+
+/**
+ * Where in the tick the ball's centre reached a plane, as a fraction of it.
+ *
+ * Only asked once the two ends of the tick are known to straddle the plane, so
+ * the travel cannot be zero and the answer is always within [0, 1].
+ */
+function crossingFraction(previousX: number, x: number, plane: number): number {
+  return (plane - previousX) / (x - previousX);
 }
 
 /**
@@ -113,16 +134,42 @@ function bounceOffWalls(ball: Ball): Ball {
  * The test is on crossing a plane between the previous position and this one,
  * not on overlapping it. At speed the ball covers more than its own diameter in
  * a tick, and an overlap test would let it tunnel straight through the paddle.
+ *
+ * Crossing the plane is only half the question, though. The other half is
+ * whether the paddle was in front of the ball *at that moment*, and the moment
+ * is somewhere inside the tick rather than at the end of it. At full speed and
+ * the steepest angle the ball climbs twenty-four units in one tick — nearly
+ * half the paddle's reach — and the paddle itself travels fourteen. Asking
+ * where either of them ended up is how a ball goes through solid material, and
+ * how one that was never in reach gets returned.
+ *
+ * So both are wound back to the instant of contact. Both move at a constant
+ * velocity across the tick, so that is one multiplication each and no
+ * approximation.
  */
-function blockedByPaddle(ball: Ball, previousX: number, left: Paddle, right: Paddle): Ball | null {
-  if (ball.vx < 0 && previousX >= LEFT_CONTACT_X && ball.x <= LEFT_CONTACT_X) {
-    if (Math.abs(ball.y - left.y) <= CONTACT_REACH) {
-      return deflect(ball, left.y, 'right');
+function blockedByPaddle(
+  ball: Ball,
+  previous: Ball,
+  previousPaddles: { readonly left: Paddle; readonly right: Paddle },
+  paddles: { readonly left: Paddle; readonly right: Paddle },
+): Ball | null {
+  if (ball.vx < 0 && previous.x >= LEFT_CONTACT_X && ball.x <= LEFT_CONTACT_X) {
+    const at = crossingFraction(previous.x, ball.x, LEFT_CONTACT_X);
+    // From the pre-bounce velocity, then folded: the ball may have met a wall
+    // on its way to the paddle, and the trajectory is a straight line only
+    // until it does.
+    const contactY = foldIntoField(previous.y + previous.vy * TICK_SECONDS * at);
+    const paddleY = previousPaddles.left.y + (paddles.left.y - previousPaddles.left.y) * at;
+    if (Math.abs(contactY - paddleY) <= CONTACT_REACH) {
+      return deflect(contactY, paddleY, ball.speed, 'right');
     }
   }
-  if (ball.vx > 0 && previousX <= RIGHT_CONTACT_X && ball.x >= RIGHT_CONTACT_X) {
-    if (Math.abs(ball.y - right.y) <= CONTACT_REACH) {
-      return deflect(ball, right.y, 'left');
+  if (ball.vx > 0 && previous.x <= RIGHT_CONTACT_X && ball.x >= RIGHT_CONTACT_X) {
+    const at = crossingFraction(previous.x, ball.x, RIGHT_CONTACT_X);
+    const contactY = foldIntoField(previous.y + previous.vy * TICK_SECONDS * at);
+    const paddleY = previousPaddles.right.y + (paddles.right.y - previousPaddles.right.y) * at;
+    if (Math.abs(contactY - paddleY) <= CONTACT_REACH) {
+      return deflect(contactY, paddleY, ball.speed, 'left');
     }
   }
   return null;
@@ -168,14 +215,15 @@ export function step(state: PongState, inputs: PongInputs): PongState {
     };
   }
 
-  const previousX = state.ball.x;
+  const previous = state.ball;
   const travelled: Ball = {
-    ...state.ball,
-    x: state.ball.x + state.ball.vx * TICK_SECONDS,
-    y: state.ball.y + state.ball.vy * TICK_SECONDS,
+    ...previous,
+    x: previous.x + previous.vx * TICK_SECONDS,
+    y: previous.y + previous.vy * TICK_SECONDS,
   };
   const afterWalls = bounceOffWalls(travelled);
-  const ball = blockedByPaddle(afterWalls, previousX, left, right) ?? afterWalls;
+  const ball =
+    blockedByPaddle(afterWalls, previous, state, { left, right }) ?? afterWalls;
 
   const conceded = concededSide(ball);
   if (conceded === null) {

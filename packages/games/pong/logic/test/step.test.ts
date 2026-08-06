@@ -8,6 +8,7 @@ import {
   FIELD_HEIGHT,
   FIELD_WIDTH,
   LEFT_PADDLE_X,
+  MAX_BOUNCE_RATIO,
   PADDLE_HEIGHT,
   PADDLE_SPEED,
   PADDLE_WIDTH,
@@ -132,6 +133,8 @@ describe('walls', () => {
 
 describe('paddle deflection', () => {
   const contactX = LEFT_PADDLE_X + PADDLE_WIDTH / 2 + BALL_RADIUS;
+  /** How far from a paddle's centre the ball's centre can be and still be met. */
+  const CONTACT_REACH = PADDLE_HEIGHT / 2 + BALL_RADIUS;
 
   it('sends a centred hit straight back', () => {
     const state = step(
@@ -209,6 +212,85 @@ describe('paddle deflection', () => {
     );
 
     expect(state.ball.vx).toBeLessThan(0);
+  });
+
+  /**
+   * A ball at top speed and the steepest angle a paddle can give it, arranged
+   * to cross the paddle's plane exactly halfway through a tick.
+   *
+   * It climbs 24 units in that tick, so where it is when it crosses and where
+   * it is when the tick ends are 12 units apart — nearly a quarter of the
+   * paddle's reach. Which of the two the rule asks about decides these cases.
+   */
+  const steepArrival = (): { ball: PongState['ball']; crossesAt: number; endsAt: number } => {
+    const vy = -MAX_BOUNCE_RATIO * BALL_MAX_SPEED;
+    const vx = -Math.sqrt(1 - MAX_BOUNCE_RATIO * MAX_BOUNCE_RATIO) * BALL_MAX_SPEED;
+    const crossesAt = 300;
+    const startY = crossesAt - (vy * TICK_SECONDS) / 2;
+
+    return {
+      ball: {
+        x: contactX - (vx * TICK_SECONDS) / 2,
+        y: startY,
+        vx,
+        vy,
+        speed: BALL_MAX_SPEED,
+      },
+      crossesAt,
+      endsAt: startY + vy * TICK_SECONDS,
+    };
+  };
+
+  it('blocks a steep ball that has climbed past the paddle by the end of the tick', () => {
+    const { ball, crossesAt, endsAt } = steepArrival();
+    // In reach at the moment of contact, and six units out of it by the time
+    // the tick is over. Asking the question at the end of the tick is how a
+    // ball goes through solid material.
+    const paddleY = crossesAt + CONTACT_REACH - 6;
+    expect(Math.abs(crossesAt - paddleY)).toBeLessThan(CONTACT_REACH);
+    expect(Math.abs(endsAt - paddleY)).toBeGreaterThan(CONTACT_REACH);
+
+    const state = step(playing({ left: { y: paddleY }, ball }), IDLE);
+
+    expect(state.ball.vx).toBeGreaterThan(0);
+    expect(state.score).toEqual({ left: 0, right: 0 });
+  });
+
+  it('lets a steep ball past when it was out of reach at the moment it crossed', () => {
+    const { ball, crossesAt, endsAt } = steepArrival();
+    // The mirror, and the reason this cannot be fixed by widening the reach:
+    // out of reach when it crosses, and only drifting into line afterwards.
+    const paddleY = endsAt - CONTACT_REACH + 6;
+    expect(Math.abs(crossesAt - paddleY)).toBeGreaterThan(CONTACT_REACH);
+    expect(Math.abs(endsAt - paddleY)).toBeLessThan(CONTACT_REACH);
+
+    const state = step(playing({ left: { y: paddleY }, ball }), IDLE);
+
+    expect(state.ball.vx).toBeLessThan(0);
+  });
+
+  it('measures the paddle where it was when the ball arrived, not after', () => {
+    // The same error on the other body. A paddle crosses fourteen units in a
+    // tick; held away from the ball it is in reach when the ball arrives and
+    // out of it by the end, and taking the later position rules out a block the
+    // player had already earned.
+    const paddleTravel = PADDLE_SPEED * TICK_SECONDS;
+    const start = 300;
+    const whenTheBallArrives = start - paddleTravel / 2;
+    const ballY = whenTheBallArrives + CONTACT_REACH - 3;
+    expect(Math.abs(ballY - whenTheBallArrives)).toBeLessThan(CONTACT_REACH);
+    expect(Math.abs(ballY - (start - paddleTravel))).toBeGreaterThan(CONTACT_REACH);
+
+    const state = step(
+      playing({
+        left: { y: start },
+        // Crossing the plane halfway through the tick, level all the way.
+        ball: { x: contactX + 300 * TICK_SECONDS * 0.5, y: ballY, vx: -300, vy: 0, speed: 300 },
+      }),
+      { left: HOLD_UP, right: NO_INPUT },
+    );
+
+    expect(state.ball.vx).toBeGreaterThan(0);
   });
 });
 
