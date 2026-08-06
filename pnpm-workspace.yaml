@@ -11,3 +11,5 @@ allowBuilds:
   # analytics to a third party, so the script is blocked. Scarf is designed to
   # no-op when it cannot run, and the SDK works unchanged without it.
   '@scarf/scarf': false
+minimumReleaseAgeExclude:
+  - '@babylonjs/core@9.20.0'

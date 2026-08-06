@@ -34,6 +34,18 @@ importers:
 
   packages/games/arena/logic: {}
 
+  packages/games/arena/renderer-babylon:
+    dependencies:
+      '@babylonjs/core':
+        specifier: 9.20.0
+        version: 9.20.0
+      '@littlegames/arena-logic':
+        specifier: workspace:*
+        version: link:../logic
+      '@littlegames/core':
+        specifier: workspace:*
+        version: link:../../../core
+
   packages/games/battleship/logic: {}
 
   packages/games/battleship/renderer-pixi:
@@ -89,6 +101,9 @@ importers:
 
   packages/ui:
     dependencies:
+      '@littlegames/arena-renderer-babylon':
+        specifier: workspace:*
+        version: link:../games/arena/renderer-babylon
       '@littlegames/battleship-logic':
         specifier: workspace:*
         version: link:../games/battleship/logic
@@ -647,6 +662,9 @@ packages:
   '@babel/types@7.29.8':
     resolution: {integrity: sha512-Vj1jF3cPfxg7OAfoI7QnVKLoILlm2JF9pnVHrX8qx7AHMiYWT+NDAA7jChlNgRS4WTLc/fD1lXLmPixluj+3Gg==}
     engines: {node: '>=6.9.0'}
+
+  '@babylonjs/core@9.20.0':
+    resolution: {integrity: sha512-iWM/Re+FnqTEOxkGxvjRjChcPZzydcb0OGtnVk5o0vDQizqwkcpWFlJzfIv1Ij7Li2edJJJDZd6jRzC8QSWuuw==}
 
   '@bufbuild/buf-darwin-arm64@1.72.0':
     resolution: {integrity: sha512-rKHRvjwAThapxIoOn92vIoTjYSz5FmRemDRLU4BYT4T6QWMEC13PM3/pPnqVgsNKZ5aW7iYDm9ztnisEqSi5yA==}
@@ -3243,6 +3261,8 @@ snapshots:
     dependencies:
       '@babel/helper-string-parser': 7.29.7
       '@babel/helper-validator-identifier': 7.29.7
+
+  '@babylonjs/core@9.20.0': {}
 
   '@bufbuild/buf-darwin-arm64@1.72.0':
     optional: true

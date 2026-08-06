@@ -14,13 +14,16 @@ messages — is written in English.
 > second game would be cheap.
 >
 > A third is being built in five phases of its own: **Arena**, a 1v1
-> server-authoritative FPS. Two of the five are done — the rules, and the
-> protocol, the Go port and the authoritative handler — so a whole match can be
-> played to a win over two real sockets today, by a script rather than by a
-> person. It has no renderer yet; that is the phase this game exists for,
-> because Babylon.js arriving without touching logic, networking or the lobby is
-> the claim `SPEC.md` §3 has been making since day one and has never been asked
-> to prove.
+> server-authoritative FPS. Three of the five are done — the rules, the
+> authoritative server, and now the arena itself in Babylon.js. A whole match
+> can be played to a win over two real sockets, by a script rather than by a
+> person, and the arena can be looked at while it happens to nobody.
+>
+> The third phase is the one this game exists for. Adding a second rendering
+> engine took **one new package and one line in the version table**: no change to
+> any rule, to the protocol, to the socket, to the lobby, or to either of the
+> games already using PixiJS. That is the claim `SPEC.md` §3 has been making
+> since day one, and it had never been asked to prove it.
 
 ## Architecture in one paragraph
 
@@ -41,7 +44,7 @@ from memory. Lockfiles (`pnpm-lock.yaml`, `go.sum`) are committed.
 Versions are re-checked at the start of each phase with `pnpm outdated` and
 `go list -u -m all`.
 
-**Last verified: 2026-08-05.**
+**Last verified: 2026-08-06.**
 
 ### Runtime and languages
 
@@ -64,10 +67,13 @@ Versions are re-checked at the start of each phase with `pnpm outdated` and
 | @types/node | `26.1.2` | `npm view @types/node version` |
 | react-router | `8.3.0` | `npm view react-router version` |
 | pixi.js | `8.19.0` | `npm view pixi.js dist-tags` |
+| @babylonjs/core | `9.20.0` | `npm view @babylonjs/core dist-tags` |
 | @heroiclabs/nakama-js | `2.8.0` | `npm view @heroiclabs/nakama-js version` |
 
-`pixi.js` is not installed yet: its phase has not started. The version above is
-the one that will be pinned when it is.
+Two engines, and they never meet: PixiJS draws the two flat games, Babylon draws
+the arena, and each is confined to the one package that implements the rendering
+contract with it. Both are reached by dynamic import, so a page that shows
+neither downloads neither.
 
 ### Quality and build
 
@@ -109,6 +115,13 @@ the one that will be pinned when it is.
 - **PixiJS 8 initialises asynchronously.** `new Application()` no longer builds
   a renderer; `await app.init()` is required. `GameRenderer.mount` is `async`
   to absorb exactly this.
+- **Babylon is imported by deep path, never from its index.** `@babylonjs/core`
+  is a few megabytes and its index re-exports all of it. Importing
+  `@babylonjs/core/Meshes/Builders/boxBuilder.js` and its neighbours brings in
+  what the arena uses and leaves the rest; the built chunk is 766 KB rather than
+  the whole engine. The one exception is deliberate and commented in the source:
+  `Meshes/thinInstanceMesh.js` is imported for its side effects alone, because
+  it is what puts the thin-instance methods on `Mesh`.
 
 ## Prerequisites
 
@@ -383,6 +396,40 @@ server and disagree on an ARM one, which is the worst shape a bug can have.
 nothing. A unit test plays a full match against it, to the winning score, with
 no browser and no network. If that keeps passing, nothing in the rules reaches
 for a canvas, and a second engine can be added later without touching them.
+
+And one now has been. `@littlegames/arena-renderer-babylon` is the only package
+that imports Babylon, exactly as the two `renderer-pixi` packages are the only
+ones that import PixiJS. Adding it changed no rule, no message on the wire, no
+socket and no lobby — the diff outside the new package is a route, a line of
+CSS and a dependency.
+
+Two things had to be given up to get there, and both were worth stating rather
+than hiding:
+
+- **The renderer does not own the camera.** It is handed an `ArenaView` with the
+  eye position and direction already in it. Prediction, smoothing and drawing
+  would otherwise straddle the boundary that exists to keep the engine out, and
+  the session would have to reach into engine state to move the player.
+- **It owns one member more than `GameRenderer`: the canvas.** A first-person
+  game asks for pointer lock on an element and a touch layout attaches gestures
+  to one. Both belong to the surface rather than to the drawing, and the
+  alternative was for the screen to guess which element the engine created.
+
+The arena is drawn as thin instances of a single unit cube — one mesh, one
+material, one draw call for the whole map — placed from `ARENA_BOXES`, the array
+the server resolves collisions against. Nothing in the renderer invents
+geometry, so the box that stops a bullet is the box that gets drawn, and a test
+asserts the drawn bounds match the rules' bounds for every box in the arena.
+
+```sh
+pnpm dev   # then http://localhost/preview/arena
+```
+
+That page is development-only and deliberately unnetworked: the arena, and a
+camera flying a fixed path through it. A debug camera that clipped through a
+crate would read as a fault in the renderer, so the path is a pure function of
+time and a test walks the whole loop asserting it never enters anything that is
+drawn.
 
 ## How the picture is built
 
@@ -746,6 +793,7 @@ packages/
     battleship/renderer-pixi  The two grids, the water and what lands on it.
     arena/logic               Arena rules: movement, collision, shooting, rounds,
                               and the arena itself as data.
+    arena/renderer-babylon    The arena in 3D, and the only Babylon in the tree.
   renderer-headless A renderer that draws nothing, for headless matches.
   ui/              React shell: routing, authentication, profile, catalogue.
 server/
@@ -755,9 +803,10 @@ server/
 
 Packages arrive as their phase begins, so that nothing in the tree is a
 placeholder. The two `renderer-pixi` packages are the only ones that import
-PixiJS, and `packages/ui/src/features/game/game-stage.tsx` is the only place
-the two games are told apart at all — everything above it is the same code for
-both.
+PixiJS and `arena/renderer-babylon` is the only one that imports Babylon, so
+every engine in the project is confined to a single leaf of the tree.
+`packages/ui/src/features/game/game-stage.tsx` is the only place the games are
+told apart at all — everything above it is the same code for all of them.
 
 `net` is the only package that imports the Nakama SDK. It re-exports what the
 shell needs, so no screen talks to the backend directly and swapping the

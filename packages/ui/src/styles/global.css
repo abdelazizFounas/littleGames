@@ -597,3 +597,9 @@ body {
   padding-bottom: 1rem;
   border-bottom: 1px solid var(--border);
 }
+
+/* The arena is first person, so its surface is the shape of a screen rather
+   than of Pong's field. */
+.stage__surface--arena {
+  aspect-ratio: 16 / 9;
+}

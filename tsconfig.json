@@ -11,6 +11,9 @@
       "path": "./packages/games/arena/logic"
     },
     {
+      "path": "./packages/games/arena/renderer-babylon"
+    },
+    {
       "path": "./packages/games/battleship/logic"
     },
     {
