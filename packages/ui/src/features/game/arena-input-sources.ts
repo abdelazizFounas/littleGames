@@ -104,9 +104,14 @@ function onContextMenu(event: Event): void {
   event.preventDefault();
 }
 
-/** Buttons that always fire and zoom, whatever else is bound to them. */
-const FIRE_BUTTON = 0;
-const ZOOM_BUTTON = 2;
+/**
+ * Buttons that always fire and scope, whatever else is bound to them.
+ *
+ * As bits of `PointerEvent.buttons` rather than as `button` numbers, because
+ * that is the field which tells the truth when more than one is down at once.
+ */
+const FIRE_BUTTON_MASK = 1;
+const ZOOM_BUTTON_MASK = 2;
 
 export function createArenaInput(
   surface: HTMLElement,
@@ -132,6 +137,19 @@ export function createArenaInput(
 
   const held = new Set<string>();
   let zoomPressed = false;
+
+  /**
+   * The mouse buttons as of the last event seen.
+   *
+   * Pointer events do not report a button press the way mouse events do. A
+   * `pointerdown` fires only for the *first* button to go down; press a second
+   * while the first is held and the browser sends a `pointermove` carrying the
+   * new bitmask instead. Watching for `pointerdown` alone therefore means that
+   * scoping with the right button and then firing with the left does nothing at
+   * all — the trigger press is never announced as one. Comparing bitmasks
+   * catches every press and release whatever order they happen in.
+   */
+  let heldButtons = 0;
 
   /**
    * Which device the player last actually used.
@@ -225,6 +243,7 @@ export function createArenaInput(
   const onBlur = (): void => {
     held.clear();
     zoomPressed = false;
+    heldButtons = 0;
   };
 
   /**
@@ -249,6 +268,12 @@ export function createArenaInput(
     const sensitivity =
       settings.look.sensitivity * (isZoomedNow() ? settings.look.zoomSensitivity : 1);
     look(event.movementX, event.movementY, sensitivity, settings.look.invertY);
+  };
+
+  /** Every pointer event is a chance to notice a button changed. */
+  const onPointerActivity = (event: PointerEvent): void => {
+    onButtons(event);
+    onPointerMove(event);
   };
 
   /**
@@ -306,21 +331,28 @@ export function createArenaInput(
     touchLayer?.classList.toggle('arena-touch--idle', next === 'mouse');
   };
 
-  const onPointerDown = (event: PointerEvent): void => {
-    if (event.pointerType !== 'mouse' || !locked) {
+  /** Turns a change in the button bitmask into presses and releases. */
+  const onButtons = (event: PointerEvent): void => {
+    if (event.pointerType !== 'mouse') {
       return;
     }
-    if (event.button === FIRE_BUTTON) {
+    const pressed = event.buttons & ~heldButtons;
+    const released = heldButtons & ~event.buttons;
+    heldButtons = event.buttons;
+
+    // Letting go is honoured whether or not the game holds the pointer, so a
+    // scope cannot be left raised by releasing the button somewhere else.
+    if ((released & ZOOM_BUTTON_MASK) !== 0) {
+      zoomPressed = false;
+    }
+    if (!locked) {
+      return;
+    }
+    if ((pressed & FIRE_BUTTON_MASK) !== 0) {
       fire();
     }
-    if (event.button === ZOOM_BUTTON) {
+    if ((pressed & ZOOM_BUTTON_MASK) !== 0) {
       zoomPressed = true;
-    }
-  };
-
-  const onPointerUp = (event: PointerEvent): void => {
-    if (event.pointerType === 'mouse' && event.button === ZOOM_BUTTON) {
-      zoomPressed = false;
     }
   };
 
@@ -371,9 +403,9 @@ export function createArenaInput(
       window.addEventListener('keydown', onKeyDown, { passive: false });
       window.addEventListener('keyup', onKeyUp);
       window.addEventListener('blur', onBlur);
-      window.addEventListener('pointermove', onPointerMove);
-      window.addEventListener('pointerdown', onPointerDown);
-      window.addEventListener('pointerup', onPointerUp);
+      window.addEventListener('pointermove', onPointerActivity);
+      window.addEventListener('pointerdown', onButtons);
+      window.addEventListener('pointerup', onButtons);
       window.addEventListener('contextmenu', onContextMenu, { capture: true });
       surface.addEventListener('pointerdown', onSurfacePointerDown);
       surface.addEventListener('click', onSurfaceClick);
@@ -443,9 +475,9 @@ export function createArenaInput(
       window.removeEventListener('keydown', onKeyDown);
       window.removeEventListener('keyup', onKeyUp);
       window.removeEventListener('blur', onBlur);
-      window.removeEventListener('pointermove', onPointerMove);
-      window.removeEventListener('pointerdown', onPointerDown);
-      window.removeEventListener('pointerup', onPointerUp);
+      window.removeEventListener('pointermove', onPointerActivity);
+      window.removeEventListener('pointerdown', onButtons);
+      window.removeEventListener('pointerup', onButtons);
       window.removeEventListener('contextmenu', onContextMenu, { capture: true });
       surface.removeEventListener('pointerdown', onSurfacePointerDown);
       surface.removeEventListener('click', onSurfaceClick);
