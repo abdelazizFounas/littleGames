@@ -55,17 +55,59 @@ func RayVsBox(origin, direction Vec3, box Bounds, maxDistance float64) (float64,
 	return enter, true
 }
 
-// ShotTarget is somebody who can be shot, and the box they occupied at the
-// judged moment.
+// RayVsOrientedBox reports how far along the ray it enters a box with an
+// orientation of its own.
+//
+// The same slab test, done in the box's frame instead of the world's. A part of
+// a body carries its own right, up and forward, so the ray's origin and
+// direction are projected onto those three axes with dot products and the
+// result is an axis-aligned problem again. No matrix, no inverse, and nothing
+// that is not a multiply and an add.
+func RayVsOrientedBox(origin, direction Vec3, box OrientedBox, maxDistance float64) (float64, bool) {
+	dx := origin.X - box.Centre.X
+	dy := origin.Y - box.Centre.Y
+	dz := origin.Z - box.Centre.Z
+	along := func(axis Vec3) float64 {
+		return float64(dx*axis.X) + float64(dy*axis.Y) + float64(dz*axis.Z)
+	}
+	cast := func(axis Vec3) float64 {
+		return float64(direction.X*axis.X) + float64(direction.Y*axis.Y) + float64(direction.Z*axis.Z)
+	}
+
+	return RayVsBox(
+		Vec3{X: along(box.Right), Y: along(box.Up), Z: along(box.Forward)},
+		Vec3{X: cast(box.Right), Y: cast(box.Up), Z: cast(box.Forward)},
+		Bounds{
+			MinX: -box.Half.X, MinY: -box.Half.Y, MinZ: -box.Half.Z,
+			MaxX: box.Half.X, MaxY: box.Half.Y, MaxZ: box.Half.Z,
+		},
+		maxDistance,
+	)
+}
+
+// OrientedBox is a box that is not aligned to the world: a limb, a torso, a
+// rifle.
+type OrientedBox struct {
+	Centre  Vec3
+	Half    Vec3
+	Right   Vec3
+	Up      Vec3
+	Forward Vec3
+}
+
+// ShotTarget is one part of one body, where it stood at the judged moment.
 type ShotTarget struct {
-	Seat   string
-	Bounds Bounds
+	Seat string
+	Part string
+	Box  OrientedBox
 }
 
 // Trace is what one shot found.
 type Trace struct {
 	// HitSeat is who was hit, or empty for nobody.
 	HitSeat string
+	// HitPart is which part of them, which is what decides the damage.
+	HitPart string
 	// Endpoint is where the shot stopped: a body, a wall, or the end of its
 	// range.
 	Endpoint Vec3
@@ -78,6 +120,10 @@ type Trace struct {
 // against the far side of a crate is behind it rather than in front of it.
 // Targets are given as boxes rather than as bodies because the server hands
 // over where they were when the shooter saw them, not where they are now.
+//
+// Every part is tested and the nearest wins, which is what makes a head shot a
+// head shot rather than whichever limb happened to be listed first — and why
+// the parts must be the same ones the renderer draws.
 func TraceShot(origin, aim Vec3, targets []ShotTarget) Trace {
 	closest := MaxShotDistance
 
@@ -88,17 +134,19 @@ func TraceShot(origin, aim Vec3, targets []ShotTarget) Trace {
 		}
 	}
 
-	hitSeat := ""
+	hitSeat, hitPart := "", ""
 	for _, target := range targets {
-		distance, hit := RayVsBox(origin, aim, target.Bounds, closest)
+		distance, hit := RayVsOrientedBox(origin, aim, target.Box, closest)
 		if hit && distance < closest {
 			closest = distance
 			hitSeat = target.Seat
+			hitPart = target.Part
 		}
 	}
 
 	return Trace{
 		HitSeat: hitSeat,
+		HitPart: hitPart,
 		Endpoint: Vec3{
 			X: origin.X + float64(aim.X*closest),
 			Y: origin.Y + float64(aim.Y*closest),

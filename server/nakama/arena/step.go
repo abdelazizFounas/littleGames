@@ -28,6 +28,8 @@ func frameOf(north, south PlayerSim) HistoryFrame {
 	return HistoryFrame{
 		North:      north.Body,
 		South:      south.Body,
+		NorthAim:   north.Aim,
+		SouthAim:   south.Aim,
 		NorthAlive: north.Alive,
 		SouthAlive: south.Alive,
 		NorthEpoch: north.SpawnEpoch,
@@ -35,24 +37,55 @@ func frameOf(north, south PlayerSim) HistoryFrame {
 	}
 }
 
-// rewoundBounds is where a target was when the shooter saw it.
+// rewoundParts is every part of a target, where it was when the shooter saw it.
 //
 // Rewinding is refused across a respawn: if the target has been put back at
 // their spawn since the frame being read, the shot is judged against where they
 // are now. Without that, the ugliest death in the game is possible — being
 // killed a beat after reappearing, by a bullet aimed at the corpse.
-func rewoundBounds(state State, target PlayerSim, seat string, back int) ShotTarget {
+//
+// The aim comes out of the ring along with the body, because the parts are
+// oriented by it. Rewinding one and not the other would put a target's feet
+// where they were and their arms where they are.
+func rewoundParts(state State, target PlayerSim, seat string, back int) []ShotTarget {
 	frame := HistoryAt(state, back)
 
-	epoch, body := frame.SouthEpoch, frame.South
+	epoch, body, aim := frame.SouthEpoch, frame.South, frame.SouthAim
 	if seat == SeatNorth {
-		epoch, body = frame.NorthEpoch, frame.North
+		epoch, body, aim = frame.NorthEpoch, frame.North, frame.NorthAim
 	}
 	if epoch != target.SpawnEpoch {
-		body = target.Body
+		body, aim = target.Body, target.Aim
 	}
 
-	return ShotTarget{Seat: seat, Bounds: BodyBounds(body)}
+	parts := HittablePartsOf(PoseOf(body, aim))
+	targets := make([]ShotTarget, 0, len(parts))
+	for _, part := range parts {
+		targets = append(targets, ShotTarget{
+			Seat: seat,
+			Part: part.Part,
+			Box: OrientedBox{
+				Centre:  part.Centre,
+				Half:    part.Half,
+				Right:   part.Right,
+				Up:      part.Up,
+				Forward: part.Forward,
+			},
+		})
+	}
+	return targets
+}
+
+// DamageOf is what one hit takes off, decided entirely by where it landed.
+func DamageOf(part string) int {
+	switch part {
+	case PartHead:
+		return HeadDamage
+	case PartTorso:
+		return TorsoDamage
+	default:
+		return LimbDamage
+	}
 }
 
 // Step advances the simulation by exactly one tick.
@@ -101,13 +134,16 @@ func Step(state State, inputs Inputs) (State, []ShotEvent) {
 	// tested first a free trade, decided by nothing a player can see.
 	var shots []ShotEvent
 	nextShotID := state.NextShotID
-	var killedNorth, killedSouth, firedNorth, firedSouth bool
+	var firedNorth, firedSouth bool
+	damagedNorth, damagedSouth := 0, 0
 	scoredNorth, scoredSouth := 0, 0
 
-	for _, seat := range Seats {
+	for seatIndex, seat := range Seats {
 		shooter, input := south, inputs.South
+		previousAim := state.South.Aim
 		if seat == SeatNorth {
 			shooter, input = north, inputs.North
+			previousAim = state.North.Aim
 		}
 		if !input.Fire || !shooter.Alive || shooter.CooldownTicks > 0 {
 			continue
@@ -120,11 +156,16 @@ func Step(state State, inputs Inputs) (State, []ShotEvent) {
 		}
 		var targets []ShotTarget
 		if target.Alive {
-			targets = append(targets, rewoundBounds(afterMove, target, targetSeat, input.RewindTicks))
+			targets = rewoundParts(afterMove, target, targetSeat, input.RewindTicks)
 		}
 
 		origin := EyePosition(shooter.Body)
-		trace := TraceShot(origin, shooter.Aim, targets)
+		// Where the shot goes rather than where it was pointed. previousAim is
+		// the one this seat held before this tick's was latched, which is what
+		// makes the turning term a turn rather than a position.
+		spread := SpreadOf(shooter.Body, previousAim, shooter.Aim, input.Zoomed)
+		line := Deflect(shooter.Aim, spread, SeedOf(nextShotID, seatIndex))
+		trace := TraceShot(origin, line, targets)
 
 		shots = append(shots, ShotEvent{
 			ID:        nextShotID,
@@ -141,13 +182,22 @@ func Step(state State, inputs Inputs) (State, []ShotEvent) {
 			firedSouth = true
 		}
 
-		switch trace.HitSeat {
-		case SeatNorth:
-			killedNorth = true
-		case SeatSouth:
-			killedSouth = true
+		if trace.HitSeat == "" || trace.HitPart == "" {
+			continue
 		}
-		if trace.HitSeat != "" {
+
+		// A shot that lands is not a kill unless it finishes them, and the
+		// score is a count of kills.
+		damage := DamageOf(trace.HitPart)
+		finished := false
+		if trace.HitSeat == SeatNorth {
+			damagedNorth += damage
+			finished = damagedNorth >= target.Health
+		} else {
+			damagedSouth += damage
+			finished = damagedSouth >= target.Health
+		}
+		if finished {
 			if seat == SeatNorth {
 				scoredNorth++
 			} else {
@@ -156,8 +206,8 @@ func Step(state State, inputs Inputs) (State, []ShotEvent) {
 		}
 	}
 
-	north = settle(north, SeatNorth, killedNorth, firedNorth, scoredNorth)
-	south = settle(south, SeatSouth, killedSouth, firedSouth, scoredSouth)
+	north = settle(north, SeatNorth, damagedNorth, firedNorth, scoredNorth)
+	south = settle(south, SeatSouth, damagedSouth, firedSouth, scoredSouth)
 
 	winner := ""
 	switch {
@@ -180,11 +230,17 @@ func Step(state State, inputs Inputs) (State, []ShotEvent) {
 	return next, shots
 }
 
-// settle applies a tick's outcome to one player: death, respawn, cooldown,
-// score.
-func settle(player PlayerSim, seat string, wasKilled, wasFired bool, points int) PlayerSim {
+// settle applies a tick's outcome to one player: damage, death, respawn,
+// cooldown, score.
+func settle(player PlayerSim, seat string, damage int, wasFired bool, points int) PlayerSim {
 	next := player
 	next.Score = player.Score + points
+	if player.Alive {
+		next.Health = player.Health - damage
+		if next.Health < 0 {
+			next.Health = 0
+		}
+	}
 
 	// One short of the constant on the tick a shot goes out, because this tick
 	// is the first of the wait rather than the last of the previous one. Set to
@@ -199,8 +255,9 @@ func settle(player PlayerSim, seat string, wasKilled, wasFired bool, points int)
 		next.CooldownTicks = 0
 	}
 
-	if wasKilled && next.Alive {
+	if next.Health <= 0 && next.Alive {
 		next.Alive = false
+		next.Health = 0
 		next.RespawnTicks = RespawnTicks
 		return next
 	}

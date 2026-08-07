@@ -139,6 +139,65 @@ export const FIRE_COOLDOWN_TICKS = 24;
 /** Past this the ray stops looking, in metres. Longer than the arena. */
 export const MAX_SHOT_DISTANCE = 80;
 
+/* --- What a hit is worth -------------------------------------------------- */
+
+/**
+ * Health, and the damage each zone does, as whole numbers.
+ *
+ * Integers on purpose. Everything else in the rules is a double held to
+ * identical bits by the conformance vectors; damage does not need to be, and a
+ * quantity that cannot drift at all is one fewer thing for the vectors to have
+ * to prove. Six is chosen so that the three zones divide it exactly: a head is
+ * the whole of it, a torso half, a limb a third.
+ */
+export const MAX_HEALTH = 6;
+
+/** A head shot is a kill however healthy the target was. */
+export const HEAD_DAMAGE = MAX_HEALTH;
+/** Two to the chest. */
+export const TORSO_DAMAGE = 3;
+/** Three to an arm or a leg, which is what makes hitting the middle worth it. */
+export const LIMB_DAMAGE = 2;
+
+/* --- Where the shot actually goes ----------------------------------------- */
+
+/**
+ * How far off the aim a shot can stray, as a fraction of the distance flown.
+ *
+ * A tangent without the trigonometry: the aim is nudged sideways by this much
+ * per metre travelled and renormalised, which for the small angles involved is
+ * the angle itself. Everything below is in the same unit and they add.
+ *
+ * The base is what a rifle fired from the hip does at rest — about half a
+ * degree, enough that a duel across the ravine rewards raising the sight and
+ * not enough to make hip fire pointless in a corridor.
+ */
+export const SPREAD_BASE = 0.009;
+
+/** Added at a full run, and proportional to how big a step is being taken. */
+export const SPREAD_MOVING = 0.03;
+
+/** Added while both feet are off the ground, where nobody can brace. */
+export const SPREAD_AIRBORNE = 0.045;
+
+/**
+ * Added for turning, per unit of aim swung in one tick.
+ *
+ * Measured as the straight-line distance between last tick's aim and this
+ * one's, both unit vectors, so it needs no angle. Flicking onto a target and
+ * firing in the same instant is the shot this exists to punish.
+ */
+export const SPREAD_TURNING = 0.8;
+
+/**
+ * What is left of all of it while the sight is up.
+ *
+ * Not zero. A scope that guaranteed the centre of the crosshair would make the
+ * hip an irrelevance rather than a trade, and a shot that can be predicted
+ * exactly is a shot a bot fires better than a person.
+ */
+export const SPREAD_SCOPED_SHARE = 0.06;
+
 /* --- Rounds --------------------------------------------------------------- */
 
 export const RESPAWN_TICKS = 90;

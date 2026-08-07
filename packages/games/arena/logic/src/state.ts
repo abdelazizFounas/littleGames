@@ -1,6 +1,6 @@
 import { SPAWNS, SPAWN_AIM, type Seat } from './arena.ts';
 import { restingBody, type PlayerBody } from './body.ts';
-import { INTERP_DELAY_TICKS, MAX_REWIND_TICKS } from './constants.ts';
+import { INTERP_DELAY_TICKS, MAX_HEALTH, MAX_REWIND_TICKS } from './constants.ts';
 import { DEFAULT_AIM, ZERO_2, type Vec2, type Vec3 } from './vector.ts';
 
 export type MatchPhase = 'waiting' | 'countdown' | 'playing' | 'finished';
@@ -10,6 +10,15 @@ export interface PlayerSim {
   /** Unit length, as the server latched it from the client's input. */
   readonly aim: Vec3;
   readonly alive: boolean;
+  /**
+   * What is left before the next hit is the last one.
+   *
+   * A whole number, and the only quantity in the rules that is. Where a hit
+   * lands decides how much of it goes: the head takes all of it, the chest half
+   * and a limb a third, so the same three shots kill or do not depending
+   * entirely on where they were put.
+   */
+  readonly health: number;
   readonly score: number;
   /** Counts down to nothing, then the player is put back at their spawn. */
   readonly respawnTicks: number;
@@ -26,10 +35,19 @@ export interface PlayerSim {
   readonly cooldownTicks: number;
 }
 
-/** Both bodies as they stood at the end of one past tick. */
+/**
+ * Both bodies as they stood at the end of one past tick, and where they looked.
+ *
+ * The aim is here because the parts of a body are oriented by it: a shot judged
+ * against a rewound body has to be judged against the pose that body was in,
+ * and a pose needs a facing. Keeping only the position would rewind a target's
+ * feet and leave their arms where they are now.
+ */
 export interface HistoryFrame {
   readonly north: PlayerBody;
   readonly south: PlayerBody;
+  readonly northAim: Vec3;
+  readonly southAim: Vec3;
   readonly northAlive: boolean;
   readonly southAlive: boolean;
   readonly northEpoch: number;
@@ -64,6 +82,14 @@ export interface ArenaInput {
   readonly jump: boolean;
   readonly crouch: boolean;
   readonly fire: boolean;
+  /**
+   * Whether the sight was up when this command was sampled.
+   *
+   * It reaches the rules for one reason: a scoped shot is nearly true and a hip
+   * shot is not. It changes nothing else, and in particular it does not change
+   * the field of view, which is the client's business alone.
+   */
+  readonly zoomed: boolean;
   /** How far back this player's screen was, already clamped. */
   readonly rewindTicks: number;
 }
@@ -79,6 +105,7 @@ export const NO_INPUT: ArenaInput = {
   jump: false,
   crouch: false,
   fire: false,
+  zoomed: false,
   rewindTicks: 0,
 };
 
@@ -87,6 +114,7 @@ function spawn(seat: Seat, epoch: number): PlayerSim {
     body: restingBody(SPAWNS[seat]),
     aim: SPAWN_AIM[seat],
     alive: true,
+    health: MAX_HEALTH,
     score: 0,
     respawnTicks: 0,
     spawnEpoch: epoch,
@@ -94,7 +122,12 @@ function spawn(seat: Seat, epoch: number): PlayerSim {
   };
 }
 
-/** Puts a player back at their spawn, keeping their score and bumping the epoch. */
+/**
+ * Puts a player back at their spawn, keeping their score and bumping the epoch.
+ *
+ * Health comes back whole with everything else, because it is built from a
+ * fresh spawn rather than patched onto the old player.
+ */
 export function respawn(player: PlayerSim, seat: Seat): PlayerSim {
   return {
     ...spawn(seat, player.spawnEpoch + 1),
@@ -106,6 +139,8 @@ function emptyFrame(): HistoryFrame {
   return {
     north: restingBody(SPAWNS.north),
     south: restingBody(SPAWNS.south),
+    northAim: SPAWN_AIM.north,
+    southAim: SPAWN_AIM.south,
     northAlive: true,
     southAlive: true,
     northEpoch: 0,

@@ -1,7 +1,16 @@
 import { SEATS, opponentOf, type Seat } from './arena.ts';
-import { bodyBounds, eyePosition, stepBody } from './body.ts';
-import { FIRE_COOLDOWN_TICKS, RESPAWN_TICKS, WINNING_SCORE } from './constants.ts';
+import { eyePosition, stepBody } from './body.ts';
+import {
+  FIRE_COOLDOWN_TICKS,
+  HEAD_DAMAGE,
+  LIMB_DAMAGE,
+  RESPAWN_TICKS,
+  TORSO_DAMAGE,
+  WINNING_SCORE,
+} from './constants.ts';
+import { hittablePartsOf, poseOf, type BodyPart } from './pose.ts';
 import { traceShot, type ShotTarget } from './ray.ts';
+import { deflect, seedOf, spreadOf } from './spread.ts';
 import {
   historyAt,
   respawn,
@@ -50,6 +59,8 @@ function frameOf(north: PlayerSim, south: PlayerSim): HistoryFrame {
   return {
     north: north.body,
     south: south.body,
+    northAim: north.aim,
+    southAim: south.aim,
     northAlive: north.alive,
     southAlive: south.alive,
     northEpoch: north.spawnEpoch,
@@ -58,18 +69,37 @@ function frameOf(north: PlayerSim, south: PlayerSim): HistoryFrame {
 }
 
 /**
- * Where a target was when the shooter saw it.
+ * Every part of a target, where it was when the shooter saw it.
  *
  * Rewinding is refused across a respawn: if the target has been put back at
  * their spawn since the frame being read, the shot is judged against where they
  * are now. Without that, the ugliest death in the game is possible — being
  * killed a beat after reappearing, by a bullet aimed at the corpse.
+ *
+ * The aim comes out of the ring along with the body, because the parts are
+ * oriented by it. Rewinding one and not the other would put a target's feet
+ * where they were and their arms where they are.
  */
-function rewoundBounds(state: ArenaState, target: PlayerSim, seat: Seat, back: number): ShotTarget {
+function rewoundParts(state: ArenaState, target: PlayerSim, seat: Seat, back: number): ShotTarget[] {
   const frame = historyAt(state, back);
   const epoch = seat === 'north' ? frame.northEpoch : frame.southEpoch;
-  const body = epoch === target.spawnEpoch ? (seat === 'north' ? frame.north : frame.south) : target.body;
-  return { seat, bounds: bodyBounds(body) };
+  const current = epoch !== target.spawnEpoch;
+  const body = current ? target.body : seat === 'north' ? frame.north : frame.south;
+  const aim = current ? target.aim : seat === 'north' ? frame.northAim : frame.southAim;
+
+  return hittablePartsOf(poseOf(body, aim)).map((part) => ({
+    seat,
+    part: part.part,
+    box: part,
+  }));
+}
+
+/** What one hit takes off, decided entirely by where it landed. */
+export function damageOf(part: BodyPart): number {
+  if (part === 'head') {
+    return HEAD_DAMAGE;
+  }
+  return part === 'torso' ? TORSO_DAMAGE : LIMB_DAMAGE;
 }
 
 /**
@@ -122,7 +152,7 @@ export function step(state: ArenaState, inputs: ArenaInputs): StepResult {
   // tested first a free trade, decided by nothing a player can see.
   const shots: ShotEvent[] = [];
   let nextShotId = state.nextShotId;
-  const killed = { north: false, south: false };
+  const damaged = { north: 0, south: 0 };
   const fired = { north: false, south: false };
   const scored = { north: 0, south: 0 };
 
@@ -136,11 +166,17 @@ export function step(state: ArenaState, inputs: ArenaInputs): StepResult {
     const targetSeat = opponentOf(seat);
     const target = targetSeat === 'north' ? north : south;
     const targets: ShotTarget[] = target.alive
-      ? [rewoundBounds(afterMove, target, targetSeat, input.rewindTicks)]
+      ? rewoundParts(afterMove, target, targetSeat, input.rewindTicks)
       : [];
 
     const origin = eyePosition(shooter.body);
-    const trace = traceShot(origin, shooter.aim, targets);
+    // Where the shot goes rather than where it was pointed. The previous aim is
+    // the one this seat held before this tick's was latched, which is what makes
+    // the turning term a turn rather than a position.
+    const previousAim = seat === 'north' ? state.north.aim : state.south.aim;
+    const spread = spreadOf(shooter.body, previousAim, shooter.aim, input.zoomed);
+    const line = deflect(shooter.aim, spread, seedOf(nextShotId, SEATS.indexOf(seat)));
+    const trace = traceShot(origin, line, targets);
 
     shots.push({
       id: nextShotId,
@@ -151,14 +187,19 @@ export function step(state: ArenaState, inputs: ArenaInputs): StepResult {
     });
     nextShotId += 1;
     fired[seat] = true;
-    if (trace.hitSeat !== null) {
-      killed[trace.hitSeat] = true;
-      scored[seat] += 1;
+    if (trace.hitSeat !== null && trace.hitPart !== null) {
+      damaged[trace.hitSeat] += damageOf(trace.hitPart);
+      // A shot that lands is not a kill unless it finishes them, and the score
+      // is a count of kills. Whether it did is settled below, where the health
+      // both shots came off is known.
+      if (damaged[trace.hitSeat] >= target.health) {
+        scored[seat] += 1;
+      }
     }
   }
 
-  north = settle(north, 'north', killed.north, fired.north, scored.north);
-  south = settle(south, 'south', killed.south, fired.south, scored.south);
+  north = settle(north, 'north', damaged.north, fired.north, scored.north);
+  south = settle(south, 'south', damaged.south, fired.south, scored.south);
 
   const winner: Seat | null =
     north.score >= WINNING_SCORE ? 'north' : south.score >= WINNING_SCORE ? 'south' : null;
@@ -177,11 +218,11 @@ export function step(state: ArenaState, inputs: ArenaInputs): StepResult {
   };
 }
 
-/** Applies a tick's outcome to one player: death, respawn, cooldown, score. */
+/** Applies a tick's outcome to one player: damage, death, respawn, cooldown, score. */
 function settle(
   player: PlayerSim,
   seat: Seat,
-  wasKilled: boolean,
+  damage: number,
   wasFired: boolean,
   points: number,
 ): PlayerSim {
@@ -189,8 +230,10 @@ function settle(
   // the first of the wait rather than the last of the previous one. Set to the
   // constant itself, the gap would be one tick longer than the name promises,
   // and the name is what the Go port is written against.
+  const health = player.alive ? player.health - damage : player.health;
   const next: PlayerSim = {
     ...player,
+    health: health < 0 ? 0 : health,
     score: player.score + points,
     cooldownTicks: wasFired
       ? FIRE_COOLDOWN_TICKS - 1
@@ -199,8 +242,8 @@ function settle(
         : 0,
   };
 
-  if (wasKilled && next.alive) {
-    return { ...next, alive: false, respawnTicks: RESPAWN_TICKS };
+  if (next.health <= 0 && next.alive) {
+    return { ...next, alive: false, health: 0, respawnTicks: RESPAWN_TICKS };
   }
 
   if (!next.alive) {

@@ -3,7 +3,7 @@ import { OCCLUDERS, SPAWNS } from '../src/arena.ts';
 import { bodyBounds, restingBody } from '../src/body.ts';
 import type { Bounds } from '../src/bounds.ts';
 import { MAX_SHOT_DISTANCE, STAND_EYE } from '../src/constants.ts';
-import { rayVsBox, traceShot } from '../src/ray.ts';
+import { rayVsBox, traceShot, type ShotTarget } from '../src/ray.ts';
 import { normalizeAim, type Vec3 } from '../src/vector.ts';
 
 /** A unit cube sitting between 1 and 2 on every axis. */
@@ -75,6 +75,29 @@ describe('a ray against a box', () => {
   });
 });
 
+/** A body's whole box as one target, which is enough for the tests below. */
+function wholeBody(seat: 'north' | 'south', bounds: Bounds): ShotTarget {
+  return {
+    seat,
+    part: 'torso',
+    box: {
+      centre: {
+        x: (bounds.minX + bounds.maxX) / 2,
+        y: (bounds.minY + bounds.maxY) / 2,
+        z: (bounds.minZ + bounds.maxZ) / 2,
+      },
+      half: {
+        x: (bounds.maxX - bounds.minX) / 2,
+        y: (bounds.maxY - bounds.minY) / 2,
+        z: (bounds.maxZ - bounds.minZ) / 2,
+      },
+      right: { x: 1, y: 0, z: 0 },
+      up: { x: 0, y: 1, z: 0 },
+      forward: { x: 0, y: 0, z: 1 },
+    },
+  };
+}
+
 describe('firing a shot', () => {
   const southEye = { ...SPAWNS.south, y: SPAWNS.south.y + STAND_EYE };
   const northBody = restingBody(SPAWNS.north);
@@ -88,14 +111,14 @@ describe('firing a shot', () => {
       z: SPAWNS.north.z - SPAWNS.south.z,
     });
 
-    const trace = traceShot(southEye, aim, [{ seat: 'north', bounds: bodyBounds(northBody) }]);
+    const trace = traceShot(southEye, aim, [wholeBody('north', bodyBounds(northBody))]);
 
     expect(trace.hitSeat).toBe('north');
   });
 
   it('stops at a wall rather than at the target behind it', () => {
     const trace = traceShot(southEye, normalizeAim({ x: 0, y: 0, z: 1 }), [
-      { seat: 'north', bounds: bodyBounds(northBody) },
+      wholeBody('north', bodyBounds(northBody)),
     ]);
 
     // Fired the other way: into the back wall, with the target nowhere near.
@@ -119,7 +142,7 @@ describe('firing a shot', () => {
     };
     const origin = at(0, 0.5, wallFront);
 
-    const trace = traceShot(origin, at(0, 0, 1), [{ seat: 'north', bounds: behind }]);
+    const trace = traceShot(origin, at(0, 0, 1), [wholeBody('north', behind)]);
 
     expect(trace.hitSeat).toBeNull();
   });

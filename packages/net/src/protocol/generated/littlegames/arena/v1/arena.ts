@@ -303,6 +303,13 @@ export interface PlayerState {
    * before the countdown opens; it is never cleared once a match is under way.
    */
   ready: boolean;
+  /**
+   * What is left before the next hit is the last one, out of six.
+   *
+   * A head takes all of it, a chest half and a limb a third, so it is also what
+   * tells a player whether the shot that just landed on them was a good one.
+   */
+  health: number;
 }
 
 /** A shot the server resolved, for the client to draw. */
@@ -967,6 +974,7 @@ function createBasePlayerState(): PlayerState {
     spawnEpoch: 0,
     zoomed: false,
     ready: false,
+    health: 0,
   };
 }
 
@@ -1010,6 +1018,9 @@ export const PlayerState: MessageFns<PlayerState> = {
     }
     if (message.ready !== false) {
       writer.uint32(104).bool(message.ready);
+    }
+    if (message.health !== 0) {
+      writer.uint32(112).uint32(message.health);
     }
     return writer;
   },
@@ -1125,6 +1136,14 @@ export const PlayerState: MessageFns<PlayerState> = {
           message.ready = reader.bool();
           continue;
         }
+        case 14: {
+          if (tag !== 112) {
+            break;
+          }
+
+          message.health = reader.uint32();
+          continue;
+        }
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -1169,6 +1188,7 @@ export const PlayerState: MessageFns<PlayerState> = {
         : 0,
       zoomed: isSet(object.zoomed) ? globalThis.Boolean(object.zoomed) : false,
       ready: isSet(object.ready) ? globalThis.Boolean(object.ready) : false,
+      health: isSet(object.health) ? globalThis.Number(object.health) : 0,
     };
   },
 
@@ -1213,6 +1233,9 @@ export const PlayerState: MessageFns<PlayerState> = {
     if (message.ready !== false) {
       obj.ready = message.ready;
     }
+    if (message.health !== 0) {
+      obj.health = Math.round(message.health);
+    }
     return obj;
   },
 
@@ -1234,6 +1257,7 @@ export const PlayerState: MessageFns<PlayerState> = {
     message.spawnEpoch = object.spawnEpoch ?? 0;
     message.zoomed = object.zoomed ?? false;
     message.ready = object.ready ?? false;
+    message.health = object.health ?? 0;
     return message;
   },
 };

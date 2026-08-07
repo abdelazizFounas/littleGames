@@ -506,6 +506,9 @@ func (s *arenaState) consume() arena.Inputs {
 			Jump:   command.jump,
 			Crouch: command.crouch,
 			Fire:   fire,
+			// Whether the sight was up, which is the difference between a shot
+			// that goes where it was pointed and one that mostly does.
+			Zoomed: command.zoomed,
 			// How far back this player's screen was. seenTick is theirs to
 			// claim, so it is judged against the tick the server is actually
 			// on: claiming the future buys nothing, claiming the distant past
@@ -658,6 +661,7 @@ func (s *arenaState) broadcast(dispatcher runtime.MatchDispatcher) error {
 			SpawnEpoch:    uint32(simulated.SpawnEpoch),
 			Zoomed:        seated.zoomed,
 			Ready:         seated.ready,
+			Health:        uint32(simulated.Health),
 		})
 	}
 

@@ -175,6 +175,12 @@ message PlayerState {
   // Whether this player has said they are ready to start. Only meaningful
   // before the countdown opens; it is never cleared once a match is under way.
   bool ready = 13;
+
+  // What is left before the next hit is the last one, out of six.
+  //
+  // A head takes all of it, a chest half and a limb a third, so it is also what
+  // tells a player whether the shot that just landed on them was a good one.
+  uint32 health = 14;
 }
 
 // A shot the server resolved, for the client to draw.

@@ -1,5 +1,6 @@
 import {
   INTERP_DELAY_TICKS,
+  MAX_HEALTH,
   RESPAWN_TICKS,
   TICK_RATE,
   TICK_SECONDS,
@@ -50,6 +51,8 @@ export interface FramePlayer {
   readonly body: PlayerBody;
   readonly aim: Vec3;
   readonly alive: boolean;
+  /** Whole, as the rules count it: six down to nothing. */
+  readonly health: number;
   readonly score: number;
   readonly respawnTicks: number;
   readonly spawnEpoch: number;
@@ -357,6 +360,9 @@ export function hudFor(
     scope,
     hitMarker: fadeSince(now, lastOwnHitAt, HIT_MARKER_SECONDS),
     damage: fadeSince(now, lastDamageAt, DAMAGE_SECONDS),
+    // As a fraction, because the bar is a width. A dead player reads as empty
+    // rather than as whatever they had left when they were finished.
+    health: frame.self.alive ? Math.max(frame.self.health, 0) / MAX_HEALTH : 0,
   };
 }
 

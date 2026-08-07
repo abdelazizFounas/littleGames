@@ -74,6 +74,9 @@ function createDuellist(seat: Seat, readState: () => ArenaState): InputSource<Ar
         jump: false,
         crouch: false,
         fire: target.alive && shooter.alive,
+        // Down the sights, so a scripted duel is decided by where it aims
+        // rather than by the spread.
+        zoomed: true,
         rewindTicks: back,
       };
     },

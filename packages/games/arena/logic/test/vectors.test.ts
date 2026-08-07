@@ -20,6 +20,7 @@ import { normalizeAim } from '../src/vector.ts';
 const FLAG_JUMP = 1;
 const FLAG_CROUCH = 2;
 const FLAG_FIRE = 4;
+const FLAG_ZOOM = 8;
 
 interface Vectors {
   readonly tickRate: number;
@@ -51,6 +52,7 @@ function observable(state: ArenaState): unknown {
       body: from.body,
       aim: from.aim,
       alive: from.alive,
+      health: from.health,
       score: from.score,
       respawnTicks: from.respawnTicks,
       spawnEpoch: from.spawnEpoch,
@@ -80,6 +82,7 @@ function decode(row: readonly number[], offset: number): ArenaInput {
     jump: (flags & FLAG_JUMP) !== 0,
     crouch: (flags & FLAG_CROUCH) !== 0,
     fire: (flags & FLAG_FIRE) !== 0,
+    zoomed: (flags & FLAG_ZOOM) !== 0,
     rewindTicks: row[offset + 6] ?? 0,
   };
 }

@@ -122,6 +122,55 @@ const (
 	MaxShotDistance float64 = 80
 )
 
+// What a hit is worth.
+//
+// Whole numbers on purpose. Everything else in this package is a double held to
+// identical bits by the conformance vectors; damage does not need to be, and a
+// quantity that cannot drift at all is one fewer thing for the vectors to have
+// to prove. Six divides exactly by the three zones: a head is the whole of it,
+// a torso half, a limb a third.
+const (
+	MaxHealth = 6
+
+	// HeadDamage makes a head shot a kill however healthy the target was.
+	HeadDamage = MaxHealth
+	// TorsoDamage is two to the chest.
+	TorsoDamage = 3
+	// LimbDamage is three to an arm or a leg, which is what makes hitting the
+	// middle worth it.
+	LimbDamage = 2
+)
+
+// Where the shot actually goes, as a fraction of the distance flown.
+//
+// A tangent without the trigonometry: the aim is nudged sideways by this much
+// per metre travelled and renormalised, which for the small angles involved is
+// the angle itself. Everything here is in the same unit and they add.
+const (
+	// SpreadBase is what a rifle fired from the hip does at rest — about half a
+	// degree. Enough that a duel across the ravine rewards raising the sight,
+	// not enough to make hip fire pointless in a corridor.
+	SpreadBase float64 = 0.009
+
+	// SpreadMoving is added at a full run, in proportion to the size of the
+	// step being taken.
+	SpreadMoving float64 = 0.03
+
+	// SpreadAirborne is added while both feet are off the ground, where nobody
+	// can brace.
+	SpreadAirborne float64 = 0.045
+
+	// SpreadTurning is added per unit of aim swung in one tick, measured as the
+	// straight-line distance between last tick's aim and this one's. Flicking
+	// onto a target and firing in the same instant is the shot it punishes.
+	SpreadTurning float64 = 0.8
+
+	// SpreadScopedShare is what is left of all of it while the sight is up. Not
+	// zero: a scope that guaranteed the centre of the crosshair would make the
+	// hip an irrelevance rather than a trade.
+	SpreadScopedShare float64 = 0.06
+)
+
 // Rounds.
 const (
 	RespawnTicks   = 90

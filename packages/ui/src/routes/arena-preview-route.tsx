@@ -74,6 +74,7 @@ export function ArenaPreviewRoute(): ReactNode {
               scope: 0,
               hitMarker: 0,
               damage: 0,
+              health: 1,
             },
           },
           0,

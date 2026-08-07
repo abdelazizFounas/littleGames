@@ -1,5 +1,6 @@
 import {
   INTERP_DELAY_TICKS,
+  MAX_HEALTH,
   RESPAWN_TICKS,
   SPAWNS,
   TICK_RATE,
@@ -37,6 +38,7 @@ function player(over: Partial<FramePlayer> = {}): FramePlayer {
     body: restingBody(SPAWNS.north),
     aim: { x: 0, y: 0, z: 1 },
     alive: true,
+    health: MAX_HEALTH,
     score: 0,
     respawnTicks: 0,
     spawnEpoch: 0,

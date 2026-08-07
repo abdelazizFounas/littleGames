@@ -23,6 +23,7 @@ import {
   STAND_HEIGHT,
   TICK_RATE,
 } from '../src/constants.ts';
+import { poseOf, type BodyPart } from '../src/pose.ts';
 import {
   createInitialState,
   historyAt,
@@ -39,6 +40,7 @@ const CHECKPOINT_EVERY = 30;
 const FLAG_JUMP = 1;
 const FLAG_CROUCH = 2;
 const FLAG_FIRE = 4;
+const FLAG_ZOOM = 8;
 
 /**
  * One player's tick of input, as the integers that travel on the wire.
@@ -60,14 +62,21 @@ type WireInput = readonly [
 function wire(
   move: { x: number; z: number },
   aim: Vec3,
-  over: { jump?: boolean; crouch?: boolean; fire?: boolean; rewindTicks?: number } = {},
+  over: {
+    jump?: boolean;
+    crouch?: boolean;
+    fire?: boolean;
+    zoomed?: boolean;
+    rewindTicks?: number;
+  } = {},
 ): WireInput {
   const quantisedMove = moveToWire(move);
   const quantisedAim = aimToWire(normalizeAim(aim));
   const flags =
     (over.jump === true ? FLAG_JUMP : 0) |
     (over.crouch === true ? FLAG_CROUCH : 0) |
-    (over.fire === true ? FLAG_FIRE : 0);
+    (over.fire === true ? FLAG_FIRE : 0) |
+    (over.zoomed === true ? FLAG_ZOOM : 0);
   return [
     quantisedMove.x,
     quantisedMove.z,
@@ -88,6 +97,7 @@ function decode(input: WireInput): ArenaInput {
     jump: (flags & FLAG_JUMP) !== 0,
     crouch: (flags & FLAG_CROUCH) !== 0,
     fire: (flags & FLAG_FIRE) !== 0,
+    zoomed: (flags & FLAG_ZOOM) !== 0,
     rewindTicks,
   };
 }
@@ -108,6 +118,7 @@ function observable(state: ArenaState) {
       body: from.body,
       aim: from.aim,
       alive: from.alive,
+      health: from.health,
       score: from.score,
       respawnTicks: from.respawnTicks,
       spawnEpoch: from.spawnEpoch,
@@ -183,6 +194,16 @@ function aimAcross(state: ArenaState, from: 'north' | 'south'): Vec3 {
     y: target.body.y + STAND_HEIGHT / 2 - eye.y,
     z: target.body.z - eye.z,
   });
+}
+
+/** Aim from one player's eyes at a named part of the other's drawn pose. */
+function aimAtPart(state: ArenaState, from: 'north' | 'south', part: BodyPart): Vec3 {
+  const shooter = from === 'north' ? state.north : state.south;
+  const target = from === 'north' ? state.south : state.north;
+  const eye = eyePosition(shooter.body);
+  const found = poseOf(target.body, target.aim).parts.find((piece) => piece.part === part);
+  const at = found?.centre ?? { x: target.body.x, y: target.body.y, z: target.body.z };
+  return normalizeAim({ x: at.x - eye.x, y: at.y - eye.y, z: at.z - eye.z });
 }
 
 const scenarios: Scenario[] = [
@@ -277,6 +298,61 @@ const scenarios: Scenario[] = [
       north: wire({ x: 0, z: 0 }, aimAcross(state, 'north')),
       south: wire({ x: 0, z: 0 }, aimAcross(state, 'south'), { fire: state.north.alive }),
     }),
+  ),
+
+  record(
+    'zones',
+    'Aims at one named part after another from a steady scope while the target walks and crouches, so the per-part boxes, the damage each is worth and the health between them are all pinned — and so are the bent legs, which are only bent while somebody is moving.',
+    COUNTDOWN_TICKS + 900,
+    (tick, state) => {
+      // The shooter stands still and scoped, so the spread is at its smallest
+      // and which part is hit is decided by the geometry rather than by the
+      // dice. The target does not: a standing leg is nearly straight, and a
+      // port that bends the knee the wrong way would still be hit through a
+      // straight one. Walking and crouching is what puts the joint somewhere
+      // only a correct port finds.
+      const parts: BodyPart[] = ['head', 'torso', 'thighRight', 'armLeft', 'shinLeft', 'shinRight'];
+      const since = tick - COUNTDOWN_TICKS;
+      const part = parts[Math.floor(since / 120) % parts.length] ?? 'torso';
+      return {
+        north: wire({ x: Math.sin(since / 23), z: 0 }, aimAcross(state, 'north'), {
+          crouch: since % 240 > 140,
+        }),
+        south: wire({ x: 0, z: 0 }, aimAtPart(state, 'south', part), {
+          fire: since > 0 && since % 25 === 0,
+          zoomed: true,
+        }),
+      };
+    },
+  ),
+
+  record(
+    'scatter',
+    'Fires while running, jumping and swinging the aim, which is the whole of the spread: every term of it, and the integer randomness that turns it into a direction.',
+    COUNTDOWN_TICKS + 600,
+    (tick, state) => {
+      const since = tick - COUNTDOWN_TICKS;
+      // Swept rather than held, so the turning term is never zero, and jumping
+      // on a beat that does not divide the firing beat so shots land on both
+      // sides of a landing.
+      const swing = Math.sin(since / 7) * 0.5;
+      const aim = normalizeAim({
+        x: aimAcross(state, 'south').x + swing,
+        y: aimAcross(state, 'south').y + Math.cos(since / 11) * 0.2,
+        z: aimAcross(state, 'south').z,
+      });
+      return {
+        north: wire({ x: Math.sin(since / 13), z: 0 }, aimAcross(state, 'north'), {
+          fire: since > 0 && since % 30 === 0,
+          jump: since % 37 < 2,
+        }),
+        south: wire({ x: Math.cos(since / 9), z: 0 }, aim, {
+          fire: since > 0 && since % 26 === 0,
+          jump: since % 41 < 2,
+          zoomed: since % 200 > 120,
+        }),
+      };
+    },
   ),
 ];
 

@@ -38,8 +38,9 @@ export {
 } from './body.ts';
 export type { BodyPart, PartBox, Pose } from './pose.ts';
 export { PARTS_PER_BODY, facingOf, hittablePartsOf, lift, poseOf, swing } from './pose.ts';
-export type { ShotTarget, Trace } from './ray.ts';
-export { rayVsBox, traceShot } from './ray.ts';
+export type { OrientedBox, ShotTarget, Trace } from './ray.ts';
+export { rayVsBox, rayVsOrientedBox, traceShot } from './ray.ts';
+export { deflect, seedOf, spreadOf, unitFrom, xorshift32 } from './spread.ts';
 export type {
   ArenaInput,
   ArenaInputs,
@@ -58,4 +59,4 @@ export {
   startCountdown,
 } from './state.ts';
 export type { ShotEvent, StepResult } from './step.ts';
-export { step } from './step.ts';
+export { damageOf, step } from './step.ts';

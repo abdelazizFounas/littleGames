@@ -107,6 +107,14 @@ export interface ArenaHud {
   readonly hitMarker: number;
   /** How strongly to show that this player was hit, from one down to nothing. */
   readonly damage: number;
+  /**
+   * How much of this player is left, from one down to nothing.
+   *
+   * A fraction rather than the whole number the rules carry, because what the
+   * screen has to say is "most of the way there" and not "four". It is the only
+   * warning a player gets that the next torso shot finishes them.
+   */
+  readonly health: number;
 }
 
 /**

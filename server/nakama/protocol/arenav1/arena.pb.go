@@ -611,7 +611,12 @@ type PlayerState struct {
 	Zoomed     bool   `protobuf:"varint,12,opt,name=zoomed,proto3" json:"zoomed,omitempty"`
 	// Whether this player has said they are ready to start. Only meaningful
 	// before the countdown opens; it is never cleared once a match is under way.
-	Ready         bool `protobuf:"varint,13,opt,name=ready,proto3" json:"ready,omitempty"`
+	Ready bool `protobuf:"varint,13,opt,name=ready,proto3" json:"ready,omitempty"`
+	// What is left before the next hit is the last one, out of six.
+	//
+	// A head takes all of it, a chest half and a limb a third, so it is also what
+	// tells a player whether the shot that just landed on them was a good one.
+	Health        uint32 `protobuf:"varint,14,opt,name=health,proto3" json:"health,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -735,6 +740,13 @@ func (x *PlayerState) GetReady() bool {
 		return x.Ready
 	}
 	return false
+}
+
+func (x *PlayerState) GetHealth() uint32 {
+	if x != nil {
+		return x.Health
+	}
+	return 0
 }
 
 // A shot the server resolved, for the client to draw.
@@ -947,7 +959,7 @@ const file_littlegames_arena_v1_arena_proto_rawDesc = "" +
 	"\aVector3\x12\f\n" +
 	"\x01x\x18\x01 \x01(\x01R\x01x\x12\f\n" +
 	"\x01y\x18\x02 \x01(\x01R\x01y\x12\f\n" +
-	"\x01z\x18\x03 \x01(\x01R\x01z\"\xc8\x03\n" +
+	"\x01z\x18\x03 \x01(\x01R\x01z\"\xe0\x03\n" +
 	"\vPlayerState\x12\x17\n" +
 	"\auser_id\x18\x01 \x01(\tR\x06userId\x12\x1a\n" +
 	"\busername\x18\x02 \x01(\tR\busername\x12.\n" +
@@ -963,7 +975,8 @@ const file_littlegames_arena_v1_arena_proto_rawDesc = "" +
 	"\vspawn_epoch\x18\v \x01(\rR\n" +
 	"spawnEpoch\x12\x16\n" +
 	"\x06zoomed\x18\f \x01(\bR\x06zoomed\x12\x14\n" +
-	"\x05ready\x18\r \x01(\bR\x05ready\"\xe2\x01\n" +
+	"\x05ready\x18\r \x01(\bR\x05ready\x12\x16\n" +
+	"\x06health\x18\x0e \x01(\rR\x06health\"\xe2\x01\n" +
 	"\tShotEvent\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\rR\x02id\x124\n" +
 	"\ashooter\x18\x02 \x01(\x0e2\x1a.littlegames.arena.v1.SeatR\ashooter\x125\n" +

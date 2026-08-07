@@ -18,6 +18,7 @@ const (
 	flagJump   = 1
 	flagCrouch = 2
 	flagFire   = 4
+	flagZoom   = 8
 )
 
 // wireFields is how many integers one player's tick of input occupies.
@@ -105,6 +106,7 @@ func decodeInput(row []int32, offset int) Input {
 		Jump:        flags&flagJump != 0,
 		Crouch:      flags&flagCrouch != 0,
 		Fire:        flags&flagFire != 0,
+		Zoomed:      flags&flagZoom != 0,
 		RewindTicks: int(row[offset+6]),
 	}
 }

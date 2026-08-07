@@ -147,7 +147,33 @@ export function createHud(container: HTMLElement): Hud {
   glass.append(across, down);
   scope.appendChild(glass);
 
-  root.append(damage, crosshair, hitMarker, scope, score, message);
+  /**
+   * What is left of the player, along the bottom of the screen.
+   *
+   * A bar rather than a number: the question it answers is whether there is
+   * enough left to trade a shot, and a width answers that at a glance where a
+   * digit has to be read. Low on the screen and out of the way, because it only
+   * matters in the moment after being hit.
+   */
+  const healthTrack = document.createElement('div');
+  healthTrack.style.position = 'absolute';
+  healthTrack.style.left = '50%';
+  healthTrack.style.bottom = '4%';
+  healthTrack.style.transform = 'translateX(-50%)';
+  healthTrack.style.width = 'min(240px, 28%)';
+  healthTrack.style.height = '6px';
+  healthTrack.style.borderRadius = '3px';
+  healthTrack.style.background = 'rgb(0 0 0 / 45%)';
+  healthTrack.style.boxShadow = '0 0 0 1px rgb(0 0 0 / 35%)';
+
+  const healthFill = document.createElement('div');
+  healthFill.style.height = '100%';
+  healthFill.style.width = '100%';
+  healthFill.style.borderRadius = '3px';
+  healthFill.style.background = '#e8e2d6';
+  healthTrack.appendChild(healthFill);
+
+  root.append(damage, crosshair, hitMarker, scope, healthTrack, score, message);
   container.appendChild(root);
 
   // What each element currently says. Writing textContent unconditionally
@@ -158,6 +184,7 @@ export function createHud(container: HTMLElement): Hud {
   let shownHit = 0;
   let shownDamage = 0;
   let shownScope = -1;
+  let shownHealth = -1;
 
   return {
     update(state: ArenaHud): void {
@@ -190,6 +217,18 @@ export function createHud(container: HTMLElement): Hud {
       if (wantsHit !== shownHit) {
         shownHit = wantsHit;
         hitMarker.style.opacity = String(wantsHit);
+      }
+
+      // Stepped in twelfths, which is finer than the six the rules count in and
+      // coarse enough that nothing is rewritten for a rounding.
+      const wantsHealth = Math.round(state.health * 12) / 12;
+      if (wantsHealth !== shownHealth) {
+        shownHealth = wantsHealth;
+        healthFill.style.width = `${String(wantsHealth * 100)}%`;
+        // Red once a single shot anywhere would finish it, which is the only
+        // moment the number is worth reacting to.
+        healthFill.style.background = wantsHealth <= 0.5 ? '#d34a4a' : '#e8e2d6';
+        healthTrack.style.opacity = wantsHealth >= 1 ? '0.35' : '1';
       }
 
       const wantsDamage = Math.round(state.damage * 20) / 20;

@@ -200,6 +200,13 @@ export interface PlayerState {
    * before the countdown opens; it is never cleared once a match is under way.
    */
   ready: boolean;
+  /**
+   * What is left before the next hit is the last one, out of six.
+   *
+   * A head takes all of it, a chest half and a limb a third, so it is also what
+   * tells a player whether the shot that just landed on them was a good one.
+   */
+  health: number;
 }
 
 /** A shot the server resolved, for the client to draw. */

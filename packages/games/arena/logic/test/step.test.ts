@@ -5,6 +5,7 @@ import {
   COUNTDOWN_TICKS,
   FIRE_COOLDOWN_TICKS,
   MOVE_SPEED,
+  MAX_HEALTH,
   RESPAWN_TICKS,
   STAND_HEIGHT,
   TICK_SECONDS,
@@ -19,17 +20,32 @@ import {
   type ArenaInput,
   type ArenaState,
 } from '../src/state.ts';
+import { poseOf } from '../src/pose.ts';
 import { step } from '../src/step.ts';
 import { normalizeAim, type Vec3 } from '../src/vector.ts';
 
 const input = (over: Partial<ArenaInput> = {}): ArenaInput => ({ ...NO_INPUT, ...over });
 const IDLE = { north: NO_INPUT, south: NO_INPUT };
 
-/** Both players standing at their spawns, with the round already open. */
+/** Each seat looking across the ravine at the other, which is where they spawn facing. */
+const ACROSS: Record<'north' | 'south', ArenaInput> = {
+  north: input({ aim: { x: 0, y: 0, z: 1 } }),
+  south: input({ aim: { x: 0, y: 0, z: -1 } }),
+};
+const WATCHING = { north: ACROSS.north, south: ACROSS.south };
+
+/**
+ * Both players standing at their spawns, looking at each other, round open.
+ *
+ * Looking at each other from the start is load-bearing now: swinging onto a
+ * target and firing in the same tick is the shot the spread exists to punish,
+ * so a test that turned first would be measuring the flick rather than the rule
+ * it means to measure.
+ */
 function playing(): ArenaState {
   let state = startCountdown(createInitialState(), COUNTDOWN_TICKS);
   for (let tick = 0; tick <= COUNTDOWN_TICKS; tick += 1) {
-    state = step(state, IDLE).state;
+    state = step(state, WATCHING).state;
   }
   return state;
 }
@@ -75,7 +91,7 @@ describe('phases', () => {
     const state = startCountdown(createInitialState(), COUNTDOWN_TICKS);
     const eye = eyePosition(state.south.body);
     const firing = {
-      north: NO_INPUT,
+      north: ACROSS.north,
       south: input({ fire: true, aim: aimAt(eye, chestOf(state.north.body)) }),
     };
 
@@ -112,32 +128,76 @@ describe('the speed cap', () => {
   });
 });
 
-describe('shooting', () => {
-  function southShootsNorth(state: ArenaState, over: Partial<ArenaInput> = {}) {
-    const eye = eyePosition(state.south.body);
-    return {
-      north: NO_INPUT,
-      south: input({ fire: true, aim: aimAt(eye, chestOf(state.north.body)), ...over }),
-    };
-  }
+/** South firing at north's chest, down the sights so the shot goes where it is put. */
+function southShootsNorth(state: ArenaState, over: Partial<ArenaInput> = {}) {
+  const eye = eyePosition(state.south.body);
+  return {
+    north: ACROSS.north,
+    south: input({
+      fire: true,
+      zoomed: true,
+      aim: aimAt(eye, chestOf(state.north.body)),
+      ...over,
+    }),
+  };
+}
 
-  it('kills across the gap, scores, and reports the shot', () => {
+/** Two to the chest, which is what a body is worth, with the cooldown between. */
+function killNorth(state: ArenaState): ArenaState {
+  let current = step(state, southShootsNorth(state)).state;
+  current = advance(current, FIRE_COOLDOWN_TICKS, WATCHING);
+  return step(current, southShootsNorth(current)).state;
+}
+
+describe('shooting', () => {
+  it('takes two to the chest, scores on the second, and reports both shots', () => {
     const state = playing();
 
-    const { state: after, shots } = step(state, southShootsNorth(state));
+    const first = step(state, southShootsNorth(state));
+    expect(first.shots).toHaveLength(1);
+    expect(first.shots[0]?.shooter).toBe('south');
+    expect(first.shots[0]?.hitPlayer).toBe(true);
+    // A hit is not a kill. The score counts kills, and there has not been one.
+    expect(first.state.north.alive).toBe(true);
+    expect(first.state.north.health).toBeLessThan(MAX_HEALTH);
+    expect(first.state.south.score).toBe(0);
 
-    expect(shots).toHaveLength(1);
-    expect(shots[0]?.shooter).toBe('south');
-    expect(shots[0]?.hitPlayer).toBe(true);
-    expect(after.south.score).toBe(1);
+    const settled = advance(first.state, FIRE_COOLDOWN_TICKS, WATCHING);
+    const second = step(settled, southShootsNorth(settled));
+    expect(second.state.north.alive).toBe(false);
+    expect(second.state.south.score).toBe(1);
+  });
+
+  it('kills outright with one to the head', () => {
+    // The whole point of per-part boxes: the same rifle, the same distance, and
+    // a different number of shots depending only on where they are put.
+    const state = playing();
+    const eye = eyePosition(state.south.body);
+    const head = poseOf(state.north.body, state.north.aim).parts.find(
+      (part) => part.part === 'head',
+    );
+    expect(head).toBeDefined();
+    const aim = aimAt(eye, head?.centre ?? chestOf(state.north.body));
+    // Settled onto it for a tick, so the turn is spent before the trigger.
+    const ready = step(state, {
+      north: ACROSS.north,
+      south: input({ aim, zoomed: true }),
+    }).state;
+
+    const after = step(ready, {
+      north: ACROSS.north,
+      south: input({ fire: true, zoomed: true, aim }),
+    }).state;
+
     expect(after.north.alive).toBe(false);
+    expect(after.south.score).toBe(1);
   });
 
   it('reports a miss as a shot that hit nothing', () => {
     const state = playing();
     const eye = eyePosition(state.south.body);
     const wide = {
-      north: NO_INPUT,
+      north: ACROSS.north,
       south: input({ fire: true, aim: aimAt(eye, { x: 9, y: 5, z: state.north.body.z }) }),
     };
 
@@ -157,7 +217,7 @@ describe('shooting', () => {
     expect(first.shots).toHaveLength(1);
     state = first.state;
 
-    // The target is dead, so nothing is hit; what is being counted is shots.
+    // What is being counted is shots that went out, not what they found.
     let fired = 0;
     for (let tick = 0; tick < FIRE_COOLDOWN_TICKS - 1; tick += 1) {
       const result = step(state, firing);
@@ -173,14 +233,24 @@ describe('shooting', () => {
     // Resolved against the state before either shot landed. Applying one and
     // then the other would hand whichever seat is tested first a free win,
     // decided by nothing a player can see.
-    const state = playing();
-    const northEye = eyePosition(state.north.body);
-    const southEye = eyePosition(state.south.body);
-
-    const { state: after, shots } = step(state, {
-      north: input({ fire: true, aim: aimAt(northEye, chestOf(state.south.body)) }),
-      south: input({ fire: true, aim: aimAt(southEye, chestOf(state.north.body)) }),
+    let state = playing();
+    const trade = (from: ArenaState) => ({
+      north: input({
+        fire: true,
+        zoomed: true,
+        aim: aimAt(eyePosition(from.north.body), chestOf(from.south.body)),
+      }),
+      south: input({
+        fire: true,
+        zoomed: true,
+        aim: aimAt(eyePosition(from.south.body), chestOf(from.north.body)),
+      }),
     });
+
+    // One chest shot each first, so the second pair is the one that decides it.
+    state = step(state, trade(state)).state;
+    state = advance(state, FIRE_COOLDOWN_TICKS, WATCHING);
+    const { state: after, shots } = step(state, trade(state));
 
     expect(shots).toHaveLength(2);
     expect(after.north.alive).toBe(false);
@@ -190,12 +260,11 @@ describe('shooting', () => {
   });
 
   it('cannot shoot a player who is already down', () => {
-    let state = playing();
-    state = step(state, southShootsNorth(state)).state;
+    let state = killNorth(playing());
     expect(state.north.alive).toBe(false);
 
     // Wait out the cooldown, then fire at the same place again.
-    state = advance(state, FIRE_COOLDOWN_TICKS);
+    state = advance(state, FIRE_COOLDOWN_TICKS, WATCHING);
     const { state: after, shots } = step(state, southShootsNorth(state));
 
     expect(shots).toHaveLength(1);
@@ -206,20 +275,13 @@ describe('shooting', () => {
 
 describe('respawning', () => {
   it('comes back at the spawn after a delay, keeping the score', () => {
-    let state = playing();
-    state = step(state, {
-      north: NO_INPUT,
-      south: input({
-        fire: true,
-        aim: aimAt(eyePosition(state.south.body), chestOf(state.north.body)),
-      }),
-    }).state;
+    let state = killNorth(playing());
     const epochBefore = state.north.spawnEpoch;
 
-    state = advance(state, RESPAWN_TICKS - 2);
+    state = advance(state, RESPAWN_TICKS - 2, WATCHING);
     expect(state.north.alive).toBe(false);
 
-    state = advance(state, 2);
+    state = advance(state, 2, WATCHING);
     expect(state.north.alive).toBe(true);
     expect(state.north.spawnEpoch).toBe(epochBefore + 1);
     expect(state.north.body.z).toBeCloseTo(SPAWNS.north.z, 9);
@@ -231,8 +293,8 @@ describe('lag compensation', () => {
   /** Walks the north player sideways for long enough to leave a trail. */
   function strafingNorth(): ArenaState {
     return advance(playing(), 20, {
-      north: input({ move: { x: 1, z: 0 } }),
-      south: NO_INPUT,
+      north: input({ ...ACROSS.north, move: { x: 1, z: 0 } }),
+      south: ACROSS.south,
     });
   }
 
@@ -247,14 +309,21 @@ describe('lag compensation', () => {
 
     const eye = eyePosition(state.south.body);
     const aim = aimAt(eye, chestOf(seen));
+    const moving = input({ ...ACROSS.north, move: { x: 1, z: 0 } });
+    // Settled onto the remembered position before firing, so the shot is
+    // decided by the rewind rather than by the spread a flick would add.
+    const ready = step(state, {
+      north: moving,
+      south: input({ aim, zoomed: true }),
+    }).state;
 
-    const compensated = step(state, {
-      north: NO_INPUT,
-      south: input({ fire: true, aim, rewindTicks: back }),
+    const compensated = step(ready, {
+      north: moving,
+      south: input({ fire: true, zoomed: true, aim, rewindTicks: back + 1 }),
     });
-    const uncompensated = step(state, {
-      north: NO_INPUT,
-      south: input({ fire: true, aim, rewindTicks: 0 }),
+    const uncompensated = step(ready, {
+      north: moving,
+      south: input({ fire: true, zoomed: true, aim, rewindTicks: 0 }),
     });
 
     expect(compensated.shots[0]?.hitPlayer).toBe(true);
@@ -265,30 +334,30 @@ describe('lag compensation', () => {
     // The ugliest death there is: killed a beat after reappearing, by a shot
     // aimed at where the corpse was.
     let state = playing();
-    const moving = { north: input({ move: { x: 1, z: 0 } }), south: NO_INPUT };
+    const moving = { north: input({ ...ACROSS.north, move: { x: 1, z: 0 } }), south: ACROSS.south };
     state = advance(state, 40, moving);
     const deathSpot = state.north.body;
+    const atDeathSpot = input({
+      zoomed: true,
+      aim: aimAt(eyePosition(state.south.body), chestOf(deathSpot)),
+    });
 
-    state = step(state, {
-      north: NO_INPUT,
-      south: input({ fire: true, aim: aimAt(eyePosition(state.south.body), chestOf(deathSpot)) }),
-    }).state;
+    // Two to the chest, from a standing target, with the cooldown between.
+    state = step(state, { north: ACROSS.north, south: { ...atDeathSpot, fire: true } }).state;
+    state = advance(state, FIRE_COOLDOWN_TICKS, { north: ACROSS.north, south: atDeathSpot });
+    state = step(state, { north: ACROSS.north, south: { ...atDeathSpot, fire: true } }).state;
     expect(state.north.alive).toBe(false);
 
-    state = advance(state, RESPAWN_TICKS);
+    state = advance(state, RESPAWN_TICKS, { north: ACROSS.north, south: atDeathSpot });
     expect(state.north.alive).toBe(true);
-    state = advance(state, 3);
+    state = advance(state, 3, { north: ACROSS.north, south: atDeathSpot });
 
     // A rewind that reaches back before the respawn is refused, so the shot is
     // judged against where the player is now — at their spawn, not here.
-    const late = step(advance(state, FIRE_COOLDOWN_TICKS), {
-      north: NO_INPUT,
-      south: input({
-        fire: true,
-        aim: aimAt(eyePosition(state.south.body), chestOf(deathSpot)),
-        rewindTicks: 12,
-      }),
-    });
+    const late = step(
+      advance(state, FIRE_COOLDOWN_TICKS, { north: ACROSS.north, south: atDeathSpot }),
+      { north: ACROSS.north, south: { ...atDeathSpot, fire: true, rewindTicks: 12 } },
+    );
 
     expect(late.shots[0]?.hitPlayer).toBe(false);
   });
@@ -307,18 +376,15 @@ describe('winning', () => {
   it('ends the match at the winning score', () => {
     let state = playing();
 
-    for (let round = 0; round < WINNING_SCORE; round += 1) {
-      state = step(state, {
-        north: NO_INPUT,
-        south: input({
-          fire: true,
-          aim: aimAt(eyePosition(state.south.body), chestOf(state.north.body)),
-        }),
-      }).state;
-      if (state.phase === 'finished') {
+    // Two chest shots a life now, so this is twice the rounds it used to be.
+    // Bounded rather than counted, because what is being asserted is that the
+    // match ends at the winning score and not how many ticks that takes.
+    for (let round = 0; round < WINNING_SCORE * 3 && state.phase === 'playing'; round += 1) {
+      state = killNorth(state);
+      if (state.phase !== 'playing') {
         break;
       }
-      state = advance(state, RESPAWN_TICKS);
+      state = advance(state, RESPAWN_TICKS + 1, WATCHING);
     }
 
     expect(state.phase).toBe('finished');

@@ -15,7 +15,14 @@ type PlayerSim struct {
 	// Aim is unit length, as the server latched it from the client's input.
 	Aim   Vec3 `json:"aim"`
 	Alive bool `json:"alive"`
-	Score int  `json:"score"`
+	// Health is what is left before the next hit is the last one.
+	//
+	// A whole number, and the only quantity in the rules that is. Where a hit
+	// lands decides how much of it goes: the head takes all of it, the chest
+	// half and a limb a third, so the same three shots kill or do not depending
+	// entirely on where they were put.
+	Health int `json:"health"`
+	Score  int `json:"score"`
 	// RespawnTicks counts down to nothing, then the player is put back at their
 	// spawn.
 	RespawnTicks int `json:"respawnTicks"`
@@ -30,10 +37,18 @@ type PlayerSim struct {
 	CooldownTicks int `json:"cooldownTicks"`
 }
 
-// HistoryFrame is both bodies as they stood at the end of one past tick.
+// HistoryFrame is both bodies as they stood at the end of one past tick, and
+// where they looked.
+//
+// The aim is here because the parts of a body are oriented by it: a shot judged
+// against a rewound body has to be judged against the pose that body was in.
+// Keeping only the position would rewind a target's feet and leave their arms
+// where they are now.
 type HistoryFrame struct {
 	North      PlayerBody
 	South      PlayerBody
+	NorthAim   Vec3
+	SouthAim   Vec3
 	NorthAlive bool
 	SouthAlive bool
 	NorthEpoch int
@@ -68,6 +83,10 @@ type Input struct {
 	Jump   bool
 	Crouch bool
 	Fire   bool
+	// Zoomed is whether the sight was up when this command was sampled. It
+	// reaches the rules for one reason: a scoped shot is nearly true and a hip
+	// shot is not.
+	Zoomed bool
 	// RewindTicks is how far back this player's screen was, already clamped.
 	RewindTicks int
 }
@@ -86,6 +105,7 @@ func spawn(seat string, epoch int) PlayerSim {
 		Body:          RestingBody(Spawns[seat]),
 		Aim:           SpawnAim[seat],
 		Alive:         true,
+		Health:        MaxHealth,
 		Score:         0,
 		RespawnTicks:  0,
 		SpawnEpoch:    epoch,
@@ -105,6 +125,8 @@ func emptyFrame() HistoryFrame {
 	return HistoryFrame{
 		North:      RestingBody(Spawns[SeatNorth]),
 		South:      RestingBody(Spawns[SeatSouth]),
+		NorthAim:   SpawnAim[SeatNorth],
+		SouthAim:   SpawnAim[SeatSouth],
 		NorthAlive: true,
 		SouthAlive: true,
 	}
