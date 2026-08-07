@@ -29,8 +29,6 @@ export {
 export type { MoveIntent, PlayerBody } from './body.ts';
 export type { Crouchable } from './body.ts';
 export {
-  FEET_TOGETHER_EARLY,
-  FEET_TOGETHER_LATE,
   bodyBounds,
   bodyHeight,
   eyeHeight,
@@ -39,7 +37,7 @@ export {
   stepBody,
 } from './body.ts';
 export type { BodyPart, PartBox, Pose } from './pose.ts';
-export { facingOf, hittablePartsOf, poseOf, swing } from './pose.ts';
+export { PARTS_PER_BODY, facingOf, hittablePartsOf, lift, poseOf, swing } from './pose.ts';
 export type { ShotTarget, Trace } from './ray.ts';
 export { rayVsBox, traceShot } from './ray.ts';
 export type {

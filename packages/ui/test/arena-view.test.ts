@@ -320,6 +320,29 @@ describe('tracers', () => {
     expect(drawableShots([shot()], 9000)).toHaveLength(0);
   });
 
+  it('leave the muzzle when the shot is your own and goes somewhere', () => {
+    const muzzle = { x: 0.3, y: 1.4, z: 10.9 };
+    const [theirs] = drawableShots([shot()], 1000, muzzle);
+    const [mine] = drawableShots([shot({ mine: true })], 1000, muzzle);
+    // Somebody else's tracer starts where the server says it did — their muzzle
+    // is not something this client knows or needs to.
+    expect(theirs?.from).toEqual(shot().origin);
+    expect(mine?.from).toEqual(muzzle);
+  });
+
+  it('leave the eye for a shot that stops at the end of the barrel', () => {
+    // Firing at the floor by your own feet: the bullet stops about where the
+    // muzzle already is, and a tracer from the muzzle to a point beside it has
+    // no length and never appears.
+    const muzzle = { x: 0, y: 0.3, z: 11.5 };
+    const [drawn] = drawableShots(
+      [shot({ mine: true, endpoint: { x: 0, y: 0, z: 11.5 } })],
+      1000,
+      muzzle,
+    );
+    expect(drawn?.from).toEqual(shot().origin);
+  });
+
   it('keep the shooter apart from what they hit', () => {
     const [missed, landed] = drawableShots(
       [shot({ id: 1, hitPlayer: false }), shot({ id: 2, hitPlayer: true })],

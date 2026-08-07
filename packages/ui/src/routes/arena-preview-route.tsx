@@ -64,6 +64,7 @@ export function ArenaPreviewRoute(): ReactNode {
             players: [],
             shots: [],
             viewModel: [],
+            seat: 'north',
             hud: {
               ownScore: 0,
               opponentScore: 0,

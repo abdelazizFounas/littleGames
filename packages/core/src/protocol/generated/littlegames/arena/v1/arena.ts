@@ -153,6 +153,14 @@ export interface Body {
    * flag because a body spends most of a crouch between the two.
    */
   crouchAmount: number;
+  /**
+   * How big a step this body is taking, from standing still to a full run.
+   *
+   * The phase cannot say it on its own: a walk has its feet together only
+   * halfway through a step, and the other foot is then at the top of its swing,
+   * so no phase describes a figure standing still.
+   */
+  gaitPower: number;
 }
 
 /** A unit vector. */

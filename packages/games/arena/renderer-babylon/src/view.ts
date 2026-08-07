@@ -30,6 +30,8 @@ export interface ArenaView {
    * looking down a scope is looking down the scope.
    */
   readonly viewModel: readonly PartBox[];
+  /** Which seat is looking, so their own hands wear their own colour. */
+  readonly seat: Seat;
   readonly hud: ArenaHud;
 }
 

@@ -39,6 +39,15 @@ type PlayerBody struct {
 	// that get drawn are the limbs that get shot at, so both sides have to agree
 	// on where they are.
 	GaitPhase float64 `json:"gaitPhase"`
+	// GaitPower is how much of a stride this body is taking, from standing
+	// still to a full run.
+	//
+	// The phase alone cannot say this. A walk has its feet together only halfway
+	// through a step, and at that moment the other foot is at the top of its
+	// swing, so there is no phase at which a walking figure is also a standing
+	// one. The size of the step is carried separately and falls to nothing when
+	// a player stops.
+	GaitPower float64 `json:"gaitPower"`
 	// CrouchAmount is how far into a crouch this body is, standing to fully
 	// down. A number rather than a flag, so the body has somewhere to be
 	// between the two: height, eye and hitbox all follow it.
@@ -66,29 +75,39 @@ func settleCrouch(amount float64, crouching bool) float64 {
 // Only while grounded: legs that keep striding through a jump look like running
 // in mid-air, which is a thing cartoons do and shooters do not.
 func nextGait(phase, travelled float64, grounded bool) float64 {
-	if !grounded {
+	if !grounded || travelled <= 0 {
 		return phase
 	}
-	if travelled > 0 {
-		advanced := phase + travelled/StrideMetres
-		// Wrapped by subtraction rather than by a modulo: exact in both
-		// languages, and one tick can never span a whole stride.
-		if advanced >= 1 {
-			return advanced - 1
-		}
-		return advanced
+	advanced := phase + travelled/StrideMetres
+	// Wrapped by subtraction rather than by a modulo: exact in both languages,
+	// and one tick can never span a whole stride.
+	if advanced >= 1 {
+		return advanced - 1
 	}
+	return advanced
+}
 
-	target := FeetTogetherLate
-	if phase-FeetTogetherEarly < FeetTogetherLate-phase {
-		target = FeetTogetherEarly
+// nextGaitPower moves the size of the step toward what this tick's speed
+// deserves.
+//
+// Full ground covered in a tick is a full stride; a crouched walk covers less
+// and takes correspondingly shorter steps, with no separate rule for it. Off
+// the ground or stopped, it falls to nothing over a few ticks, which is what
+// puts a stationary player's feet together and straightens their legs.
+func nextGaitPower(power, travelled float64, grounded bool) float64 {
+	target := 0.0
+	if grounded && travelled > 0 {
+		target = travelled / WalkStepMetres
+		if target > 1 {
+			target = 1
+		}
 	}
-	gap := target - phase
-	if gap > GaitSettlePerTick {
-		return phase + GaitSettlePerTick
+	gap := target - power
+	if gap > GaitPowerPerTick {
+		return power + GaitPowerPerTick
 	}
-	if gap < -GaitSettlePerTick {
-		return phase - GaitSettlePerTick
+	if gap < -GaitPowerPerTick {
+		return power - GaitPowerPerTick
 	}
 	return target
 }
@@ -269,6 +288,7 @@ func StepBody(body PlayerBody, intent MoveIntent) PlayerBody {
 		Crouching:    crouching,
 		CrouchAmount: crouchAmount,
 		GaitPhase:    nextGait(body.GaitPhase, travelled, grounded),
+		GaitPower:    nextGaitPower(body.GaitPower, travelled, grounded),
 	}
 }
 
@@ -279,6 +299,7 @@ func RestingBody(at Vec3) PlayerBody {
 		X: at.X, Y: at.Y, Z: at.Z,
 		VY: 0, Grounded: false, Crouching: false,
 		CrouchAmount: 0,
-		GaitPhase:    FeetTogetherEarly,
+		GaitPhase:    0,
+		GaitPower:    0,
 	}
 }

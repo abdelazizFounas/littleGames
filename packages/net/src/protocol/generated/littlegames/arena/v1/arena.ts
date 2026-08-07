@@ -256,6 +256,14 @@ export interface Body {
    * flag because a body spends most of a crouch between the two.
    */
   crouchAmount: number;
+  /**
+   * How big a step this body is taking, from standing still to a full run.
+   *
+   * The phase cannot say it on its own: a walk has its feet together only
+   * halfway through a step, and the other foot is then at the top of its swing,
+   * so no phase describes a figure standing still.
+   */
+  gaitPower: number;
 }
 
 /** A unit vector. */
@@ -653,7 +661,7 @@ export const Ready: MessageFns<Ready> = {
 };
 
 function createBaseBody(): Body {
-  return { x: 0, y: 0, z: 0, vy: 0, grounded: false, crouching: false, gaitPhase: 0, crouchAmount: 0 };
+  return { x: 0, y: 0, z: 0, vy: 0, grounded: false, crouching: false, gaitPhase: 0, crouchAmount: 0, gaitPower: 0 };
 }
 
 export const Body: MessageFns<Body> = {
@@ -681,6 +689,9 @@ export const Body: MessageFns<Body> = {
     }
     if (message.crouchAmount !== 0) {
       writer.uint32(65).double(message.crouchAmount);
+    }
+    if (message.gaitPower !== 0) {
+      writer.uint32(73).double(message.gaitPower);
     }
     return writer;
   },
@@ -756,6 +767,14 @@ export const Body: MessageFns<Body> = {
           message.crouchAmount = reader.double();
           continue;
         }
+        case 9: {
+          if (tag !== 73) {
+            break;
+          }
+
+          message.gaitPower = reader.double();
+          continue;
+        }
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -782,6 +801,11 @@ export const Body: MessageFns<Body> = {
         ? globalThis.Number(object.crouchAmount)
         : isSet(object.crouch_amount)
         ? globalThis.Number(object.crouch_amount)
+        : 0,
+      gaitPower: isSet(object.gaitPower)
+        ? globalThis.Number(object.gaitPower)
+        : isSet(object.gait_power)
+        ? globalThis.Number(object.gait_power)
         : 0,
     };
   },
@@ -812,6 +836,9 @@ export const Body: MessageFns<Body> = {
     if (message.crouchAmount !== 0) {
       obj.crouchAmount = message.crouchAmount;
     }
+    if (message.gaitPower !== 0) {
+      obj.gaitPower = message.gaitPower;
+    }
     return obj;
   },
 
@@ -828,6 +855,7 @@ export const Body: MessageFns<Body> = {
     message.crouching = object.crouching ?? false;
     message.gaitPhase = object.gaitPhase ?? 0;
     message.crouchAmount = object.crouchAmount ?? 0;
+    message.gaitPower = object.gaitPower ?? 0;
     return message;
   },
 };

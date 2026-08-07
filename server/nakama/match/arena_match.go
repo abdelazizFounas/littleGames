@@ -647,6 +647,7 @@ func (s *arenaState) broadcast(dispatcher runtime.MatchDispatcher) error {
 				Grounded:     simulated.Body.Grounded,
 				Crouching:    simulated.Body.Crouching,
 				GaitPhase:    simulated.Body.GaitPhase,
+				GaitPower:    simulated.Body.GaitPower,
 				CrouchAmount: simulated.Body.CrouchAmount,
 			},
 			Aim:           vectorToProto(simulated.Aim),

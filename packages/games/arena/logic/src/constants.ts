@@ -103,12 +103,23 @@ export const JUMP_SPEED = 7.5;
 export const STRIDE_METRES = 2.4;
 
 /**
- * How quickly the legs come together once a player stops, per tick.
+ * Ground covered in one tick at a full run, in metres.
+ *
+ * What a whole step is measured against: cover this much and the stride is at
+ * full size, cover half of it — a crouched walk does — and the steps are half
+ * as long, with no separate rule needed for crouching.
+ */
+export const WALK_STEP_METRES = MOVE_SPEED * TICK_SECONDS;
+
+/**
+ * How fast the size of a step grows and shrinks, per tick.
  *
  * Without it a player who stops mid-stride freezes with one leg out in front,
  * which reads as a statue of somebody walking rather than as somebody standing.
+ * About an eighth of a second either way, so a walk begins and ends rather than
+ * switching on.
  */
-export const GAIT_SETTLE_PER_TICK = 0.05;
+export const GAIT_POWER_PER_TICK = 0.12;
 
 /**
  * How much of the way into a crouch a body travels each tick.

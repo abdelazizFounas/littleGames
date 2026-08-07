@@ -1,4 +1,4 @@
-import { poseOf, type PartBox } from '@littlegames/arena-logic';
+import { PARTS_PER_BODY, poseOf, type PartBox } from '@littlegames/arena-logic';
 import { FreeCamera } from '@babylonjs/core/Cameras/freeCamera.js';
 import { Engine } from '@babylonjs/core/Engines/engine.js';
 import { HemisphericLight } from '@babylonjs/core/Lights/hemisphericLight.js';
@@ -62,8 +62,8 @@ const TRACER_MUZZLE_METRES = 1.2;
 const MAX_TRACERS = 8;
 
 /** Parts per body including its rifle, for both seats, plus the view model. */
-const PARTS_PER_PLAYER = 8;
-const MAX_PARTS = PARTS_PER_PLAYER * 2 + 4;
+const VIEW_MODEL_PARTS = 4;
+const MAX_PARTS = PARTS_PER_BODY * 2 + VIEW_MODEL_PARTS;
 
 function toColor3(colour: Rgb): Color3 {
   return new Color3(colour.r, colour.g, colour.b);
@@ -217,7 +217,7 @@ export function createArenaBabylonRenderer(): ArenaRenderer {
     // is the same cube drawn with a different matrix, and a second mesh for it
     // would be a second draw call for four boxes.
     for (const piece of view.viewModel) {
-      drawn = placePart(piece, colourOfPart(piece.part, colourOfSeat('north')), drawn);
+      drawn = placePart(piece, colourOfPart(piece.part, colourOfSeat(view.seat)), drawn);
     }
 
     mesh.thinInstanceCount = drawn;

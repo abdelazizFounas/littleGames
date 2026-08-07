@@ -127,6 +127,13 @@ message Body {
   // How far into a crouch, from standing to fully down. A number rather than a
   // flag because a body spends most of a crouch between the two.
   double crouch_amount = 8;
+
+  // How big a step this body is taking, from standing still to a full run.
+  //
+  // The phase cannot say it on its own: a walk has its feet together only
+  // halfway through a step, and the other foot is then at the top of its swing,
+  // so no phase describes a figure standing still.
+  double gait_power = 9;
 }
 
 // A unit vector.

@@ -1,5 +1,5 @@
 import { CROUCH_HEIGHT, STAND_HEIGHT } from './constants.ts';
-import { FEET_TOGETHER_EARLY, bodyHeight, type PlayerBody } from './body.ts';
+import type { PlayerBody } from './body.ts';
 import type { Vec3 } from './vector.ts';
 
 /**
@@ -10,11 +10,12 @@ import type { Vec3 } from './vector.ts';
  * the limbs you can hit, which is the oldest complaint in the genre.
  *
  * It is pure, and it is free of trigonometry — which matters, because a second
- * implementation in Go has to land on the same bits. A limb that swings from
- * the hip is an angle in most engines; here it is a direction, built by adding
- * a fraction of the body's forward to straight down and normalising. A
- * normalisation is a square root, which IEEE-754 rounds exactly in both
- * languages. A sine is not.
+ * implementation in Go has to land on the same bits. The legs are the place
+ * that usually forces an angle: a knee is a joint, and a joint is a rotation.
+ * Here it is solved as a distance instead. The feet are placed first, and the
+ * knee is found where the two circles — one around the hip at thigh length, one
+ * around the foot at shin length — cross. That is `+ - * /` and one square
+ * root, all of which IEEE-754 rounds exactly in both languages. A sine is not.
  */
 
 export type BodyPart =
@@ -22,17 +23,20 @@ export type BodyPart =
   | 'torso'
   | 'armLeft'
   | 'armRight'
-  | 'legLeft'
-  | 'legRight'
+  | 'thighLeft'
+  | 'thighRight'
+  | 'shinLeft'
+  | 'shinRight'
   | 'weapon'
   | 'sight';
 
 /**
  * A box with an orientation of its own.
  *
- * Axis-aligned boxes were enough while a body was one block. A leg that hinges
- * at the hip is not axis-aligned to anything, so each part carries the frame it
- * is measured in: `half` is along `right`, `up` and `forward` in that order.
+ * Axis-aligned boxes were enough while a body was one block. A thigh that
+ * hinges at the hip is not axis-aligned to anything, so each part carries the
+ * frame it is measured in: `half` is along `right`, `up` and `forward` in that
+ * order.
  */
 export interface PartBox {
   readonly part: BodyPart;
@@ -57,6 +61,7 @@ export interface Pose {
 
 const DEFAULT_FACING: Vec3 = { x: 0, y: 0, z: 1 };
 const UP: Vec3 = { x: 0, y: 1, z: 0 };
+const DOWN: Vec3 = { x: 0, y: -1, z: 0 };
 
 function add(a: Vec3, b: Vec3, scale: number): Vec3 {
   return { x: a.x + b.x * scale, y: a.y + b.y * scale, z: a.z + b.z * scale };
@@ -118,17 +123,110 @@ export function swing(phase: number): number {
   return phase < 0.5 ? phase * 4 - 1 : 3 - phase * 4;
 }
 
-const HEAD_HALF = 0.15;
-const TORSO_HALF_WIDTH = 0.28;
-const TORSO_HALF_DEPTH = 0.15;
-const LIMB_HALF = 0.085;
-const LEG_HALF = 0.1;
-/** How far forward a leg leans at full stride, as a fraction of straight down. */
-const LEG_SWING = 0.55;
-/** How far the knee comes forward when fully crouched. */
-const CROUCH_LEAN = 0.75;
-/** How much shorter the legs are when fully crouched. */
-const CROUCH_SHORTENING = 0.42;
+/**
+ * How far a foot is off the ground, over the half of the cycle it is swinging.
+ *
+ * Zero for the whole of the other half, which is what makes it a walk rather
+ * than a hover: one foot is always planted. Piecewise linear, like everything
+ * else here.
+ */
+export function lift(phase: number): number {
+  if (phase >= 0.5) {
+    return 0;
+  }
+  return phase < 0.25 ? phase * 4 : 2 - phase * 4;
+}
+
+/* --- The figure, in metres ------------------------------------------------ */
+
+const HEAD_HALF = 0.14;
+const TORSO_HALF_WIDTH = 0.24;
+const TORSO_HALF_DEPTH = 0.14;
+const TORSO_LENGTH = 0.64;
+/** How far apart the hips are, which is also how far apart the feet stand. */
+const HIP_HALF_WIDTH = 0.11;
+// A shade longer together than the hips ride high, so a standing leg carries
+// the soft bend a real one does rather than locking dead straight.
+const THIGH_LENGTH = 0.42;
+const SHIN_LENGTH = 0.39;
+const LEG_HALF = 0.085;
+/** How high the sole of a foot is, so a leg stands on the ground not in it. */
+const ANKLE = LEG_HALF;
+const ARM_HALF = 0.075;
+
+/** Where the hips ride, standing and fully crouched. */
+const HIP_STANDING = 0.88;
+const HIP_CROUCHED = 0.34;
+
+/**
+ * How far the hips travel backwards into a full crouch.
+ *
+ * Squatting is not folding in place. The knees go forward and the seat goes
+ * back, and the two cancel: the head ends up over the feet rather than out in
+ * front of them, which is what keeps a crouched figure inside the box it is
+ * allowed to occupy.
+ */
+const HIP_SETBACK = 0.28;
+
+/** How far a foot reaches fore and aft at the ends of a full stride. */
+const STEP_REACH = 0.34;
+/** How high the swinging foot comes off the ground at a full stride. */
+const FOOT_LIFT = 0.14;
+
+/**
+ * How far the torso tips forward when fully crouched.
+ *
+ * A crouch is not a body lowered on a lift. Dropping the hips this far puts the
+ * knees out in front, and the chest has to come over them or the figure falls
+ * backwards — so the torso leans by roughly the same amount, which is also what
+ * brings the head down inside the shorter hitbox.
+ */
+const TORSO_LEAN = 0.85;
+
+/**
+ * Where the knee goes, given a hip, a foot and two bones.
+ *
+ * The two-circle construction: every point at thigh length from the hip lies on
+ * one sphere, every point at shin length from the foot lies on another, and the
+ * knee is on the circle where they meet. `along` is how far down the hip-to-foot
+ * line that circle sits and `out` is its radius, and the knee is picked off it
+ * in the direction the leg bends — forwards, because that is which way a knee
+ * goes.
+ *
+ * A foot placed further away than the leg is long is pulled in first, so the
+ * square root never sees a negative number and the leg never comes apart.
+ */
+function kneeOf(
+  hip: Vec3,
+  foot: Vec3,
+  bend: Vec3,
+): { knee: Vec3; foot: Vec3 } {
+  const reach = distance(hip, foot);
+  const span = THIGH_LENGTH + SHIN_LENGTH;
+  // Kept off both ends: fully straight leaves the knee with no side to bend to,
+  // and a hip and foot in the same place has no direction between them at all.
+  const clamped = reach > span - 0.004 ? span - 0.004 : reach < 0.12 ? 0.12 : reach;
+  const axis = normalise(
+    { x: foot.x - hip.x, y: foot.y - hip.y, z: foot.z - hip.z },
+    DOWN,
+  );
+
+  const along =
+    (clamped * clamped + THIGH_LENGTH * THIGH_LENGTH - SHIN_LENGTH * SHIN_LENGTH) /
+    (2 * clamped);
+  const outSquared = THIGH_LENGTH * THIGH_LENGTH - along * along;
+  const out = outSquared > 0 ? Math.sqrt(outSquared) : 0;
+
+  // Perpendicular to the leg, in the plane the leg bends in. Two cross products
+  // rather than an angle, and it survives a leg pointing any which way.
+  const side = cross(axis, bend);
+  const outward = normalise(cross(side, axis), bend);
+
+  return {
+    knee: add(add(hip, axis, along), outward, out),
+    foot: add(hip, axis, clamped),
+  };
+}
 
 export function poseOf(body: PlayerBody, aim: Vec3): Pose {
   const forward = facingOf(aim);
@@ -138,16 +236,7 @@ export function poseOf(body: PlayerBody, aim: Vec3): Pose {
   const aimUnit = normalise(aim, forward);
 
   const crouch = body.crouchAmount;
-  const height = bodyHeight(body);
-
-  // Hips at about half the height, which is where a person's are. They come
-  // down further than the rest when crouching, because that is what bending
-  // your knees does.
-  const hipHeight = 0.5 * height * (1 - CROUCH_SHORTENING * crouch * 0.3);
-  const legLength = hipHeight * (1 - CROUCH_SHORTENING * crouch);
-  const torsoHeight = (height - hipHeight - HEAD_HALF * 2) * 0.92;
-  const torsoCentre = hipHeight + torsoHeight / 2;
-  const headCentre = height - HEAD_HALF;
+  const upright = frameFrom(UP, forward);
 
   const at = (rightward: number, up: number, forwardward: number): Vec3 => ({
     x: body.x + right.x * rightward + forward.x * forwardward,
@@ -155,101 +244,119 @@ export function poseOf(body: PlayerBody, aim: Vec3): Pose {
     z: body.z + right.z * rightward + forward.z * forwardward,
   });
 
-  const upright = frameFrom(UP, forward);
-  const stride = swing(body.gaitPhase);
-
-  /** A limb hanging from a joint, leaning by a fraction of the body's forward. */
-  const limb = (
-    part: BodyPart,
-    joint: Vec3,
-    lean: number,
-    limbLength: number,
-    half: number,
-  ): PartBox => {
-    // Straight down, pushed forward. Normalising turns that into a direction
-    // without ever naming the angle it makes.
+  /** A box reaching from one point to another, as thick as it is told. */
+  const segment = (part: BodyPart, from: Vec3, to: Vec3, half: number): PartBox => {
+    const length = distance(from, to);
     const axis = normalise(
-      { x: forward.x * lean, y: -1, z: forward.z * lean },
-      { x: 0, y: -1, z: 0 },
+      { x: to.x - from.x, y: to.y - from.y, z: to.z - from.z },
+      DOWN,
     );
     const frame = frameFrom({ x: -axis.x, y: -axis.y, z: -axis.z }, forward);
     return {
       part,
-      centre: add(joint, axis, limbLength / 2),
-      half: { x: half, y: limbLength / 2, z: half },
+      centre: add(from, axis, length / 2),
+      half: { x: half, y: length / 2, z: half },
       ...frame,
     };
   };
 
-  // The rifle, held out in front along the aim rather than along the facing, so
-  // it points where the shot will actually go.
-  const chest = at(0, torsoCentre + torsoHeight * 0.18, 0);
-  const weaponCentre = add(add(chest, right, 0.12), aimUnit, 0.34);
-  const weaponHalfLength = 0.42;
+  /* --- Legs, from the feet up ------------------------------------------- */
+
+  const hipHeight = HIP_STANDING + (HIP_CROUCHED - HIP_STANDING) * crouch;
+  // The size of the step, not just where in the step the body is. Standing
+  // still it is nothing, and the feet come together under straight legs.
+  const stride = swing(body.gaitPhase);
+  const reach = STEP_REACH * body.gaitPower;
+  const rise = FOOT_LIFT * body.gaitPower;
+
+  // The right foot leads while the left trails, and each rises over the half of
+  // the cycle it is swinging through.
+  const otherPhase = body.gaitPhase < 0.5 ? body.gaitPhase + 0.5 : body.gaitPhase - 0.5;
+  const footRight = at(HIP_HALF_WIDTH, ANKLE + rise * lift(body.gaitPhase), stride * reach);
+  const footLeft = at(-HIP_HALF_WIDTH, ANKLE + rise * lift(otherPhase), -stride * reach);
+  // The feet stay under the body; only the hips travel back, which is what puts
+  // the knees in front of the toes and the seat behind them.
+  const hipBack = -HIP_SETBACK * crouch;
+  const hipRight = at(HIP_HALF_WIDTH, hipHeight, hipBack);
+  const hipLeft = at(-HIP_HALF_WIDTH, hipHeight, hipBack);
+
+  const legRight = kneeOf(hipRight, footRight, forward);
+  const legLeft = kneeOf(hipLeft, footLeft, forward);
+
+  /* --- Torso, head and shoulders ---------------------------------------- */
+
+  // Tipped forward as the body drops, so the chest comes over the knees rather
+  // than the whole figure sinking like a lift.
+  const torsoUp = normalise(
+    { x: forward.x * TORSO_LEAN * crouch, y: 1, z: forward.z * TORSO_LEAN * crouch },
+    UP,
+  );
+  const torsoFrame = frameFrom(torsoUp, forward);
+  const hips = at(0, hipHeight, hipBack);
+  const neck = add(hips, torsoUp, TORSO_LENGTH);
+  // The head stays level while the torso tips: a player crouched behind cover is
+  // still looking over it.
+  const headCentre = add(neck, UP, HEAD_HALF * 0.85);
+
+  const shoulderRight = add(add(neck, torsoFrame.right, TORSO_HALF_WIDTH * 0.8), torsoUp, -0.06);
+  const shoulderLeft = add(add(neck, torsoFrame.right, -TORSO_HALF_WIDTH * 0.8), torsoUp, -0.06);
+
+  /* --- The rifle, and the hands on it ----------------------------------- */
+
+  // Along the aim rather than along the facing, so raising the barrel is what
+  // raising the aim does, and shouldered rather than held out at the hip.
+  const weaponHalfLength = 0.4;
+  const weaponCentre = add(
+    add(add(shoulderRight, aimUnit, 0.36), right, -0.04),
+    UP,
+    -0.06,
+  );
   const muzzle = add(weaponCentre, aimUnit, weaponHalfLength);
   const weaponFrame = frameFrom(
     normalise(cross(cross(aimUnit, UP), aimUnit), UP),
     aimUnit,
   );
 
-  // Hands on the rifle, and the arms are simply what reaches them.
-  const gripHand = add(weaponCentre, aimUnit, -0.12);
-  const foreHand = add(weaponCentre, aimUnit, 0.24);
-  const shoulderHeight = torsoCentre + torsoHeight * 0.3;
-  const shoulderRight = at(TORSO_HALF_WIDTH * 0.85, shoulderHeight, 0);
-  const shoulderLeft = at(-TORSO_HALF_WIDTH * 0.85, shoulderHeight, 0);
+  const gripHand = add(weaponCentre, aimUnit, -0.14);
+  const foreHand = add(weaponCentre, aimUnit, 0.2);
 
-  /** An arm as a box reaching from a shoulder to a hand. */
-  const arm = (part: BodyPart, shoulder: Vec3, hand: Vec3): PartBox => {
-    const reach = distance(shoulder, hand);
-    const axis = normalise(
-      { x: hand.x - shoulder.x, y: hand.y - shoulder.y, z: hand.z - shoulder.z },
-      { x: 0, y: -1, z: 0 },
-    );
-    const frame = frameFrom({ x: -axis.x, y: -axis.y, z: -axis.z }, forward);
-    return {
-      part,
-      centre: add(shoulder, axis, reach / 2),
-      half: { x: LIMB_HALF, y: reach / 2, z: LIMB_HALF },
-      ...frame,
-    };
+  return {
+    forward,
+    right,
+    muzzle,
+    parts: [
+      {
+        part: 'head',
+        centre: headCentre,
+        half: { x: HEAD_HALF, y: HEAD_HALF, z: HEAD_HALF },
+        ...upright,
+      },
+      {
+        part: 'torso',
+        centre: add(hips, torsoUp, TORSO_LENGTH / 2),
+        half: { x: TORSO_HALF_WIDTH, y: TORSO_LENGTH / 2, z: TORSO_HALF_DEPTH },
+        ...torsoFrame,
+      },
+      segment('armRight', shoulderRight, gripHand, ARM_HALF),
+      segment('armLeft', shoulderLeft, foreHand, ARM_HALF),
+      segment('thighRight', hipRight, legRight.knee, LEG_HALF),
+      segment('thighLeft', hipLeft, legLeft.knee, LEG_HALF),
+      segment('shinRight', legRight.knee, legRight.foot, LEG_HALF),
+      segment('shinLeft', legLeft.knee, legLeft.foot, LEG_HALF),
+      {
+        part: 'weapon',
+        centre: weaponCentre,
+        half: { x: 0.04, y: 0.05, z: weaponHalfLength },
+        ...weaponFrame,
+      },
+      {
+        part: 'sight',
+        centre: add(add(weaponCentre, weaponFrame.up, 0.08), aimUnit, -0.06),
+        half: { x: 0.028, y: 0.032, z: 0.1 },
+        ...weaponFrame,
+      },
+    ],
   };
-
-  const legLean = stride * LEG_SWING + crouch * CROUCH_LEAN;
-
-  const parts: PartBox[] = [
-    {
-      part: 'head',
-      centre: at(0, headCentre, 0.02),
-      half: { x: HEAD_HALF, y: HEAD_HALF, z: HEAD_HALF },
-      ...upright,
-    },
-    {
-      part: 'torso',
-      // Leaning forward as the body drops, which is what crouching looks like.
-      centre: at(0, torsoCentre, crouch * 0.1),
-      half: { x: TORSO_HALF_WIDTH, y: torsoHeight / 2, z: TORSO_HALF_DEPTH },
-      ...upright,
-    },
-    arm('armRight', shoulderRight, gripHand),
-    arm('armLeft', shoulderLeft, foreHand),
-    limb('legRight', at(0.12, hipHeight, 0), legLean, legLength, LEG_HALF),
-    limb('legLeft', at(-0.12, hipHeight, 0), -stride * LEG_SWING + crouch * CROUCH_LEAN, legLength, LEG_HALF),
-    {
-      part: 'weapon',
-      centre: weaponCentre,
-      half: { x: 0.045, y: 0.055, z: weaponHalfLength },
-      ...weaponFrame,
-    },
-    {
-      part: 'sight',
-      centre: add(weaponCentre, weaponFrame.up, 0.09),
-      half: { x: 0.03, y: 0.035, z: 0.11 },
-      ...weaponFrame,
-    },
-  ];
-
-  return { forward, right, parts, muzzle };
 }
 
 /** The parts a shot can hit: a body, never its rifle. */
@@ -257,4 +364,7 @@ export function hittablePartsOf(pose: Pose): readonly PartBox[] {
   return pose.parts.filter((part) => part.part !== 'weapon' && part.part !== 'sight');
 }
 
-export { FEET_TOGETHER_EARLY, CROUCH_HEIGHT, STAND_HEIGHT };
+/** How many boxes one body is drawn from, which is what the renderer reserves. */
+export const PARTS_PER_BODY = 10;
+
+export { CROUCH_HEIGHT, STAND_HEIGHT };

@@ -420,7 +420,13 @@ type Body struct {
 	GaitPhase float64 `protobuf:"fixed64,7,opt,name=gait_phase,json=gaitPhase,proto3" json:"gait_phase,omitempty"`
 	// How far into a crouch, from standing to fully down. A number rather than a
 	// flag because a body spends most of a crouch between the two.
-	CrouchAmount  float64 `protobuf:"fixed64,8,opt,name=crouch_amount,json=crouchAmount,proto3" json:"crouch_amount,omitempty"`
+	CrouchAmount float64 `protobuf:"fixed64,8,opt,name=crouch_amount,json=crouchAmount,proto3" json:"crouch_amount,omitempty"`
+	// How big a step this body is taking, from standing still to a full run.
+	//
+	// The phase cannot say it on its own: a walk has its feet together only
+	// halfway through a step, and the other foot is then at the top of its swing,
+	// so no phase describes a figure standing still.
+	GaitPower     float64 `protobuf:"fixed64,9,opt,name=gait_power,json=gaitPower,proto3" json:"gait_power,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -507,6 +513,13 @@ func (x *Body) GetGaitPhase() float64 {
 func (x *Body) GetCrouchAmount() float64 {
 	if x != nil {
 		return x.CrouchAmount
+	}
+	return 0
+}
+
+func (x *Body) GetGaitPower() float64 {
+	if x != nil {
+		return x.GaitPower
 	}
 	return 0
 }
@@ -918,7 +931,7 @@ const file_littlegames_arena_v1_arena_proto_rawDesc = "" +
 	"\vshots_fired\x18\v \x01(\rR\n" +
 	"shotsFired\"\x1d\n" +
 	"\x05Ready\x12\x14\n" +
-	"\x05ready\x18\x01 \x01(\bR\x05ready\"\xbe\x01\n" +
+	"\x05ready\x18\x01 \x01(\bR\x05ready\"\xdd\x01\n" +
 	"\x04Body\x12\f\n" +
 	"\x01x\x18\x01 \x01(\x01R\x01x\x12\f\n" +
 	"\x01y\x18\x02 \x01(\x01R\x01y\x12\f\n" +
@@ -928,7 +941,9 @@ const file_littlegames_arena_v1_arena_proto_rawDesc = "" +
 	"\tcrouching\x18\x06 \x01(\bR\tcrouching\x12\x1d\n" +
 	"\n" +
 	"gait_phase\x18\a \x01(\x01R\tgaitPhase\x12#\n" +
-	"\rcrouch_amount\x18\b \x01(\x01R\fcrouchAmount\"3\n" +
+	"\rcrouch_amount\x18\b \x01(\x01R\fcrouchAmount\x12\x1d\n" +
+	"\n" +
+	"gait_power\x18\t \x01(\x01R\tgaitPower\"3\n" +
 	"\aVector3\x12\f\n" +
 	"\x01x\x18\x01 \x01(\x01R\x01x\x12\f\n" +
 	"\x01y\x18\x02 \x01(\x01R\x01y\x12\f\n" +

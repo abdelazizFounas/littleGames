@@ -120,6 +120,7 @@ function bodyOf(player: ArenaPlayerState): PlayerBody {
     crouching: body.crouching,
     crouchAmount: body.crouchAmount,
     gaitPhase: body.gaitPhase,
+    gaitPower: body.gaitPower,
   };
 }
 
@@ -322,6 +323,7 @@ export async function startArenaSession(
   renderer.render(
     {
       camera: { position: eyeOf(opening.north.body), forward: { x: 0, y: 0, z: 1 }, fieldOfView: current.look.fieldOfView },
+      seat: 'north',
       players: [],
       shots: [],
       viewModel: [],

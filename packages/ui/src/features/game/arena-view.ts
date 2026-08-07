@@ -106,10 +106,13 @@ export function interpolateOpponent(
       x: lerp(before.body.x, target.body.x, at),
       y: lerp(before.body.y, target.body.y, at),
       z: lerp(before.body.z, target.body.z, at),
-      // Crouching is a discrete state and belongs to the moment being drawn:
-      // blending it would mean drawing a body at no height either player has.
-      // The stride is continuous and blends, except across the wrap from one
-      // stride to the next, where blending would run the legs backwards.
+      // Whether the player asked to crouch is a decision and belongs to the
+      // moment being drawn. How far into one they are is a movement, and blends
+      // — as does the size of their step. The stride phase blends too, except
+      // across the wrap from one stride to the next, where blending it would
+      // run the legs backwards through a whole step.
+      crouchAmount: lerp(before.body.crouchAmount, target.body.crouchAmount, at),
+      gaitPower: lerp(before.body.gaitPower, target.body.gaitPower, at),
       gaitPhase:
         Math.abs(target.body.gaitPhase - before.body.gaitPhase) > 0.5
           ? before.body.gaitPhase
@@ -261,6 +264,33 @@ export interface TimedShot {
 }
 
 /**
+ * Where one drawn tracer begins.
+ *
+ * The muzzle, for your own shots — but only when the shot goes past it. A
+ * player firing at the floor by their feet stops the bullet at about the range
+ * their own barrel reaches, and a tracer drawn from the muzzle to a point
+ * beside it is a tracer of no length at all: the shot would simply not appear.
+ * Below that range the eye is the honest start, and it is also the only one
+ * that produces a line anybody can see.
+ */
+function startOf(shot: TimedShot, muzzle: Vec3 | null): Vec3 {
+  if (!shot.mine || muzzle === null) {
+    return shot.origin;
+  }
+  const reach = Math.hypot(
+    muzzle.x - shot.origin.x,
+    muzzle.y - shot.origin.y,
+    muzzle.z - shot.origin.z,
+  );
+  const travelled = Math.hypot(
+    shot.endpoint.x - shot.origin.x,
+    shot.endpoint.y - shot.origin.y,
+    shot.endpoint.z - shot.origin.z,
+  );
+  return travelled > reach * 2 ? muzzle : shot.origin;
+}
+
+/**
  * The shots still worth drawing, oldest first.
  *
  * Ageing happens here rather than in the renderer because the renderer holds no
@@ -283,7 +313,7 @@ export function drawableShots(
       // eye, which is what keeps the crosshair honest, but a tracer that
       // appeared out of the middle of the screen would not look like a rifle
       // firing — so the one you can see starts where the rifle ends.
-      from: shot.mine && muzzle !== null ? muzzle : shot.origin,
+      from: startOf(shot, muzzle),
       to: shot.endpoint,
       hitPlayer: shot.hitPlayer,
       fade: 1 - left,
@@ -369,6 +399,7 @@ export function composeArenaView(
 
   return {
     camera: { position: eye, forward, fieldOfView },
+    seat: from.seat,
     // Only the opponent is drawn: the camera is inside this player's own body,
     // and a box around one's own eyes is a screen full of its inside faces.
     players: opponent === null ? [] : [opponent],
@@ -413,10 +444,11 @@ export function viewModelOf(
   };
 
   // The sway: a small figure of eight from the stride, so the rifle breathes
-  // with the walk instead of hanging in space.
-  const stride = swing(body.gaitPhase);
-  const bob = swing((body.gaitPhase * 2) % 1) * 0.012;
-  const drift = stride * 0.014;
+  // with the walk instead of hanging in space. Scaled by the size of the step,
+  // so a player standing still holds it perfectly steady.
+  const stride = swing(body.gaitPhase) * body.gaitPower;
+  const bob = swing((body.gaitPhase * 2) % 1) * 0.02 * body.gaitPower;
+  const drift = stride * 0.024;
 
   const at = (rightward: number, upward: number, forwardward: number): Vec3 => ({
     x: eye.x + right.x * rightward + up.x * upward + forward.x * forwardward,
@@ -424,24 +456,71 @@ export function viewModelOf(
     z: eye.z + right.z * rightward + up.z * upward + forward.z * forwardward,
   });
 
-  const barrel = at(0.16 + drift, -0.14 + bob, 0.5);
+  /** A box between two points held against the camera, in the camera's frame. */
+  const limb = (part: PartBox['part'], from: Vec3, to: Vec3, thickness: number): PartBox => {
+    const along = { x: to.x - from.x, y: to.y - from.y, z: to.z - from.z };
+    const length = Math.hypot(along.x, along.y, along.z) || 1;
+    const axis = { x: along.x / length, y: along.y / length, z: along.z / length };
+    // A frame around that axis, taking the camera's right as the hint. Two
+    // cross products, the same construction the world-space pose uses.
+    const side = {
+      x: axis.y * right.z - axis.z * right.y,
+      y: axis.z * right.x - axis.x * right.z,
+      z: axis.x * right.y - axis.y * right.x,
+    };
+    const sideLength = Math.hypot(side.x, side.y, side.z) || 1;
+    const across = { x: side.x / sideLength, y: side.y / sideLength, z: side.z / sideLength };
+    return {
+      part,
+      centre: {
+        x: (from.x + to.x) / 2,
+        y: (from.y + to.y) / 2,
+        z: (from.z + to.z) / 2,
+      },
+      half: { x: thickness, y: thickness, z: length / 2 },
+      right: across,
+      up: {
+        x: across.y * axis.z - across.z * axis.y,
+        y: across.z * axis.x - across.x * axis.z,
+        z: across.x * axis.y - across.y * axis.x,
+      },
+      forward: axis,
+    };
+  };
+
+  // Held low and to the right, the way a rifle is carried when it is not being
+  // aimed through. Both hands are on it, and each arm is the box that reaches
+  // from a shoulder just off the bottom of the screen to its hand.
+  //
+  // Everything sits a good metre out rather than a hand's breadth from the eye.
+  // The arena is drawn at eighty degrees, and at close range that much
+  // perspective turns a forearm into a wall: the same shapes placed further
+  // away and scaled up to match cover the same part of the screen without the
+  // distortion.
+  const grip = at(0.33 + drift, -0.5 + bob, 0.84);
+  const fore = at(0.29 + drift, -0.51 + bob, 1.3);
+  const shoulderRight = at(0.52, -0.8, 0.5);
+  const shoulderLeft = at(-0.34, -0.78, 0.55);
+
   return [
     {
       part: 'weapon',
-      centre: barrel,
-      half: { x: 0.035, y: 0.045, z: 0.34 },
+      centre: at(0.34 + drift, -0.46 + bob, 1.15),
+      half: { x: 0.05, y: 0.06, z: 0.42 },
       right,
       up,
       forward,
     },
     {
       part: 'sight',
-      centre: at(0.16 + drift, -0.08 + bob, 0.42),
-      half: { x: 0.025, y: 0.03, z: 0.1 },
+      centre: at(0.34 + drift, -0.36 + bob, 1.02),
+      half: { x: 0.035, y: 0.04, z: 0.13 },
       right,
       up,
       forward,
     },
+    limb('armRight', shoulderRight, grip, 0.06),
+    limb('armLeft', shoulderLeft, fore, 0.055),
   ];
 }
 

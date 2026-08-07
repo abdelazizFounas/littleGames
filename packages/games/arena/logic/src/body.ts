@@ -6,7 +6,7 @@ import {
   CROUCH_HEIGHT,
   CROUCH_PER_TICK,
   CROUCH_SPEED,
-  GAIT_SETTLE_PER_TICK,
+  GAIT_POWER_PER_TICK,
   GRAVITY,
   JUMP_SPEED,
   MOVE_SPEED,
@@ -15,6 +15,7 @@ import {
   STAND_HEIGHT,
   STRIDE_METRES,
   TICK_SECONDS,
+  WALK_STEP_METRES,
 } from './constants.ts';
 import type { Vec2 } from './vector.ts';
 
@@ -48,6 +49,17 @@ export interface PlayerBody {
    * the same on the server, on the client predicting ahead, and in the vectors.
    */
   readonly gaitPhase: number;
+  /**
+   * How much of a stride this body is taking, from standing still to a full run.
+   *
+   * The phase alone cannot say this. A walk has its feet together only halfway
+   * through a step, and at that moment the other foot is at the top of its
+   * swing — so there is no phase at which a walking figure is also a standing
+   * one. Rather than settle the phase somewhere and hope, the size of the step
+   * is carried separately and falls to nothing when a player stops, which is
+   * also what makes a walk start and stop rather than snap.
+   */
+  readonly gaitPower: number;
   /**
    * How far into a crouch this body is, from standing to fully down.
    *
@@ -252,6 +264,7 @@ export function stepBody(body: PlayerBody, intent: MoveIntent): PlayerBody {
     crouching,
     crouchAmount,
     gaitPhase: nextGait(body.gaitPhase, travelled, grounded),
+    gaitPower: nextGaitPower(body.gaitPower, travelled, grounded),
   };
 }
 
@@ -289,47 +302,51 @@ export function restingBody(at: { x: number; y: number; z: number }): PlayerBody
     grounded: false,
     crouching: false,
     crouchAmount: 0,
-    gaitPhase: FEET_TOGETHER_EARLY,
+    gaitPhase: 0,
+    gaitPower: 0,
   };
 }
 
 /**
- * The two phases at which the legs are level under the body.
+ * Advances the stride by the ground actually covered.
  *
- * The stride is a triangle wave, so it passes through zero swing twice: a
- * quarter of the way through and three quarters. Standing still means settling
- * on whichever of the two is nearer.
- */
-export const FEET_TOGETHER_EARLY = 0.25;
-export const FEET_TOGETHER_LATE = 0.75;
-
-/**
- * Advances the stride by the ground actually covered, or settles it.
- *
- * Only while grounded: legs that keep striding through a jump look like
- * running in mid-air, which is a thing cartoons do and shooters do not.
+ * Only while grounded and only while going somewhere: legs that keep striding
+ * through a jump look like running in mid-air, which is a thing cartoons do and
+ * shooters do not, and a player pressed against a wall covers no ground and so
+ * takes no steps.
  */
 function nextGait(phase: number, travelled: number, grounded: boolean): number {
-  if (!grounded) {
+  if (!grounded || travelled <= 0) {
     return phase;
   }
-  if (travelled > 0) {
-    const advanced = phase + travelled / STRIDE_METRES;
-    // Wrapped by subtraction rather than by a modulo: exact in both languages,
-    // and the distance covered in one tick can never span a whole stride.
-    return advanced >= 1 ? advanced - 1 : advanced;
-  }
+  const advanced = phase + travelled / STRIDE_METRES;
+  // Wrapped by subtraction rather than by a modulo: exact in both languages,
+  // and the distance covered in one tick can never span a whole stride.
+  return advanced >= 1 ? advanced - 1 : advanced;
+}
 
-  const target =
-    phase - FEET_TOGETHER_EARLY < FEET_TOGETHER_LATE - phase
-      ? FEET_TOGETHER_EARLY
-      : FEET_TOGETHER_LATE;
-  const gap = target - phase;
-  if (gap > GAIT_SETTLE_PER_TICK) {
-    return phase + GAIT_SETTLE_PER_TICK;
+/**
+ * Moves the size of the step toward what this tick's speed deserves.
+ *
+ * Full ground covered in a tick is a full stride; a crouched walk covers less
+ * and takes correspondingly shorter steps, with no separate rule for it. Off
+ * the ground or stopped, it falls to nothing over a few ticks, which is what
+ * puts a stationary player's feet together and straightens their legs.
+ */
+function nextGaitPower(power: number, travelled: number, grounded: boolean): number {
+  let target = 0;
+  if (grounded && travelled > 0) {
+    target = travelled / WALK_STEP_METRES;
+    if (target > 1) {
+      target = 1;
+    }
   }
-  if (gap < -GAIT_SETTLE_PER_TICK) {
-    return phase - GAIT_SETTLE_PER_TICK;
+  const gap = target - power;
+  if (gap > GAIT_POWER_PER_TICK) {
+    return power + GAIT_POWER_PER_TICK;
+  }
+  if (gap < -GAIT_POWER_PER_TICK) {
+    return power - GAIT_POWER_PER_TICK;
   }
   return target;
 }

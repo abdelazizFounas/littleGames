@@ -95,10 +95,16 @@ const (
 	// against a wall stops stepping — they are not going anywhere.
 	StrideMetres float64 = 2.4
 
-	// GaitSettlePerTick is how quickly the legs come together once a player
-	// stops. Without it they freeze mid-stride, which reads as a statue of
-	// somebody walking rather than as somebody standing.
-	GaitSettlePerTick float64 = 0.05
+	// WalkStepMetres is the ground covered in one tick at a full run — what a
+	// whole step is measured against. Cover half of it, as a crouched walk
+	// does, and the steps are half as long, with no separate rule for it.
+	WalkStepMetres float64 = MoveSpeed * TickSeconds
+
+	// GaitPowerPerTick is how fast the size of a step grows and shrinks.
+	// Without it a player who stops mid-stride freezes with one leg out in
+	// front, which reads as a statue of somebody walking rather than as
+	// somebody standing.
+	GaitPowerPerTick float64 = 0.12
 
 	// CrouchPerTick is how much of the way into a crouch a body travels each
 	// tick — about an eighth of a second end to end. Instant is cheaper, but a
@@ -106,11 +112,6 @@ const (
 	// nobody can see moving, and a player dropping behind cover ought to be
 	// seen dropping.
 	CrouchPerTick float64 = 0.14
-
-	// The two phases at which the legs are level under the body. The stride is
-	// a triangle wave, so it passes through zero swing twice.
-	FeetTogetherEarly float64 = 0.25
-	FeetTogetherLate  float64 = 0.75
 )
 
 // Shooting.
