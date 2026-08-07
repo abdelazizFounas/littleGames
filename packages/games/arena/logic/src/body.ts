@@ -5,12 +5,14 @@ import {
   CROUCH_EYE,
   CROUCH_HEIGHT,
   CROUCH_SPEED,
+  GAIT_SETTLE_PER_TICK,
   GRAVITY,
   JUMP_SPEED,
   MOVE_SPEED,
   PLAYER_HALF,
   STAND_EYE,
   STAND_HEIGHT,
+  STRIDE_METRES,
   TICK_SECONDS,
 } from './constants.ts';
 import type { Vec2 } from './vector.ts';
@@ -36,6 +38,15 @@ export interface PlayerBody {
   readonly vy: number;
   readonly grounded: boolean;
   readonly crouching: boolean;
+  /**
+   * Where this body is in its stride, from zero to one.
+   *
+   * In the rules rather than in the renderer, and that is the whole point: the
+   * limbs that get drawn are the limbs that get shot at, so both sides have to
+   * agree on where they are. It advances with ground actually covered, so it is
+   * the same on the server, on the client predicting ahead, and in the vectors.
+   */
+  readonly gaitPhase: number;
 }
 
 /** One tick of intent, with the move already shortened to at most unit length. */
@@ -205,12 +216,88 @@ export function stepBody(body: PlayerBody, intent: MoveIntent): PlayerBody {
     y = resolved;
   }
 
-  return { x, y, z, vy, grounded, crouching };
+  // Measured from where the body ended up, not from where it meant to go: a
+  // player walking into a wall covers no ground and takes no steps.
+  const travelledX = x - body.x;
+  const travelledZ = z - body.z;
+  const travelled = Math.sqrt(
+    float(travelledX * travelledX) + float(travelledZ * travelledZ),
+  );
+
+  return {
+    x,
+    y,
+    z,
+    vy,
+    grounded,
+    crouching,
+    gaitPhase: nextGait(body.gaitPhase, travelled, grounded),
+  };
+}
+
+/**
+ * Rounds an intermediate product before it is added to something.
+ *
+ * A no-op in JavaScript, which always rounds. Its counterpart in the Go port is
+ * an explicit float64 conversion, which is what stops the compiler fusing a
+ * multiply and an add into a single rounding on ARM.
+ */
+function float(value: number): number {
+  return value;
 }
 
 /** A body standing still at a spawn point, which is how every life starts. */
 export function restingBody(at: { x: number; y: number; z: number }): PlayerBody {
-  return { x: at.x, y: at.y, z: at.z, vy: 0, grounded: false, crouching: false };
+  return {
+    x: at.x,
+    y: at.y,
+    z: at.z,
+    vy: 0,
+    grounded: false,
+    crouching: false,
+    gaitPhase: FEET_TOGETHER_EARLY,
+  };
+}
+
+/**
+ * The two phases at which the legs are level under the body.
+ *
+ * The stride is a triangle wave, so it passes through zero swing twice: a
+ * quarter of the way through and three quarters. Standing still means settling
+ * on whichever of the two is nearer.
+ */
+export const FEET_TOGETHER_EARLY = 0.25;
+export const FEET_TOGETHER_LATE = 0.75;
+
+/**
+ * Advances the stride by the ground actually covered, or settles it.
+ *
+ * Only while grounded: legs that keep striding through a jump look like
+ * running in mid-air, which is a thing cartoons do and shooters do not.
+ */
+function nextGait(phase: number, travelled: number, grounded: boolean): number {
+  if (!grounded) {
+    return phase;
+  }
+  if (travelled > 0) {
+    const advanced = phase + travelled / STRIDE_METRES;
+    // Wrapped by subtraction rather than by a modulo: exact in both languages,
+    // and the distance covered in one tick can never span a whole stride.
+    return advanced >= 1 ? advanced - 1 : advanced;
+  }
+
+  const target =
+    phase - FEET_TOGETHER_EARLY < FEET_TOGETHER_LATE - phase
+      ? FEET_TOGETHER_EARLY
+      : FEET_TOGETHER_LATE;
+  const gap = target - phase;
+  if (gap > GAIT_SETTLE_PER_TICK) {
+    return phase + GAIT_SETTLE_PER_TICK;
+  }
+  if (gap < -GAIT_SETTLE_PER_TICK) {
+    return phase - GAIT_SETTLE_PER_TICK;
+  }
+  return target;
 }
 
 export { MOVE_SPEED, PLAYER_HALF };

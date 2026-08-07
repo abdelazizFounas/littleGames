@@ -410,9 +410,14 @@ type Body struct {
 	Y float64 `protobuf:"fixed64,2,opt,name=y,proto3" json:"y,omitempty"`
 	Z float64 `protobuf:"fixed64,3,opt,name=z,proto3" json:"z,omitempty"`
 	// Vertical speed. There is no horizontal inertia to carry.
-	Vy            float64 `protobuf:"fixed64,4,opt,name=vy,proto3" json:"vy,omitempty"`
-	Grounded      bool    `protobuf:"varint,5,opt,name=grounded,proto3" json:"grounded,omitempty"`
-	Crouching     bool    `protobuf:"varint,6,opt,name=crouching,proto3" json:"crouching,omitempty"`
+	Vy        float64 `protobuf:"fixed64,4,opt,name=vy,proto3" json:"vy,omitempty"`
+	Grounded  bool    `protobuf:"varint,5,opt,name=grounded,proto3" json:"grounded,omitempty"`
+	Crouching bool    `protobuf:"varint,6,opt,name=crouching,proto3" json:"crouching,omitempty"`
+	// Where this body is in its stride, from zero to one.
+	//
+	// Simulated rather than animated: the limbs that are drawn are the limbs that
+	// will be shot at, so both ends have to agree on where they are.
+	GaitPhase     float64 `protobuf:"fixed64,7,opt,name=gait_phase,json=gaitPhase,proto3" json:"gait_phase,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -487,6 +492,13 @@ func (x *Body) GetCrouching() bool {
 		return x.Crouching
 	}
 	return false
+}
+
+func (x *Body) GetGaitPhase() float64 {
+	if x != nil {
+		return x.GaitPhase
+	}
+	return 0
 }
 
 // A unit vector.
@@ -896,14 +908,16 @@ const file_littlegames_arena_v1_arena_proto_rawDesc = "" +
 	"\vshots_fired\x18\v \x01(\rR\n" +
 	"shotsFired\"\x1d\n" +
 	"\x05Ready\x12\x14\n" +
-	"\x05ready\x18\x01 \x01(\bR\x05ready\"z\n" +
+	"\x05ready\x18\x01 \x01(\bR\x05ready\"\x99\x01\n" +
 	"\x04Body\x12\f\n" +
 	"\x01x\x18\x01 \x01(\x01R\x01x\x12\f\n" +
 	"\x01y\x18\x02 \x01(\x01R\x01y\x12\f\n" +
 	"\x01z\x18\x03 \x01(\x01R\x01z\x12\x0e\n" +
 	"\x02vy\x18\x04 \x01(\x01R\x02vy\x12\x1a\n" +
 	"\bgrounded\x18\x05 \x01(\bR\bgrounded\x12\x1c\n" +
-	"\tcrouching\x18\x06 \x01(\bR\tcrouching\"3\n" +
+	"\tcrouching\x18\x06 \x01(\bR\tcrouching\x12\x1d\n" +
+	"\n" +
+	"gait_phase\x18\a \x01(\x01R\tgaitPhase\"3\n" +
 	"\aVector3\x12\f\n" +
 	"\x01x\x18\x01 \x01(\x01R\x01x\x12\f\n" +
 	"\x01y\x18\x02 \x01(\x01R\x01y\x12\f\n" +

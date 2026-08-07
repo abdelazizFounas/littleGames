@@ -11,7 +11,12 @@ import type { ArenaRenderer } from '@littlegames/arena-renderer-babylon';
 import type { ArenaPlayerState, ArenaSnapshot } from '@littlegames/core';
 import { createInputHistory, createSnapshotBuffer, type ArenaConnection, type ArenaMatchListeners } from '@littlegames/net';
 import { createArenaInput, type ArenaCommand, type ArenaInput } from './arena-input-sources';
-import { DEFAULT_ARENA_SETTINGS, ZOOM_FIELD_OF_VIEW_RATIO, type ArenaSettings } from './arena-settings';
+import {
+  DEFAULT_ARENA_SETTINGS,
+  SCOPE_MAGNIFICATION,
+  SCOPE_RAISE_MS,
+  type ArenaSettings,
+} from './arena-settings';
 import {
   INTERPOLATION_DELAY_MS,
   NO_SMOOTHING,
@@ -111,6 +116,7 @@ function bodyOf(player: ArenaPlayerState): PlayerBody {
     vy: body.vy,
     grounded: body.grounded,
     crouching: body.crouching,
+    gaitPhase: body.gaitPhase,
   };
 }
 
@@ -224,6 +230,13 @@ export async function startArenaSession(
   let seq = 0;
   let smoothing: CameraSmoothing = NO_SMOOTHING;
   let lobby: ArenaLobbyState | null = null;
+  /**
+   * How far the scope has come up, from nothing to fully raised.
+   *
+   * Eased here rather than switched, and never in the simulated state: raising
+   * a sight is something the player sees, not something the world does.
+   */
+  let scope = 0;
   // Shots this client has already seen, by id.
   //
   // They arrive in a trailing window rather than one frame at a time, because
@@ -314,6 +327,7 @@ export async function startArenaSession(
         message: 'Joining…',
         respawnSeconds: 0,
         crosshair: false,
+        scope: 0,
         hitMarker: 0,
         damage: 0,
       },
@@ -472,7 +486,11 @@ export async function startArenaSession(
     drawnEye = drawn;
 
     const { from, to, alpha } = interpolation;
-    const zoomed = input.isZoomed();
+    // The sight comes up and goes down over a moment rather than between two
+    // frames, which is the difference between raising a rifle and teleporting.
+    const wanted = input.isZoomed() ? 1 : 0;
+    const step = elapsed / SCOPE_RAISE_MS;
+    scope = wanted > scope ? Math.min(scope + step, 1) : Math.max(scope - step, 0);
     renderer.render(
       composeArenaView(
         from,
@@ -480,8 +498,8 @@ export async function startArenaSession(
         alpha,
         drawn,
         input.forward(),
-        current.look.fieldOfView * (zoomed ? ZOOM_FIELD_OF_VIEW_RATIO : 1),
-        { now, shots: [...seenShots.values()], lastOwnHitAt, lastDamageAt },
+        current.look.fieldOfView * (1 - scope) + (current.look.fieldOfView / SCOPE_MAGNIFICATION) * scope,
+        { now, shots: [...seenShots.values()], lastOwnHitAt, lastDamageAt, scope },
       ),
       alpha,
     );

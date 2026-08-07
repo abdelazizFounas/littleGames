@@ -244,6 +244,13 @@ export interface Body {
   vy: number;
   grounded: boolean;
   crouching: boolean;
+  /**
+   * Where this body is in its stride, from zero to one.
+   *
+   * Simulated rather than animated: the limbs that are drawn are the limbs that
+   * will be shot at, so both ends have to agree on where they are.
+   */
+  gaitPhase: number;
 }
 
 /** A unit vector. */
@@ -641,7 +648,7 @@ export const Ready: MessageFns<Ready> = {
 };
 
 function createBaseBody(): Body {
-  return { x: 0, y: 0, z: 0, vy: 0, grounded: false, crouching: false };
+  return { x: 0, y: 0, z: 0, vy: 0, grounded: false, crouching: false, gaitPhase: 0 };
 }
 
 export const Body: MessageFns<Body> = {
@@ -663,6 +670,9 @@ export const Body: MessageFns<Body> = {
     }
     if (message.crouching !== false) {
       writer.uint32(48).bool(message.crouching);
+    }
+    if (message.gaitPhase !== 0) {
+      writer.uint32(57).double(message.gaitPhase);
     }
     return writer;
   },
@@ -722,6 +732,14 @@ export const Body: MessageFns<Body> = {
           message.crouching = reader.bool();
           continue;
         }
+        case 7: {
+          if (tag !== 57) {
+            break;
+          }
+
+          message.gaitPhase = reader.double();
+          continue;
+        }
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -739,6 +757,11 @@ export const Body: MessageFns<Body> = {
       vy: isSet(object.vy) ? globalThis.Number(object.vy) : 0,
       grounded: isSet(object.grounded) ? globalThis.Boolean(object.grounded) : false,
       crouching: isSet(object.crouching) ? globalThis.Boolean(object.crouching) : false,
+      gaitPhase: isSet(object.gaitPhase)
+        ? globalThis.Number(object.gaitPhase)
+        : isSet(object.gait_phase)
+        ? globalThis.Number(object.gait_phase)
+        : 0,
     };
   },
 
@@ -762,6 +785,9 @@ export const Body: MessageFns<Body> = {
     if (message.crouching !== false) {
       obj.crouching = message.crouching;
     }
+    if (message.gaitPhase !== 0) {
+      obj.gaitPhase = message.gaitPhase;
+    }
     return obj;
   },
 
@@ -776,6 +802,7 @@ export const Body: MessageFns<Body> = {
     message.vy = object.vy ?? 0;
     message.grounded = object.grounded ?? false;
     message.crouching = object.crouching ?? false;
+    message.gaitPhase = object.gaitPhase ?? 0;
     return message;
   },
 };

@@ -93,7 +93,7 @@ describe('drawing the opponent', () => {
     const to = frame({ opponent: player({ seat: 'south', body: bodyAt(10) }) });
 
     const halfway = interpolateOpponent(from, to, 0.5);
-    expect(halfway?.position.x).toBeCloseTo(5, 9);
+    expect(halfway?.body.x).toBeCloseTo(5, 9);
   });
 
   it('refuses to blend across a respawn', () => {
@@ -105,7 +105,7 @@ describe('drawing the opponent', () => {
 
     expect(isContinuous(before, after)).toBe(false);
     const drawn = interpolateOpponent(frame({ opponent: before }), frame({ opponent: after }), 0.5);
-    expect(drawn?.position.x).toBe(0);
+    expect(drawn?.body.x).toBe(0);
   });
 
   it('is absent while there is nobody to draw', () => {

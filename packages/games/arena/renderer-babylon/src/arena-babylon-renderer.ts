@@ -1,4 +1,4 @@
-import { CROUCH_HEIGHT, PLAYER_HALF, STAND_HEIGHT } from '@littlegames/arena-logic';
+import { poseOf, weaponOf, type PartBox } from '@littlegames/arena-logic';
 import { FreeCamera } from '@babylonjs/core/Cameras/freeCamera.js';
 import { Engine } from '@babylonjs/core/Engines/engine.js';
 import { HemisphericLight } from '@babylonjs/core/Lights/hemisphericLight.js';
@@ -15,9 +15,16 @@ import { Scene } from '@babylonjs/core/scene.js';
 // oxlint-disable-next-line import/no-unassigned-import
 import '@babylonjs/core/Meshes/thinInstanceMesh.js';
 import { ARENA_INSTANCES, type BoxInstance } from './instances.ts';
-import { SKY, TRACER, TRACER_HIT, colourOfSeat, type Rgb } from './palette.ts';
+import { SKY, TRACER, TRACER_HIT, colourOfPart, colourOfSeat, type Rgb } from './palette.ts';
 import { createHud, type Hud } from './hud.ts';
 import type { ArenaRenderer, ArenaView } from './view.ts';
+
+/** A direction in the world, as the rules express one. */
+interface Vec3 {
+  readonly x: number;
+  readonly y: number;
+  readonly z: number;
+}
 
 /**
  * Draws the arena with Babylon.js.
@@ -60,6 +67,10 @@ const TRACER_MUZZLE_METRES = 1.2;
 
 /** As many tracers as can plausibly be in the air at once. */
 const MAX_TRACERS = 8;
+
+/** Parts per body, plus the rifle, for both seats. */
+const PARTS_PER_PLAYER = 8;
+const MAX_PARTS = PARTS_PER_PLAYER * 2;
 
 function toColor3(colour: Rgb): Color3 {
   return new Color3(colour.r, colour.g, colour.b);
@@ -180,32 +191,55 @@ export function createArenaBabylonRenderer(): ArenaRenderer {
   const eye = new Vector3(0, 0, 0);
   const target = new Vector3(0, 0, 1);
   const scratch = Matrix.Identity();
-  const playerMatrices = new Float32Array(2 * 16);
-  const playerColours = new Float32Array(2 * 4);
+  const playerMatrices = new Float32Array(MAX_PARTS * 16);
+  const playerColours = new Float32Array(MAX_PARTS * 4);
   const tracerMatrices = new Float32Array(MAX_TRACERS * 16);
   const tracerColours = new Float32Array(MAX_TRACERS * 4);
   const along = new Vector3(0, 0, 1);
   const turn = new Quaternion();
   const forwardAxis = new Vector3(0, 0, 1);
 
+  /**
+   * The bodies, a box at a time.
+   *
+   * The pose comes from the rules rather than from an animation here, because
+   * these are the boxes that will be shot at: a leg drawn where it is not is a
+   * leg you can miss by hitting.
+   */
   function drawPlayers(mesh: Mesh, view: ArenaView): void {
     let drawn = 0;
 
-    for (const player of view.players) {
-      if (!player.alive || drawn >= 2) {
-        continue;
+    const place = (piece: PartBox, facing: Vec3, colour: Rgb): void => {
+      if (drawn >= MAX_PARTS) {
+        return;
       }
-      const height = player.crouching ? CROUCH_HEIGHT : STAND_HEIGHT;
-      matrixFor(
-        // The rules hold feet; a cube is placed by its middle.
-        { x: player.position.x, y: player.position.y + height / 2, z: player.position.z },
-        { x: PLAYER_HALF * 2, y: height, z: PLAYER_HALF * 2 },
+      // Turned to face the same way as the body. `FromUnitVectors` takes the
+      // shortest rotation, which for a horizontal target leaves up alone.
+      along.set(facing.x, 0, facing.z);
+      Quaternion.FromUnitVectorsToRef(forwardAxis, along, turn);
+      Matrix.ComposeToRef(
+        new Vector3(piece.half.x * 2, piece.half.y * 2, piece.half.z * 2),
+        turn,
+        new Vector3(piece.centre.x, piece.centre.y, piece.centre.z),
         scratch,
       );
       scratch.copyToArray(playerMatrices, drawn * 16);
-      const colour = colourOfSeat(player.seat);
       playerColours.set([colour.r, colour.g, colour.b, 1], drawn * 4);
       drawn += 1;
+    };
+
+    for (const player of view.players) {
+      if (!player.alive) {
+        continue;
+      }
+      const pose = poseOf(player.body, player.aim);
+      const seat = colourOfSeat(player.seat);
+      for (const piece of pose.parts) {
+        place(piece, pose.forward, colourOfPart(piece.part, seat));
+      }
+      for (const piece of weaponOf(player.body, pose)) {
+        place(piece, pose.forward, colourOfPart(piece.part, seat));
+      }
     }
 
     mesh.thinInstanceCount = drawn;

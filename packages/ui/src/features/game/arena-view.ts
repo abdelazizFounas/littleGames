@@ -100,14 +100,21 @@ export function interpolateOpponent(
 
   return {
     seat: before.seat,
-    position: {
+    body: {
+      ...before.body,
       x: lerp(before.body.x, target.body.x, at),
       y: lerp(before.body.y, target.body.y, at),
       z: lerp(before.body.z, target.body.z, at),
+      // Crouching is a discrete state and belongs to the moment being drawn:
+      // blending it would mean drawing a body at no height either player has.
+      // The stride is continuous and blends, except across the wrap from one
+      // stride to the next, where blending would run the legs backwards.
+      gaitPhase:
+        Math.abs(target.body.gaitPhase - before.body.gaitPhase) > 0.5
+          ? before.body.gaitPhase
+          : lerp(before.body.gaitPhase, target.body.gaitPhase, at),
     },
-    // Crouching is a discrete state and belongs to the moment being drawn:
-    // blending it would mean drawing a body at no height either player has.
-    crouching: before.body.crouching,
+    aim: before.aim,
     alive: before.alive,
   };
 }
@@ -296,6 +303,7 @@ export function hudFor(
   now = 0,
   lastOwnHitAt: number | null = null,
   lastDamageAt: number | null = null,
+  scope = 0,
 ): ArenaHud {
   return {
     ownScore: frame.self.score,
@@ -305,6 +313,7 @@ export function hudFor(
       ? 0
       : Math.min(frame.self.respawnTicks, RESPAWN_TICKS) / TICK_RATE,
     crosshair: frame.phase === 'playing' && frame.self.alive,
+    scope,
     hitMarker: fadeSince(now, lastOwnHitAt, HIT_MARKER_SECONDS),
     damage: fadeSince(now, lastDamageAt, DAMAGE_SECONDS),
   };
@@ -331,7 +340,8 @@ export function composeArenaView(
     readonly shots: readonly TimedShot[];
     readonly lastOwnHitAt: number | null;
     readonly lastDamageAt: number | null;
-  } = { now: 0, shots: [], lastOwnHitAt: null, lastDamageAt: null },
+    readonly scope: number;
+  } = { now: 0, shots: [], lastOwnHitAt: null, lastDamageAt: null, scope: 0 },
 ): ArenaView {
   const opponent = interpolateOpponent(from, to, alpha);
 
@@ -344,7 +354,7 @@ export function composeArenaView(
     // interpolated past. A shot is an event, and an event shown late is an
     // event shown at the wrong time.
     shots: drawableShots(feedback.shots, feedback.now),
-    hud: hudFor(from, feedback.now, feedback.lastOwnHitAt, feedback.lastDamageAt),
+    hud: hudFor(from, feedback.now, feedback.lastOwnHitAt, feedback.lastDamageAt, feedback.scope),
   };
 }
 

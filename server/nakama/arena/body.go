@@ -1,5 +1,7 @@
 package arena
 
+import "math"
+
 // How a body moves, and the only rule the client runs as well as the server.
 //
 // Prediction replays this exact function over unacknowledged commands, so any
@@ -31,6 +33,44 @@ type PlayerBody struct {
 	VY        float64 `json:"vy"`
 	Grounded  bool    `json:"grounded"`
 	Crouching bool    `json:"crouching"`
+	// GaitPhase is where this body is in its stride, from zero to one.
+	//
+	// In the rules rather than in the renderer, and that is the point: the limbs
+	// that get drawn are the limbs that get shot at, so both sides have to agree
+	// on where they are.
+	GaitPhase float64 `json:"gaitPhase"`
+}
+
+// nextGait advances the stride by the ground actually covered, or settles it.
+//
+// Only while grounded: legs that keep striding through a jump look like running
+// in mid-air, which is a thing cartoons do and shooters do not.
+func nextGait(phase, travelled float64, grounded bool) float64 {
+	if !grounded {
+		return phase
+	}
+	if travelled > 0 {
+		advanced := phase + travelled/StrideMetres
+		// Wrapped by subtraction rather than by a modulo: exact in both
+		// languages, and one tick can never span a whole stride.
+		if advanced >= 1 {
+			return advanced - 1
+		}
+		return advanced
+	}
+
+	target := FeetTogetherLate
+	if phase-FeetTogetherEarly < FeetTogetherLate-phase {
+		target = FeetTogetherEarly
+	}
+	gap := target - phase
+	if gap > GaitSettlePerTick {
+		return phase + GaitSettlePerTick
+	}
+	if gap < -GaitSettlePerTick {
+		return phase - GaitSettlePerTick
+	}
+	return target
 }
 
 // MoveIntent is one tick of intent, with the move already shortened to at most
@@ -199,11 +239,27 @@ func StepBody(body PlayerBody, intent MoveIntent) PlayerBody {
 		y = resolved
 	}
 
-	return PlayerBody{X: x, Y: y, Z: z, VY: vy, Grounded: grounded, Crouching: crouching}
+	// Measured from where the body ended up, not from where it meant to go: a
+	// player walking into a wall covers no ground and takes no steps.
+	travelledX := x - body.X
+	travelledZ := z - body.Z
+	travelled := math.Sqrt(float64(travelledX*travelledX) + float64(travelledZ*travelledZ))
+
+	return PlayerBody{
+		X: x, Y: y, Z: z,
+		VY:        vy,
+		Grounded:  grounded,
+		Crouching: crouching,
+		GaitPhase: nextGait(body.GaitPhase, travelled, grounded),
+	}
 }
 
 // RestingBody is a body standing still at a spawn point, which is how every
 // life starts.
 func RestingBody(at Vec3) PlayerBody {
-	return PlayerBody{X: at.X, Y: at.Y, Z: at.Z, VY: 0, Grounded: false, Crouching: false}
+	return PlayerBody{
+		X: at.X, Y: at.Y, Z: at.Z,
+		VY: 0, Grounded: false, Crouching: false,
+		GaitPhase: FeetTogetherEarly,
+	}
 }

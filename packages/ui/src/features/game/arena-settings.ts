@@ -263,8 +263,16 @@ export function clampPitch(pitch: number): number {
   return Math.min(Math.max(pitch, -MAX_PITCH), MAX_PITCH);
 }
 
-/** How narrow the view gets while zoomed. */
-export const ZOOM_FIELD_OF_VIEW_RATIO = 0.55;
+/**
+ * How much the sight magnifies.
+ *
+ * Six, which is a sniper's scope rather than a rifle's. It narrows the field of
+ * view by the same factor — that is all magnification is.
+ */
+export const SCOPE_MAGNIFICATION = 6;
+
+/** How long the sight takes to come up, in milliseconds. */
+export const SCOPE_RAISE_MS = 150;
 
 /**
  * Whether this device is driven by fingers rather than a pointer.

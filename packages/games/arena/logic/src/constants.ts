@@ -92,6 +92,24 @@ export const GRAVITY = 22;
  */
 export const JUMP_SPEED = 7.5;
 
+/**
+ * How far a player travels in one full stride cycle, in metres.
+ *
+ * The gait is driven by distance covered rather than by time, so a crouching
+ * player takes the same steps over the same ground as a running one — just
+ * fewer of them a second. It also means a player pressed against a wall stops
+ * stepping, because they are not going anywhere.
+ */
+export const STRIDE_METRES = 2.4;
+
+/**
+ * How quickly the legs come together once a player stops, per tick.
+ *
+ * Without it a player who stops mid-stride freezes with one leg out in front,
+ * which reads as a statue of somebody walking rather than as somebody standing.
+ */
+export const GAIT_SETTLE_PER_TICK = 0.05;
+
 /* --- Shooting ------------------------------------------------------------- */
 
 /** Ticks between one shot and the next being allowed. */

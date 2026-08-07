@@ -1,4 +1,4 @@
-import type { BoxKind, Seat } from '@littlegames/arena-logic';
+import type { BodyPart, BoxKind, Seat } from '@littlegames/arena-logic';
 
 /**
  * Every colour in the game, in one place.
@@ -57,4 +57,39 @@ const SEAT_COLOURS: Readonly<Record<Seat, Rgb>> = {
 
 export function colourOfSeat(seat: Seat): Rgb {
   return SEAT_COLOURS[seat];
+}
+
+/** Lightens or darkens a colour, keeping it inside the range. */
+function shade(colour: Rgb, factor: number): Rgb {
+  return {
+    r: Math.min(colour.r * factor, 1),
+    g: Math.min(colour.g * factor, 1),
+    b: Math.min(colour.b * factor, 1),
+  };
+}
+
+/** Gunmetal. The one thing on a player that is not their team's colour. */
+const WEAPON = rgb(0x2a2d34);
+const SIGHT = rgb(0x14161a);
+
+/**
+ * How each part of a body is coloured, given the seat it belongs to.
+ *
+ * The head is lightest and the limbs darkest, which does two things: it reads
+ * as a figure rather than as a heap of identical boxes, and it makes the head —
+ * the part worth hitting — the easiest one to pick out at range.
+ */
+export function colourOfPart(part: BodyPart, seat: Rgb): Rgb {
+  switch (part) {
+    case 'head':
+      return shade(seat, 1.45);
+    case 'torso':
+      return seat;
+    case 'weapon':
+      return WEAPON;
+    case 'sight':
+      return SIGHT;
+    default:
+      return shade(seat, 0.7);
+  }
 }

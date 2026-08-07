@@ -69,6 +69,7 @@ export function ArenaPreviewRoute(): ReactNode {
               message: 'Arena preview',
               respawnSeconds: 0,
               crosshair: false,
+              scope: 0,
               hitMarker: 0,
               damage: 0,
             },

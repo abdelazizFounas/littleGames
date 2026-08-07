@@ -1,4 +1,4 @@
-import type { Seat, Vec3 } from '@littlegames/arena-logic';
+import type { PlayerBody, Seat, Vec3 } from '@littlegames/arena-logic';
 import type { GameRenderer } from '@littlegames/core';
 
 /**
@@ -58,9 +58,16 @@ export interface ArenaCamera {
 
 export interface ArenaPlayerView {
   readonly seat: Seat;
-  /** Feet, as the rules hold it. */
-  readonly position: Vec3;
-  readonly crouching: boolean;
+  /**
+   * The body, whole, as the rules hold it.
+   *
+   * The stride comes with it, because the limbs are posed from the simulation
+   * rather than animated here: the legs that are drawn have to be the legs that
+   * can be shot at.
+   */
+  readonly body: PlayerBody;
+  /** Where they are looking, which is which way the body faces. */
+  readonly aim: Vec3;
   /** A dead body is not drawn, but it is still in the view so it can fade. */
   readonly alive: boolean;
 }
@@ -74,6 +81,13 @@ export interface ArenaHud {
   /** Seconds until this player is back on their feet. Zero while alive. */
   readonly respawnSeconds: number;
   readonly crosshair: boolean;
+  /**
+   * How far into the scope the view is, from nothing to fully raised.
+   *
+   * A number rather than a flag so the reticle can arrive with the zoom rather
+   * than snapping over it a frame early.
+   */
+  readonly scope: number;
   /**
    * How strongly to mark a shot of this player's that connected, from one down
    * to nothing. It is the only confirmation a shooter gets: the target is a box

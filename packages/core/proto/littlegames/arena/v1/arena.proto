@@ -117,6 +117,12 @@ message Body {
   double vy = 4;
   bool grounded = 5;
   bool crouching = 6;
+
+  // Where this body is in its stride, from zero to one.
+  //
+  // Simulated rather than animated: the limbs that are drawn are the limbs that
+  // will be shot at, so both ends have to agree on where they are.
+  double gait_phase = 7;
 }
 
 // A unit vector.

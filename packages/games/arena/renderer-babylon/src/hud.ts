@@ -103,7 +103,51 @@ export function createHud(container: HTMLElement): Hud {
   damage.style.background =
     'radial-gradient(ellipse at center, transparent 35%, rgb(190 20 20 / 75%) 100%)';
 
-  root.append(damage, crosshair, hitMarker, score, message);
+  /**
+   * The sight: a circle of glass with everything outside it blacked out.
+   *
+   * The black comes from a spread shadow rather than from a second element,
+   * which is what keeps the edge of the circle exactly the edge of the circle at
+   * any size. The two lines cross at the middle, running in from the rim, which
+   * is the reticle everybody recognises.
+   */
+  const scope = document.createElement('div');
+  scope.style.position = 'absolute';
+  scope.style.inset = '0';
+  scope.style.opacity = '0';
+  scope.style.pointerEvents = 'none';
+
+  const glass = document.createElement('div');
+  glass.style.position = 'absolute';
+  glass.style.left = '50%';
+  glass.style.top = '50%';
+  glass.style.width = 'min(86vmin, 86%)';
+  glass.style.aspectRatio = '1';
+  glass.style.transform = 'translate(-50%, -50%)';
+  glass.style.borderRadius = '50%';
+  glass.style.border = '2px solid rgb(0 0 0 / 85%)';
+  glass.style.boxShadow = '0 0 0 100vmax #000, inset 0 0 6vmin rgb(0 0 0 / 55%)';
+
+  const across = document.createElement('div');
+  across.style.position = 'absolute';
+  across.style.left = '0';
+  across.style.right = '0';
+  across.style.top = '50%';
+  across.style.height = '1px';
+  across.style.background = 'rgb(0 0 0 / 70%)';
+
+  const down = document.createElement('div');
+  down.style.position = 'absolute';
+  down.style.top = '0';
+  down.style.bottom = '0';
+  down.style.left = '50%';
+  down.style.width = '1px';
+  down.style.background = 'rgb(0 0 0 / 70%)';
+
+  glass.append(across, down);
+  scope.appendChild(glass);
+
+  root.append(damage, crosshair, hitMarker, scope, score, message);
   container.appendChild(root);
 
   // What each element currently says. Writing textContent unconditionally
@@ -113,6 +157,7 @@ export function createHud(container: HTMLElement): Hud {
   let shownCrosshair = true;
   let shownHit = 0;
   let shownDamage = 0;
+  let shownScope = -1;
 
   return {
     update(state: ArenaHud): void {
@@ -136,7 +181,7 @@ export function createHud(container: HTMLElement): Hud {
       const wantsCrosshair = state.crosshair && state.respawnSeconds <= 0;
       if (wantsCrosshair !== shownCrosshair) {
         shownCrosshair = wantsCrosshair;
-        crosshair.style.display = wantsCrosshair ? 'block' : 'none';
+        crosshair.style.display = wantsCrosshair && shownScope <= 0 ? 'block' : 'none';
       }
 
       // Rounded before comparing, so a value drifting by a thousandth every
@@ -151,6 +196,16 @@ export function createHud(container: HTMLElement): Hud {
       if (wantsDamage !== shownDamage) {
         shownDamage = wantsDamage;
         damage.style.opacity = String(wantsDamage);
+      }
+
+      // The sight fades in with the zoom rather than appearing over it, and the
+      // crosshair steps aside while it is up: two reticles is one too many.
+      const wantsScope = Math.round(state.scope * 20) / 20;
+      if (wantsScope !== shownScope) {
+        shownScope = wantsScope;
+        scope.style.opacity = String(wantsScope);
+        scope.style.display = wantsScope > 0 ? 'block' : 'none';
+        crosshair.style.display = wantsCrosshair && wantsScope === 0 ? 'block' : 'none';
       }
     },
 

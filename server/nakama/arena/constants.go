@@ -88,6 +88,24 @@ const (
 	JumpSpeed float64 = 7.5
 )
 
+// The stride.
+const (
+	// StrideMetres is how far a player travels in one full stride cycle. The
+	// gait is driven by ground covered rather than by time, so a player pressed
+	// against a wall stops stepping — they are not going anywhere.
+	StrideMetres float64 = 2.4
+
+	// GaitSettlePerTick is how quickly the legs come together once a player
+	// stops. Without it they freeze mid-stride, which reads as a statue of
+	// somebody walking rather than as somebody standing.
+	GaitSettlePerTick float64 = 0.05
+
+	// The two phases at which the legs are level under the body. The stride is
+	// a triangle wave, so it passes through zero swing twice.
+	FeetTogetherEarly float64 = 0.25
+	FeetTogetherLate  float64 = 0.75
+)
+
 // Shooting.
 const (
 	// FireCooldownTicks is the gap between one shot and the next being allowed.

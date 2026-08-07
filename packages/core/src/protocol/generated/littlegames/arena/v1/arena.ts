@@ -141,6 +141,13 @@ export interface Body {
   vy: number;
   grounded: boolean;
   crouching: boolean;
+  /**
+   * Where this body is in its stride, from zero to one.
+   *
+   * Simulated rather than animated: the limbs that are drawn are the limbs that
+   * will be shot at, so both ends have to agree on where they are.
+   */
+  gaitPhase: number;
 }
 
 /** A unit vector. */
