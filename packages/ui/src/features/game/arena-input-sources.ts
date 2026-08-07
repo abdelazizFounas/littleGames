@@ -63,6 +63,14 @@ export interface ArenaInput {
 
 export interface ArenaInputListeners {
   /**
+   * The browser refused to hide the pointer, and said why.
+   *
+   * Worth reporting rather than swallowing: without the pointer there is no
+   * mouse look, no fire and no scope, and a game that simply does not answer
+   * the mouse tells the player nothing about why.
+   */
+  onLockRefused: (reason: string) => void;
+  /**
    * Pointer lock was gained or lost.
    *
    * `expected` says the loss was this client's own doing — a menu being opened
@@ -84,7 +92,14 @@ function directionOf(yaw: number, pitch: number): Vec3 {
 /** Opens the settings panel. Not rebindable: it is the way out of the game. */
 const SETTINGS_CODE = 'KeyP';
 
-/** Right-click is the zoom, so it must not also open a menu over the game. */
+/**
+ * Right-click raises the scope, so it must never also open a menu.
+ *
+ * Prevented on the window rather than on the canvas: while the pointer is
+ * hidden the event does not necessarily target the canvas, and a context menu
+ * that does open takes the pointer back with it — which is why right-clicking
+ * stopped the camera dead instead of raising the scope.
+ */
 function onContextMenu(event: Event): void {
   event.preventDefault();
 }
@@ -117,6 +132,16 @@ export function createArenaInput(
 
   const held = new Set<string>();
   let zoomPressed = false;
+
+  /**
+   * Which device the player last actually used.
+   *
+   * A coarse pointer being *available* is not the same as there being nothing
+   * else: a laptop with a touchscreen has both, and the touch layer sitting over
+   * the canvas swallowed every mouse click on one. The layout follows the device
+   * in the player's hand rather than the devices the machine happens to own.
+   */
+  let pointerMode: 'mouse' | 'touch' = hasCoarsePointer() ? 'touch' : 'mouse';
 
   /**
    * Whether the next loss of the pointer is one we asked for.
@@ -202,7 +227,19 @@ export function createArenaInput(
     zoomPressed = false;
   };
 
-  const onMouseMove = (event: MouseEvent): void => {
+  /**
+   * Look, fire and scope all arrive as pointer events rather than mouse events.
+   *
+   * They are the superset, and they are what actually gets delivered: with the
+   * pointer hidden, Firefox sends a `pointerdown` for a click and no `mousedown`
+   * at all, so a game listening for the older pair silently never fires and
+   * never scopes. `pointerType` keeps a finger out of this path — touch has its
+   * own buttons, and a tap on the screen is not a trigger pull.
+   */
+  const onPointerMove = (event: PointerEvent): void => {
+    if (event.pointerType !== 'mouse') {
+      return;
+    }
     if (!locked) {
       // Without the lock the pointer is the page's, and moving it must not turn
       // the player. This is also what stops the view spinning while the
@@ -222,20 +259,55 @@ export function createArenaInput(
    * window so that a click on the settings panel or the overlay is not also a
    * request to give the pointer back to the game.
    */
-  const onSurfacePointerDown = (): void => {
-    // Never on a touch screen. There is no pointer to lock, and asking anyway is
-    // what made the settings open on almost every touch: a mobile browser grants
-    // the lock and drops it again immediately, and a drop is what this game reads
-    // as the player asking for the menu.
-    if (!locked && !hasCoarsePointer()) {
-      // The browser may refuse, and the truth arrives on `pointerlockchange`
-      // rather than from this call, so the promise is nothing to wait on.
-      void surface.requestPointerLock();
+  function takePointer(): void {
+    if (locked) {
+      return;
+    }
+    // The truth arrives on `pointerlockchange`, but a refusal only ever arrives
+    // here — and a refusal is the difference between a game that does not answer
+    // the mouse and a game that says why.
+    const asked: unknown = surface.requestPointerLock();
+    if (asked instanceof Promise) {
+      asked.catch((cause: unknown) => {
+        listeners.onLockRefused(cause instanceof Error ? cause.message : String(cause));
+      });
+    }
+  }
+
+  /**
+   * Clicking the game takes the mouse — but never for a finger.
+   *
+   * There is no pointer to hide on a touch screen, and asking anyway is what
+   * made the settings open on almost every touch: a mobile browser grants the
+   * lock and drops it again immediately, and a drop is what this game reads as
+   * the player asking for the menu. The test is the pointer that arrived, not
+   * what the machine is capable of.
+   */
+  const onSurfacePointerDown = (event: PointerEvent): void => {
+    if (event.pointerType !== 'touch') {
+      takePointer();
     }
   };
 
-  const onMouseDown = (event: MouseEvent): void => {
-    if (!locked) {
+  /** A click as well, because not every browser grants a lock from a pointerdown. */
+  const onSurfaceClick = (): void => {
+    if (pointerMode !== 'touch') {
+      takePointer();
+    }
+  };
+
+  /** Follows the device actually in use, and hides the layout the other one needs. */
+  const onAnyPointerDown = (event: PointerEvent): void => {
+    const next = event.pointerType === 'touch' ? 'touch' : 'mouse';
+    if (next === pointerMode) {
+      return;
+    }
+    pointerMode = next;
+    touchLayer?.classList.toggle('arena-touch--idle', next === 'mouse');
+  };
+
+  const onPointerDown = (event: PointerEvent): void => {
+    if (event.pointerType !== 'mouse' || !locked) {
       return;
     }
     if (event.button === FIRE_BUTTON) {
@@ -246,8 +318,8 @@ export function createArenaInput(
     }
   };
 
-  const onMouseUp = (event: MouseEvent): void => {
-    if (event.button === ZOOM_BUTTON) {
+  const onPointerUp = (event: PointerEvent): void => {
+    if (event.pointerType === 'mouse' && event.button === ZOOM_BUTTON) {
       zoomPressed = false;
     }
   };
@@ -299,15 +371,19 @@ export function createArenaInput(
       window.addEventListener('keydown', onKeyDown, { passive: false });
       window.addEventListener('keyup', onKeyUp);
       window.addEventListener('blur', onBlur);
-      window.addEventListener('mousemove', onMouseMove);
-      window.addEventListener('mousedown', onMouseDown);
-      window.addEventListener('mouseup', onMouseUp);
-      surface.addEventListener('contextmenu', onContextMenu);
+      window.addEventListener('pointermove', onPointerMove);
+      window.addEventListener('pointerdown', onPointerDown);
+      window.addEventListener('pointerup', onPointerUp);
+      window.addEventListener('contextmenu', onContextMenu, { capture: true });
       surface.addEventListener('pointerdown', onSurfacePointerDown);
+      surface.addEventListener('click', onSurfaceClick);
+      container.addEventListener('pointerdown', onAnyPointerDown, { capture: true });
       document.addEventListener('pointerlockchange', onLockChange);
 
       // Chosen by what the device can do, never by what it calls itself: a
       // user-agent string is a claim, and a coarse pointer is a fact.
+      // Built whenever a finger is possible, and hidden while a mouse is the
+      // thing being used. A machine with both gets both.
       if (hasCoarsePointer()) {
         const built = buildTouchControls(container, settings, {
           onMove: (x, z) => {
@@ -334,6 +410,7 @@ export function createArenaInput(
         });
         touchLayer = built.element;
         touchControls = built;
+        touchLayer.classList.toggle('arena-touch--idle', pointerMode === 'mouse');
       }
     },
 
@@ -366,11 +443,13 @@ export function createArenaInput(
       window.removeEventListener('keydown', onKeyDown);
       window.removeEventListener('keyup', onKeyUp);
       window.removeEventListener('blur', onBlur);
-      window.removeEventListener('mousemove', onMouseMove);
-      window.removeEventListener('mousedown', onMouseDown);
-      window.removeEventListener('mouseup', onMouseUp);
-      surface.removeEventListener('contextmenu', onContextMenu);
+      window.removeEventListener('pointermove', onPointerMove);
+      window.removeEventListener('pointerdown', onPointerDown);
+      window.removeEventListener('pointerup', onPointerUp);
+      window.removeEventListener('contextmenu', onContextMenu, { capture: true });
       surface.removeEventListener('pointerdown', onSurfacePointerDown);
+      surface.removeEventListener('click', onSurfaceClick);
+      container.removeEventListener('pointerdown', onAnyPointerDown, { capture: true });
       document.removeEventListener('pointerlockchange', onLockChange);
       touchControls?.dispose();
       touchLayer?.remove();
@@ -397,10 +476,8 @@ export function createArenaInput(
     isZoomed: isZoomedNow,
     isLocked: () => locked,
     requestLock() {
-      // Nothing is assumed about the outcome: the browser may refuse, and the
-      // truth arrives on `pointerlockchange` rather than from this call.
       releasing = false;
-      void surface.requestPointerLock();
+      takePointer();
     },
     releaseLock() {
       if (document.pointerLockElement === surface) {

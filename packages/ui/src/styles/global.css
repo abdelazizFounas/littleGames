@@ -923,3 +923,11 @@ body {
   background: rgb(255 255 255 / 85%);
   border-color: #eef0f4;
 }
+
+/* A machine can have both a touchscreen and a mouse. The touch layout follows
+   the device in the player's hand: while a mouse is the thing being used it is
+   out of the way entirely, because otherwise its two half-screen zones sit over
+   the canvas and swallow every click. */
+.arena-touch--idle {
+  display: none;
+}

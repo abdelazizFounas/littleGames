@@ -66,6 +66,8 @@ export interface ArenaLobbyState {
 
 export interface ArenaSessionListeners {
   onStatus: (status: ArenaSessionStatus) => void;
+  /** The browser would not hide the pointer, and said why. */
+  onLockRefused: (reason: string) => void;
   /**
    * Pointer lock came or went.
    *
@@ -260,6 +262,7 @@ export async function startArenaSession(
     {
       onLockChange: listeners.onLockChange,
       onOpenSettings: listeners.onOpenSettings,
+      onLockRefused: listeners.onLockRefused,
     },
     current,
   );

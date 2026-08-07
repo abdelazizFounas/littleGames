@@ -51,6 +51,21 @@ const LOCAL_SETTINGS_KEY = 'littlegames.arena.settings';
 const RELOCK_BOUNCE_MS = 400;
 
 /**
+ * How long the pointer must have been held for losing it to mean anything.
+ *
+ * Escape is read from the pointer going away, because no browser delivers that
+ * key while the pointer is hidden. But a browser may also take the pointer back
+ * on its own the instant after granting it — Firefox does — and a grant
+ * followed immediately by a drop is not a player asking for a menu. Treated as
+ * one, it opened the settings over the game on every single click, which is a
+ * game that cannot be played with a mouse at all.
+ */
+const MIN_HELD_MS = 1000;
+
+/** After this many instant drops, the browser plainly will not keep it. */
+const UNRELIABLE_AFTER = 2;
+
+/**
  * The keys the game asks the browser to hand over while it is fullscreen.
  *
  * Escape is deliberately absent: it is how a player leaves, and a game that took
@@ -85,6 +100,12 @@ export function ArenaStage({
   /** Whether the game currently holds the mouse. Drives the one-line hint. */
   const [holdsPointer, setHoldsPointer] = useState(false);
   const relockAt = useRef(0);
+  const lockGainedAt = useRef(0);
+  const shortLocks = useRef(0);
+  /** Why the browser would not hide the pointer, if it would not. */
+  const [lockRefusal, setLockRefusal] = useState<string | null>(null);
+  /** Set once this browser has proved it will not hold the pointer. */
+  const [lockUnreliable, setLockUnreliable] = useState(false);
   const [lobby, setLobby] = useState<ArenaLobbyState>({
     phase: 'waiting',
     youAreReady: false,
@@ -253,25 +274,45 @@ export function ArenaStage({
                 return;
               }
               setHoldsPointer(next);
+              if (next) {
+                lockGainedAt.current = Date.now();
+                setLockRefusal(null);
+                return;
+              }
+
+              // Given straight back by the browser rather than by the player.
+              // Nothing about that is a request for anything.
+              const heldFor = Date.now() - lockGainedAt.current;
+              if (heldFor < MIN_HELD_MS) {
+                shortLocks.current += 1;
+                if (shortLocks.current >= UNRELIABLE_AFTER) {
+                  setLockUnreliable(true);
+                }
+                return;
+              }
+
               // Losing the pointer mid-round is how Escape reaches us, so it
               // opens the settings rather than raising a menu of its own. The
               // game is never paused by it: the opponent is still playing, and
               // saying otherwise would be a lie told in a box.
               //
-              // Unless we asked for it. Opening the panel releases the pointer,
-              // and that release arrives here a moment later; taken as a
-              // request it would re-open a panel the player had just closed.
-              // Only where there is a pointer to lose. A phone has no Escape
-              // key and no lock worth keeping, so nothing there should be read
-              // as a request for the menu — the gear is the request.
+              // Unless we asked for it — opening the panel releases the pointer,
+              // and that release arrives here a moment later — or unless there
+              // is no pointer to lose, or this browser has already shown it will
+              // not keep one.
               const bounced = Date.now() - relockAt.current < RELOCK_BOUNCE_MS;
-              if (!next && !expected && !bounced && !touchLayout) {
+              if (!expected && !bounced && !touchLayout && !lockUnreliable) {
                 openSettingsRef.current();
               }
             },
             onLobbyChange: (next) => {
               if (!cancelled) {
                 setLobby(next);
+              }
+            },
+            onLockRefused: (reason) => {
+              if (!cancelled) {
+                setLockRefusal(reason);
               }
             },
             onOpenSettings: () => {
@@ -369,7 +410,13 @@ export function ArenaStage({
             thing the player cannot see for themselves — that the mouse is
             theirs and a click gives it back to the game. */}
         {status.kind === 'playing' && !settingsOpen && !holdsPointer && lobby.phase !== 'waiting' && (
-          <p className="arena-hint">Click to take the mouse</p>
+          <p className="arena-hint">
+            {lockUnreliable
+              ? 'This browser keeps giving the pointer back, so the mouse cannot turn the view. Press P for the settings.'
+              : lockRefusal === null
+                ? 'Click to take the mouse'
+                : `This browser would not hide the pointer: ${lockRefusal}`}
+          </p>
         )}
 
         {/* Once it is decided, over the same arena. The round is over and
