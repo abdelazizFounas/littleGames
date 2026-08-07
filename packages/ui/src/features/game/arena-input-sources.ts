@@ -86,6 +86,15 @@ const ZOOM_BUTTON = 2;
 
 export function createArenaInput(
   surface: HTMLElement,
+  /**
+   * The box the canvas sits in, and where the touch controls are built.
+   *
+   * Not the canvas itself: a canvas may have children in the markup, but they
+   * are fallback content for a browser that cannot draw one and are never
+   * rendered. Built in there, the joystick and its buttons exist in the DOM,
+   * answer `querySelector`, report a size of zero and are seen by nobody.
+   */
+  container: HTMLElement,
   listeners: ArenaInputListeners,
   initial: ArenaSettings = DEFAULT_ARENA_SETTINGS,
 ): ArenaInput {
@@ -273,7 +282,7 @@ export function createArenaInput(
       // Chosen by what the device can do, never by what it calls itself: a
       // user-agent string is a claim, and a coarse pointer is a fact.
       if (window.matchMedia('(pointer: coarse)').matches) {
-        const built = buildTouchControls(surface, settings, {
+        const built = buildTouchControls(container, settings, {
           onStick: (x, z) => {
             stickX = x;
             stickZ = z;
@@ -372,6 +381,22 @@ export function createArenaInput(
   };
 }
 
+/**
+ * Keeps a gesture attached to the element that started it, if it can.
+ *
+ * Capture is an improvement, not a requirement: it is what keeps the stick
+ * following a thumb that slides off it. The browser refuses when the pointer is
+ * no longer active, and that refusal is a thrown error — which, left alone, is
+ * an uncaught exception on every single touch.
+ */
+function keepPointer(element: HTMLElement, pointerId: number): void {
+  try {
+    element.setPointerCapture(pointerId);
+  } catch {
+    // Uncaptured: the gesture still works while the finger stays on it.
+  }
+}
+
 interface TouchHandlers {
   onStick: (x: number, z: number) => void;
   onLook: (deltaX: number, deltaY: number) => void;
@@ -391,7 +416,7 @@ interface TouchHandlers {
  * fullscreen and stays visible there.
  */
 function buildTouchControls(
-  surface: HTMLElement,
+  container: HTMLElement,
   settings: ArenaSettings,
   handlers: TouchHandlers,
 ): { element: HTMLElement; dispose: () => void } {
@@ -427,7 +452,7 @@ function buildTouchControls(
   const zoomButton = makeButton('Zoom', 'arena-touch__button--zoom');
 
   layer.append(lookArea, stick, buttons);
-  surface.appendChild(layer);
+  container.appendChild(layer);
 
   let stickPointer: number | null = null;
   let lookPointer: number | null = null;
@@ -439,7 +464,7 @@ function buildTouchControls(
       return;
     }
     stickPointer = event.pointerId;
-    stick.setPointerCapture(event.pointerId);
+    keepPointer(stick, event.pointerId);
     trackStick(event);
   };
 
@@ -478,7 +503,7 @@ function buildTouchControls(
     lookPointer = event.pointerId;
     lastLookX = event.clientX;
     lastLookY = event.clientY;
-    lookArea.setPointerCapture(event.pointerId);
+    keepPointer(lookArea, event.pointerId);
   };
 
   const onLookMove = (event: PointerEvent): void => {
@@ -507,7 +532,7 @@ function buildTouchControls(
   ): { down: (event: PointerEvent) => void; up: (event: PointerEvent) => void } {
     const down = (event: PointerEvent): void => {
       event.preventDefault();
-      element.setPointerCapture(event.pointerId);
+      keepPointer(element, event.pointerId);
       handlers.onHold(action, true);
     };
     const up = (): void => {

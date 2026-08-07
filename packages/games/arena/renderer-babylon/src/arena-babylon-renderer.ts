@@ -15,7 +15,7 @@ import { Scene } from '@babylonjs/core/scene.js';
 // oxlint-disable-next-line import/no-unassigned-import
 import '@babylonjs/core/Meshes/thinInstanceMesh.js';
 import { ARENA_INSTANCES, type BoxInstance } from './instances.ts';
-import { SKY, colourOfSeat, type Rgb } from './palette.ts';
+import { SKY, TRACER, TRACER_HIT, colourOfSeat, type Rgb } from './palette.ts';
 import { createHud, type Hud } from './hud.ts';
 import type { ArenaRenderer, ArenaView } from './view.ts';
 
@@ -34,6 +34,32 @@ import type { ArenaRenderer, ArenaView } from './view.ts';
 
 /** Just past the far corner of the arena, so nothing is clipped by the sky. */
 const SKY_SIZE = 400;
+
+/**
+ * How thick a tracer is, as a fraction of its distance from the eye.
+ *
+ * A fixed width in metres does not work here: the arena is twenty-three metres
+ * across, and a line four centimetres wide at that range is under a pixel on a
+ * normal display — drawn correctly, uploaded correctly, and invisible. Sizing it
+ * by distance instead makes a tracer subtend the same angle wherever it is, so
+ * it reads the same across the gap as it does at your feet.
+ */
+const TRACER_ANGULAR_THICKNESS = 0.022;
+const TRACER_MIN_THICKNESS = 0.06;
+const TRACER_MAX_THICKNESS = 0.6;
+
+/**
+ * How much of a tracer is skipped at the muzzle end.
+ *
+ * A shot starts at the shooter's eye, and this player's eye is the camera: drawn
+ * from its true origin, their own tracer would be a bar across the middle of the
+ * screen. Starting it a stride out puts it where a muzzle would be, and costs
+ * the opponent's tracers nothing anybody can see from across the arena.
+ */
+const TRACER_MUZZLE_METRES = 1.2;
+
+/** As many tracers as can plausibly be in the air at once. */
+const MAX_TRACERS = 8;
 
 function toColor3(colour: Rgb): Color3 {
   return new Color3(colour.r, colour.g, colour.b);
@@ -94,10 +120,48 @@ function buildPlayers(owner: Scene, matrices: Float32Array, colours: Float32Arra
   const cube = CreateBox('players', { size: 1 }, owner);
   cube.material = flatMaterial('players', owner);
   cube.useVertexColors = true;
+  // Never culled. A thin-instanced mesh is tested against the bounding box of
+  // the mesh the instances were built from, and that box is a unit cube at the
+  // origin — in the middle of the ravine. Look anywhere that does not contain
+  // the middle of the ravine and every instance disappears at once, wherever it
+  // actually is. Refreshing the bounds each frame would be the other answer;
+  // for two bodies, not culling at all is cheaper than working out that they
+  // are visible.
+  cube.alwaysSelectAsActiveMesh = true;
   cube.thinInstanceSetBuffer('matrix', matrices, 16, false);
   cube.thinInstanceSetBuffer('color', colours, 4, false);
   cube.thinInstanceCount = 0;
   cube.isVisible = false;
+  return cube;
+}
+
+/**
+ * The tracers, as a third instanced cube.
+ *
+ * Unlit and bright: a tracer is not a surface catching the light, it is the
+ * light. Lighting it like scenery would make it dimmest exactly where it
+ * matters, which is against the dark far wall.
+ */
+function buildTracers(owner: Scene, matrices: Float32Array, colours: Float32Array): Mesh {
+  const cube = CreateBox('tracers', { size: 1 }, owner);
+  // Same as the bodies: culled by a unit cube in the middle of the ravine
+  // unless told otherwise, which is why a tracer fired anywhere else was drawn
+  // and never seen.
+  //
+  // Lit like everything else rather than unlit. `disableLighting` takes the
+  // per-instance colour out of the shading path and the tracers came out
+  // black — drawn, sized and oriented correctly, and the wrong colour
+  // entirely. A generous emissive term lifts them off the scenery instead,
+  // which is what made them read as a shot rather than as a stick.
+  const material = flatMaterial('tracers', owner);
+  material.emissiveColor = new Color3(0.55, 0.55, 0.55);
+  cube.material = material;
+  cube.useVertexColors = true;
+  cube.thinInstanceSetBuffer('matrix', matrices, 16, false);
+  cube.thinInstanceSetBuffer('color', colours, 4, false);
+  cube.thinInstanceCount = 0;
+  cube.isVisible = false;
+  cube.alwaysSelectAsActiveMesh = true;
   return cube;
 }
 
@@ -107,6 +171,7 @@ export function createArenaBabylonRenderer(): ArenaRenderer {
   let scene: Scene | null = null;
   let camera: FreeCamera | null = null;
   let players: Mesh | null = null;
+  let tracers: Mesh | null = null;
   let hud: Hud | null = null;
 
   // Reused every frame. Allocating these per frame is sixty allocations a
@@ -117,6 +182,11 @@ export function createArenaBabylonRenderer(): ArenaRenderer {
   const scratch = Matrix.Identity();
   const playerMatrices = new Float32Array(2 * 16);
   const playerColours = new Float32Array(2 * 4);
+  const tracerMatrices = new Float32Array(MAX_TRACERS * 16);
+  const tracerColours = new Float32Array(MAX_TRACERS * 4);
+  const along = new Vector3(0, 0, 1);
+  const turn = new Quaternion();
+  const forwardAxis = new Vector3(0, 0, 1);
 
   function drawPlayers(mesh: Mesh, view: ArenaView): void {
     let drawn = 0;
@@ -142,6 +212,65 @@ export function createArenaBabylonRenderer(): ArenaRenderer {
     // Hidden outright when there is nobody to draw. A thin-instanced mesh with
     // a count of zero does not draw nothing: it falls back to drawing itself,
     // and the unit cube it was built from appears in the middle of the arena.
+    mesh.isVisible = drawn > 0;
+    if (drawn > 0) {
+      mesh.thinInstanceBufferUpdated('matrix');
+      mesh.thinInstanceBufferUpdated('color');
+    }
+  }
+
+  function drawTracers(mesh: Mesh, view: ArenaView): void {
+    let drawn = 0;
+
+    for (const shot of view.shots) {
+      if (drawn >= MAX_TRACERS) {
+        break;
+      }
+      along.set(shot.to.x - shot.from.x, shot.to.y - shot.from.y, shot.to.z - shot.from.z);
+      const length = along.length();
+      if (length <= TRACER_MUZZLE_METRES) {
+        continue;
+      }
+      along.scaleInPlace(1 / length);
+      Quaternion.FromUnitVectorsToRef(forwardAxis, along, turn);
+
+      // The drawn segment runs from the muzzle to the endpoint, so its middle
+      // is not the middle of the shot.
+      const start = TRACER_MUZZLE_METRES;
+      const drawnLength = length - start;
+      const middle = start + drawnLength / 2;
+
+      const centreX = shot.from.x + along.x * middle;
+      const centreY = shot.from.y + along.y * middle;
+      const centreZ = shot.from.z + along.z * middle;
+      const range = Math.hypot(
+        centreX - view.camera.position.x,
+        centreY - view.camera.position.y,
+        centreZ - view.camera.position.z,
+      );
+      const thickness = Math.min(
+        Math.max(range * TRACER_ANGULAR_THICKNESS, TRACER_MIN_THICKNESS),
+        TRACER_MAX_THICKNESS,
+      );
+
+      Matrix.ComposeToRef(
+        new Vector3(thickness, thickness, drawnLength),
+        turn,
+        new Vector3(centreX, centreY, centreZ),
+        scratch,
+      );
+      scratch.copyToArray(tracerMatrices, drawn * 16);
+
+      const colour = shot.hitPlayer ? TRACER_HIT : TRACER;
+      // Faded by dimming rather than by transparency: an opaque tracer needs no
+      // sorting against the scenery it crosses, and a line that goes out is read
+      // the same way as one that fades away.
+      const left = 1 - Math.min(Math.max(shot.fade, 0), 1);
+      tracerColours.set([colour.r * left, colour.g * left, colour.b * left, 1], drawn * 4);
+      drawn += 1;
+    }
+
+    mesh.thinInstanceCount = drawn;
     mesh.isVisible = drawn > 0;
     if (drawn > 0) {
       mesh.thinInstanceBufferUpdated('matrix');
@@ -189,6 +318,7 @@ export function createArenaBabylonRenderer(): ArenaRenderer {
 
       buildArena(built);
       const bodies = buildPlayers(built, playerMatrices, playerColours);
+      const lines = buildTracers(built, tracerMatrices, tracerColours);
 
       // The sky is a box seen from the inside: its faces are flipped by scaling
       // it inside out rather than by a two-sided material, which would also
@@ -205,6 +335,7 @@ export function createArenaBabylonRenderer(): ArenaRenderer {
       scene = built;
       camera = eyeCamera;
       players = bodies;
+      tracers = lines;
       hud = createHud(container);
 
       // Nothing is drawn until the session asks for it. Babylon's own render
@@ -214,7 +345,7 @@ export function createArenaBabylonRenderer(): ArenaRenderer {
     },
 
     render(view: ArenaView): void {
-      if (scene === null || camera === null || players === null || hud === null) {
+      if (scene === null || camera === null || players === null || tracers === null || hud === null) {
         return;
       }
 
@@ -229,6 +360,7 @@ export function createArenaBabylonRenderer(): ArenaRenderer {
       camera.fov = view.camera.fieldOfView;
 
       drawPlayers(players, view);
+      drawTracers(tracers, view);
       hud.update(view.hud);
       scene.render();
     },
@@ -246,6 +378,7 @@ export function createArenaBabylonRenderer(): ArenaRenderer {
       engine?.dispose();
       canvas?.remove();
       hud = null;
+      tracers = null;
       players = null;
       camera = null;
       scene = null;

@@ -11,7 +11,12 @@ import { describe, expect, it } from 'vitest';
 import type { ArenaCommand } from '../src/features/game/arena-input-sources';
 import {
   CORRECTION_HALF_LIFE_MS,
+  DAMAGE_SECONDS,
+  HIT_MARKER_SECONDS,
   INTERPOLATION_DELAY_MS,
+  TRACER_SECONDS,
+  drawableShots,
+  fadeSince,
   NO_SMOOTHING,
   SNAP_DISTANCE_METRES,
   composeArenaView,
@@ -23,6 +28,7 @@ import {
   smoothCamera,
   type ArenaFrame,
   type FramePlayer,
+  type TimedShot,
 } from '../src/features/game/arena-view';
 
 function player(over: Partial<FramePlayer> = {}): FramePlayer {
@@ -266,3 +272,84 @@ const FORWARD = { x: 0, y: 0, z: 1 };
 function bodyAt(x: number): PlayerBody {
   return { ...restingBody(SPAWNS.north), x };
 }
+
+function shot(over: Partial<TimedShot> = {}): TimedShot {
+  return {
+    id: 1,
+    origin: { x: 0, y: 1.6, z: 11.5 },
+    endpoint: { x: 0, y: 0.9, z: -11.5 },
+    hitPlayer: false,
+    seenAt: 1000,
+    ...over,
+  };
+}
+
+describe('fading feedback', () => {
+  it('is full at the moment it happened and nothing at the end', () => {
+    expect(fadeSince(1000, 1000, 1)).toBe(1);
+    expect(fadeSince(1500, 1000, 1)).toBeCloseTo(0.5, 9);
+    expect(fadeSince(2000, 1000, 1)).toBe(0);
+    expect(fadeSince(9000, 1000, 1)).toBe(0);
+  });
+
+  it('is nothing at all when it never happened', () => {
+    // The first frame of a match has no last death and no last hit. Both have
+    // to fade to nothing rather than flash on arrival.
+    expect(fadeSince(1000, null, 1)).toBe(0);
+  });
+
+  it('is nothing for a moment that has not arrived yet', () => {
+    expect(fadeSince(500, 1000, 1)).toBe(0);
+  });
+});
+
+describe('tracers', () => {
+  it('are drawn from the moment they were first seen', () => {
+    const drawn = drawableShots([shot({ seenAt: 1000 })], 1000);
+    expect(drawn).toHaveLength(1);
+    expect(drawn[0]?.fade).toBe(0);
+    expect(drawn[0]?.from).toEqual(shot().origin);
+    expect(drawn[0]?.to).toEqual(shot().endpoint);
+  });
+
+  it('fade out over their lifetime and then are gone', () => {
+    const halfway = drawableShots([shot()], 1000 + TRACER_SECONDS * 500);
+    expect(halfway[0]?.fade).toBeCloseTo(0.5, 6);
+    expect(drawableShots([shot()], 1000 + TRACER_SECONDS * 1000)).toHaveLength(0);
+    expect(drawableShots([shot()], 9000)).toHaveLength(0);
+  });
+
+  it('keep the shooter apart from what they hit', () => {
+    const [missed, landed] = drawableShots(
+      [shot({ id: 1, hitPlayer: false }), shot({ id: 2, hitPlayer: true })],
+      1000,
+    );
+    expect(missed?.hitPlayer).toBe(false);
+    expect(landed?.hitPlayer).toBe(true);
+    expect(landed?.id).toBe(2);
+  });
+});
+
+describe('hit and damage', () => {
+  it('mark a shot that connected, briefly', () => {
+    const marked = hudFor(frame(), 1000, 1000, null);
+    expect(marked.hitMarker).toBe(1);
+    expect(marked.damage).toBe(0);
+    expect(hudFor(frame(), 1000 + HIT_MARKER_SECONDS * 1000, 1000, null).hitMarker).toBe(0);
+  });
+
+  it('mark being hit, for longer than marking a hit', () => {
+    // Being killed is worth more of the screen for longer than killing is: one
+    // of them needs explaining and the other does not.
+    expect(DAMAGE_SECONDS).toBeGreaterThan(HIT_MARKER_SECONDS);
+    const hurt = hudFor(frame(), 1000, null, 1000);
+    expect(hurt.damage).toBe(1);
+    expect(hurt.hitMarker).toBe(0);
+  });
+
+  it('show neither before anything has happened', () => {
+    const opening = hudFor(frame());
+    expect(opening.hitMarker).toBe(0);
+    expect(opening.damage).toBe(0);
+  });
+});

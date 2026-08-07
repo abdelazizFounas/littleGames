@@ -74,7 +74,36 @@ export function createHud(container: HTMLElement): Hud {
   message.style.textAlign = 'center';
   message.style.textShadow = '0 2px 6px rgba(0, 0, 0, 0.6)';
 
-  root.append(crosshair, score, message);
+  /**
+   * Four ticks around the crosshair, shown when a shot connects.
+   *
+   * The confirmation a shooter has no other way of getting: the target is a box
+   * that does not stagger or cry out, and from across the arena a miss and a
+   * kill look exactly alike until the score changes a moment later.
+   */
+  const hitMarker = document.createElement('div');
+  hitMarker.style.position = 'absolute';
+  hitMarker.style.left = '50%';
+  hitMarker.style.top = '50%';
+  hitMarker.style.width = '22px';
+  hitMarker.style.height = '22px';
+  hitMarker.style.margin = '-11px 0 0 -11px';
+  hitMarker.style.opacity = '0';
+  hitMarker.style.background = [
+    'linear-gradient(45deg, transparent 42%, #ff5d5d 42%, #ff5d5d 58%, transparent 58%)',
+    'linear-gradient(-45deg, transparent 42%, #ff5d5d 42%, #ff5d5d 58%, transparent 58%)',
+  ].join(',');
+  hitMarker.style.filter = 'drop-shadow(0 0 2px rgb(0 0 0 / 80%))';
+
+  /** Red around the edges when this player is hit. Never over the middle. */
+  const damage = document.createElement('div');
+  damage.style.position = 'absolute';
+  damage.style.inset = '0';
+  damage.style.opacity = '0';
+  damage.style.background =
+    'radial-gradient(ellipse at center, transparent 35%, rgb(190 20 20 / 75%) 100%)';
+
+  root.append(damage, crosshair, hitMarker, score, message);
   container.appendChild(root);
 
   // What each element currently says. Writing textContent unconditionally
@@ -82,6 +111,8 @@ export function createHud(container: HTMLElement): Hud {
   let shownScore = '';
   let shownMessage = '';
   let shownCrosshair = true;
+  let shownHit = 0;
+  let shownDamage = 0;
 
   return {
     update(state: ArenaHud): void {
@@ -106,6 +137,20 @@ export function createHud(container: HTMLElement): Hud {
       if (wantsCrosshair !== shownCrosshair) {
         shownCrosshair = wantsCrosshair;
         crosshair.style.display = wantsCrosshair ? 'block' : 'none';
+      }
+
+      // Rounded before comparing, so a value drifting by a thousandth every
+      // frame does not rewrite a style sixty times a second for nothing.
+      const wantsHit = Math.round(state.hitMarker * 20) / 20;
+      if (wantsHit !== shownHit) {
+        shownHit = wantsHit;
+        hitMarker.style.opacity = String(wantsHit);
+      }
+
+      const wantsDamage = Math.round(state.damage * 20) / 20;
+      if (wantsDamage !== shownDamage) {
+        shownDamage = wantsDamage;
+        damage.style.opacity = String(wantsDamage);
       }
     },
 

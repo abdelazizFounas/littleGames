@@ -15,6 +15,7 @@ import { DEFAULT_ARENA_SETTINGS, ZOOM_FIELD_OF_VIEW_RATIO, type ArenaSettings } 
 import {
   INTERPOLATION_DELAY_MS,
   NO_SMOOTHING,
+  TRACER_SECONDS,
   composeArenaView,
   eyeOf,
   predictSelf,
@@ -22,6 +23,7 @@ import {
   type ArenaFrame,
   type CameraSmoothing,
   type FramePlayer,
+  type TimedShot,
 } from './arena-view';
 
 const INPUT_INTERVAL_MS = 1000 / TICK_RATE;
@@ -57,6 +59,9 @@ export interface ArenaLobbyState {
   readonly opponentPresent: boolean;
   readonly opponentReady: boolean;
   readonly opponentName: string;
+  readonly ownScore: number;
+  readonly opponentScore: number;
+  readonly won: boolean;
 }
 
 export interface ArenaSessionListeners {
@@ -82,6 +87,15 @@ const PHASES: Record<number, ArenaFrame['phase']> = {
 };
 
 const SEATS: Record<number, Seat> = { 1: 'north', 2: 'south' };
+
+/** Where a shot came from and where it stopped, off the wire. */
+function pointOf(vector: { x: number; y: number; z: number } | undefined): {
+  x: number;
+  y: number;
+  z: number;
+} {
+  return vector ?? { x: 0, y: 0, z: 0 };
+}
 
 function bodyOf(player: ArenaPlayerState): PlayerBody {
   const body = player.body;
@@ -118,6 +132,9 @@ function lobbyOf(frame: ArenaFrame, opponentName: string): ArenaLobbyState {
     opponentPresent: frame.opponent !== null,
     opponentReady: frame.opponent?.ready ?? false,
     opponentName,
+    ownScore: frame.self.score,
+    opponentScore: frame.opponent?.score ?? 0,
+    won: frame.winner === frame.seat,
   };
 }
 
@@ -128,7 +145,10 @@ function sameLobby(a: ArenaLobbyState | null, b: ArenaLobbyState): boolean {
     a.youAreReady === b.youAreReady &&
     a.opponentPresent === b.opponentPresent &&
     a.opponentReady === b.opponentReady &&
-    a.opponentName === b.opponentName
+    a.opponentName === b.opponentName &&
+    a.ownScore === b.ownScore &&
+    a.opponentScore === b.opponentScore &&
+    a.won === b.won
   );
 }
 
@@ -202,6 +222,28 @@ export async function startArenaSession(
   let seq = 0;
   let smoothing: CameraSmoothing = NO_SMOOTHING;
   let lobby: ArenaLobbyState | null = null;
+  // Shots this client has already seen, by id.
+  //
+  // They arrive in a trailing window rather than one frame at a time, because
+  // snapshots travel unreliably and a tracer shown in a single frame would
+  // sometimes never be shown at all. The id is what makes a repeat a repeat: a
+  // shot is drawn from the moment it was first seen, however many snapshots go
+  // on mentioning it.
+  const seenShots = new Map<number, TimedShot>();
+  /**
+   * The newest shot id this client has ever accepted.
+   *
+   * Ids are unique and increasing within a match, which makes this the whole
+   * test for "have I seen this before" — and it has to be separate from the map
+   * of shots being drawn, because that map is pruned as tracers fade. Judging
+   * novelty by what is still on screen means a shot from the trailing window
+   * arrives again the moment its tracer expires, and fires the hit marker for a
+   * second time.
+   */
+  let newestShotId = 0;
+  let lastOwnHitAt: number | null = null;
+  let lastDamageAt: number | null = null;
+  let wasAlive = true;
   let drawnEye: { x: number; y: number; z: number } | null = null;
   let predicted: PlayerBody = restingBody({ x: 0, y: 0, z: 0 });
 
@@ -214,6 +256,7 @@ export async function startArenaSession(
 
   const input: ArenaInput = createArenaInput(
     surface,
+    container,
     {
       onLockChange: listeners.onLockChange,
       onOpenSettings: listeners.onOpenSettings,
@@ -235,6 +278,10 @@ export async function startArenaSession(
     history.clear();
     smoothing = NO_SMOOTHING;
     drawnEye = null;
+    // Shots from before the gap describe a moment the match has left, and
+    // drawing them now would put tracers in the air for a firefight that is
+    // over. The high-water mark stays: those shots are still not new.
+    seenShots.clear();
   };
 
   const teardown = (): void => {
@@ -257,7 +304,16 @@ export async function startArenaSession(
     {
       camera: { position: eyeOf(opening.north.body), forward: { x: 0, y: 0, z: 1 }, fieldOfView: current.look.fieldOfView },
       players: [],
-      hud: { ownScore: 0, opponentScore: 0, message: 'Joining…', respawnSeconds: 0, crosshair: false },
+      shots: [],
+      hud: {
+        ownScore: 0,
+        opponentScore: 0,
+        message: 'Joining…',
+        respawnSeconds: 0,
+        crosshair: false,
+        hitMarker: 0,
+        damage: 0,
+      },
     },
     0,
   );
@@ -274,6 +330,41 @@ export async function startArenaSession(
           }
           buffer.push(next, performance.now());
           history.acknowledge(next.acknowledgedSeq);
+
+          const arrivedAt = performance.now();
+          for (const shot of snapshot.shots) {
+            if (shot.id <= newestShotId) {
+              continue;
+            }
+            newestShotId = shot.id;
+            seenShots.set(shot.id, {
+              id: shot.id,
+              origin: pointOf(shot.origin),
+              endpoint: pointOf(shot.endpoint),
+              hitPlayer: shot.hitPlayer,
+              seenAt: arrivedAt,
+            });
+            // The only confirmation a shooter gets. The target is a box that
+            // does not stagger, and across this arena a miss looks like a hit.
+            if (shot.hitPlayer && SEATS[shot.shooter] === next.seat) {
+              lastOwnHitAt = arrivedAt;
+            }
+          }
+          // Older than any tracer can be. Kept small rather than kept forever:
+          // a match is hundreds of shots and none of them is worth remembering
+          // once it has faded.
+          for (const [id, shot] of seenShots) {
+            if (arrivedAt - shot.seenAt > TRACER_SECONDS * 1000 * 4) {
+              seenShots.delete(id);
+            }
+          }
+
+          // Being killed is a transition, not a state: the flash belongs to the
+          // moment of it, and `alive` stays false for the whole respawn.
+          if (wasAlive && !next.self.alive) {
+            lastDamageAt = arrivedAt;
+          }
+          wasAlive = next.self.alive;
 
           const opponentName =
             snapshot.players.find((player) => player.userId !== userId)?.username ?? 'your opponent';
@@ -384,6 +475,7 @@ export async function startArenaSession(
         drawn,
         input.forward(),
         current.look.fieldOfView * (zoomed ? ZOOM_FIELD_OF_VIEW_RATIO : 1),
+        { now, shots: [...seenShots.values()], lastOwnHitAt, lastDamageAt },
       ),
       alpha,
     );

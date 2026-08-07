@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 import { describeError } from '../../lib/describe-error';
 import { useSession } from '../../session/use-session';
 import { ArenaReadyPanel } from './arena-ready-panel';
+import { ArenaResultPanel } from './arena-result-panel';
 import { ArenaSettingsPanel } from './arena-settings-panel';
 import {
   DEFAULT_ARENA_SETTINGS,
@@ -76,6 +77,9 @@ export function ArenaStage({
     opponentPresent: false,
     opponentReady: false,
     opponentName: 'your opponent',
+    ownScore: 0,
+    opponentScore: 0,
+    won: false,
   });
   // Read from this browser first so the controls are right on the first frame
   // rather than a round trip later; the account's copy is adopted below if it
@@ -327,7 +331,12 @@ export function ArenaStage({
             game: the opponent is always playing, so nothing that stops the
             player ever claims to have stopped the match. */}
         {status.kind === 'playing' && !settingsOpen && lobby.phase === 'waiting' && (
-          <ArenaReadyPanel lobby={lobby} onReady={toggleReady} onOpenSettings={openSettings} />
+          <ArenaReadyPanel
+            lobby={lobby}
+            onReady={toggleReady}
+            onOpenSettings={openSettings}
+            touchLayout={touchLayout}
+          />
         )}
 
         {/* One line, not a box: the round is running and nothing about it has
@@ -336,6 +345,17 @@ export function ArenaStage({
             theirs and a click gives it back to the game. */}
         {status.kind === 'playing' && !settingsOpen && !holdsPointer && lobby.phase !== 'waiting' && (
           <p className="arena-hint">Click to take the mouse</p>
+        )}
+
+        {/* Once it is decided, over the same arena. The round is over and
+            nobody is shooting, so this one really can take the screen. */}
+        {status.kind === 'playing' && !settingsOpen && lobby.phase === 'finished' && (
+          <ArenaResultPanel
+            won={lobby.won}
+            ownScore={lobby.ownScore}
+            opponentScore={lobby.opponentScore}
+            opponentName={lobby.opponentName}
+          />
         )}
 
         {settingsOpen && (

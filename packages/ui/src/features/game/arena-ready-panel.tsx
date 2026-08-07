@@ -14,10 +14,13 @@ export function ArenaReadyPanel({
   lobby,
   onReady,
   onOpenSettings,
+  touchLayout,
 }: {
   readonly lobby: ArenaLobbyState;
   readonly onReady: () => void;
   readonly onOpenSettings: () => void;
+  /** A phone has no Escape key, so it is not told to press one. */
+  readonly touchLayout: boolean;
 }): ReactNode {
   const waitingForOpponent = !lobby.opponentPresent;
   const opponentStatus = waitingForOpponent
@@ -48,9 +51,18 @@ export function ArenaReadyPanel({
         </div>
 
         <p className="arena-panel__hint">
-          Clicking <strong>Ready</strong> also takes the mouse. Once you both are, a three-second
-          countdown opens the round. <kbd>P</kbd> or <kbd>Esc</kbd> brings the settings back at any
-          time.
+          {touchLayout ? (
+            <>
+              Once you are both ready, a three-second countdown opens the round. Use the stick to
+              move and drag anywhere to look.
+            </>
+          ) : (
+            <>
+              Clicking <strong>Ready</strong> also takes the mouse. Once you both are, a
+              three-second countdown opens the round. <kbd>P</kbd> or <kbd>Esc</kbd> brings the
+              settings back at any time.
+            </>
+          )}
         </p>
       </div>
     </div>

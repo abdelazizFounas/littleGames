@@ -45,6 +45,10 @@ export const SKY = rgb(0x161a22);
 /** Under the arena, seen down the ravine. Darker than the sky, so down reads. */
 export const VOID = rgb(0x0b0d12);
 
+/** A shot that found nothing, and one that found somebody. */
+export const TRACER = rgb(0xffe8a8);
+export const TRACER_HIT = rgb(0xff6b6b);
+
 /** One colour per seat, so a glimpse across the arena is already an answer. */
 const SEAT_COLOURS: Readonly<Record<Seat, Rgb>> = {
   north: rgb(0x4aa3ff),

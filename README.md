@@ -13,12 +13,11 @@ messages — is written in English.
 > the first real test of the claim the architecture was built on — that the
 > second game would be cheap.
 >
-> A third is being built in five phases of its own: **Arena**, a 1v1
-> server-authoritative FPS. Four of the five are done — the rules, the
-> authoritative server, the arena in Babylon.js, and now the controls: pointer
-> lock, mouse look, client-side prediction of your own body, an interpolated
-> opponent, and settings that follow your account rather than your browser. Two
-> people can duel.
+> And a third game: **Arena**, a 1v1 server-authoritative FPS, built in five
+> phases of its own and finished. Pointer lock and mouse look on a desktop, a
+> stick and four buttons on a phone, client-side prediction of your own body, an
+> interpolated opponent, lag-compensated shooting, tracers, and settings that
+> follow your account rather than your browser.
 >
 > The third phase is the one this game exists for. Adding a second rendering
 > engine took **one new package and one line in the version table**: no change to
@@ -240,6 +239,12 @@ pnpm --filter @littlegames/net verify:match        # Pong
 pnpm --filter @littlegames/net verify:battleship   # Battleship
 pnpm --filter @littlegames/net verify:arena        # Arena
 ```
+
+Arena is also driven in real browsers over the DevTools protocol — two of them
+duelling, and a third emulating a phone with touch events — because a first
+person game has a whole class of faults no unit test reaches. Everything found
+that way is listed above; the shortest summary is that **every rendering and
+input bug in this game was found by looking at it**, not by reasoning about it.
 
 The first signs in two players, puts them in one match, sends input from one
 and reads the server's echo from the other, measures the tick rate, and checks
@@ -529,6 +534,35 @@ guarded in `arena-stage.tsx` with what was observed:
 
 When the game does not hold the mouse, one line says so over the running game —
 not a box, not a blur, and not a claim that anything has stopped.
+
+### Seeing what happened
+
+A shot is the one thing in this game that has to be felt rather than inferred:
+the target is a box that does not stagger, and from across the ravine a miss
+looks exactly like a kill until the score changes a moment later. So there are
+three answers, and all three are drawn from what the server resolved rather than
+from what the client believed.
+
+**Tracers** ride in the trailing window of shots every snapshot carries, drawn
+from the moment the client first sees an id and faded out over a quarter of a
+second. Three things had to be got right and each was wrong first:
+
+- Thin-instanced meshes are frustum-culled against the bounding box of the mesh
+  the instances were built from — a unit cube at the origin, in the middle of
+  the ravine. Everything vanished the moment the camera looked anywhere that did
+  not contain that point. This was true of the player bodies too.
+- A tracer four centimetres thick is under one pixel at twenty-three metres:
+  drawn, oriented and coloured correctly, and invisible. Thickness is now
+  angular, so a tracer subtends the same width wherever it is.
+- `disableLighting` takes per-instance colour out of the shading path, so the
+  tracers came out black.
+
+**A hit marker** on the shooter's crosshair, and **the screen going red** for
+whoever was hit. Both are transitions rather than states, so both are timed from
+the moment they happened. The novelty of a shot is judged by its id against a
+high-water mark rather than by whether its tracer is still on screen — otherwise
+the trailing window brings the same shot back the instant its tracer expires,
+and the hit marker fires again for a kill from a second ago.
 
 ## How the picture is built
 

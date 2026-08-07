@@ -13,7 +13,12 @@ import {
   type Seat,
   type Vec3,
 } from '@littlegames/arena-logic';
-import type { ArenaHud, ArenaPlayerView, ArenaView } from '@littlegames/arena-renderer-babylon';
+import type {
+  ArenaHud,
+  ArenaPlayerView,
+  ArenaShotView,
+  ArenaView,
+} from '@littlegames/arena-renderer-babylon';
 import { reconcile } from '@littlegames/net';
 import type { ArenaCommand } from './arena-input-sources';
 
@@ -201,6 +206,74 @@ export function smoothCamera(
   };
 }
 
+/**
+ * How long a tracer stays on screen, in seconds.
+ *
+ * Long enough to be caught from the corner of an eye — and it has to be, since
+ * the whole use of seeing a tracer is learning where the shot came from before
+ * the next one. Short enough that the arena is never criss-crossed by the last
+ * ten seconds of the round: a shot is an event, not a decoration.
+ */
+export const TRACER_SECONDS = 0.28;
+
+/** How long the mark stays up after a shot of yours connects. */
+export const HIT_MARKER_SECONDS = 0.35;
+
+/** How long the screen stays red after you are hit. */
+export const DAMAGE_SECONDS = 0.6;
+
+/**
+ * One down to nothing over a lifetime, and nothing before it started.
+ *
+ * `never` — no such moment yet — is deliberately a value rather than a branch at
+ * every call site: the first frame of a match has no last death and no last hit,
+ * and both have to fade to nothing rather than to a flash.
+ */
+export function fadeSince(now: number, at: number | null, lifetimeSeconds: number): number {
+  if (at === null) {
+    return 0;
+  }
+  const elapsed = (now - at) / 1000;
+  if (elapsed < 0 || elapsed >= lifetimeSeconds) {
+    return 0;
+  }
+  return 1 - elapsed / lifetimeSeconds;
+}
+
+/** A shot the server resolved, aged into something drawable. */
+export interface TimedShot {
+  readonly id: number;
+  readonly origin: Vec3;
+  readonly endpoint: Vec3;
+  readonly hitPlayer: boolean;
+  /** When this client first saw it, on the same clock as `now`. */
+  readonly seenAt: number;
+}
+
+/**
+ * The shots still worth drawing, oldest first.
+ *
+ * Ageing happens here rather than in the renderer because the renderer holds no
+ * clock — it is handed how far through its life each tracer is and draws that.
+ */
+export function drawableShots(shots: readonly TimedShot[], now: number): ArenaShotView[] {
+  const drawable: ArenaShotView[] = [];
+  for (const shot of shots) {
+    const left = fadeSince(now, shot.seenAt, TRACER_SECONDS);
+    if (left <= 0) {
+      continue;
+    }
+    drawable.push({
+      id: shot.id,
+      from: shot.origin,
+      to: shot.endpoint,
+      hitPlayer: shot.hitPlayer,
+      fade: 1 - left,
+    });
+  }
+  return drawable;
+}
+
 function messageFor(frame: ArenaFrame): string {
   switch (frame.phase) {
     case 'waiting':
@@ -218,7 +291,12 @@ function messageFor(frame: ArenaFrame): string {
   }
 }
 
-export function hudFor(frame: ArenaFrame): ArenaHud {
+export function hudFor(
+  frame: ArenaFrame,
+  now = 0,
+  lastOwnHitAt: number | null = null,
+  lastDamageAt: number | null = null,
+): ArenaHud {
   return {
     ownScore: frame.self.score,
     opponentScore: frame.opponent?.score ?? 0,
@@ -227,6 +305,8 @@ export function hudFor(frame: ArenaFrame): ArenaHud {
       ? 0
       : Math.min(frame.self.respawnTicks, RESPAWN_TICKS) / TICK_RATE,
     crosshair: frame.phase === 'playing' && frame.self.alive,
+    hitMarker: fadeSince(now, lastOwnHitAt, HIT_MARKER_SECONDS),
+    damage: fadeSince(now, lastDamageAt, DAMAGE_SECONDS),
   };
 }
 
@@ -246,6 +326,12 @@ export function composeArenaView(
   eye: Vec3,
   forward: Vec3,
   fieldOfView: number,
+  feedback: {
+    readonly now: number;
+    readonly shots: readonly TimedShot[];
+    readonly lastOwnHitAt: number | null;
+    readonly lastDamageAt: number | null;
+  } = { now: 0, shots: [], lastOwnHitAt: null, lastDamageAt: null },
 ): ArenaView {
   const opponent = interpolateOpponent(from, to, alpha);
 
@@ -254,7 +340,11 @@ export function composeArenaView(
     // Only the opponent is drawn: the camera is inside this player's own body,
     // and a box around one's own eyes is a screen full of its inside faces.
     players: opponent === null ? [] : [opponent],
-    hud: hudFor(from),
+    // Tracers are drawn at the moment they arrive rather than in the
+    // interpolated past. A shot is an event, and an event shown late is an
+    // event shown at the wrong time.
+    shots: drawableShots(feedback.shots, feedback.now),
+    hud: hudFor(from, feedback.now, feedback.lastOwnHitAt, feedback.lastDamageAt),
   };
 }
 

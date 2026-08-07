@@ -19,7 +19,25 @@ export interface ArenaView {
    * box drawn around one's own eyes fills the screen with its inside faces.
    */
   readonly players: readonly ArenaPlayerView[];
+  /** Shots still worth drawing, newest last. */
+  readonly shots: readonly ArenaShotView[];
   readonly hud: ArenaHud;
+}
+
+/**
+ * One shot the server resolved, as a line to draw.
+ *
+ * It carries its own age rather than a timestamp, because the renderer holds no
+ * clock: whoever composes the view knows when the shot was first seen, and the
+ * renderer only needs to know how far through its life it is.
+ */
+export interface ArenaShotView {
+  readonly id: number;
+  readonly from: Vec3;
+  readonly to: Vec3;
+  readonly hitPlayer: boolean;
+  /** Zero when just fired, one when it should be gone. */
+  readonly fade: number;
 }
 
 /**
@@ -56,6 +74,14 @@ export interface ArenaHud {
   /** Seconds until this player is back on their feet. Zero while alive. */
   readonly respawnSeconds: number;
   readonly crosshair: boolean;
+  /**
+   * How strongly to mark a shot of this player's that connected, from one down
+   * to nothing. It is the only confirmation a shooter gets: the target is a box
+   * that does not stagger, and at this range a miss looks the same as a hit.
+   */
+  readonly hitMarker: number;
+  /** How strongly to show that this player was hit, from one down to nothing. */
+  readonly damage: number;
 }
 
 /**

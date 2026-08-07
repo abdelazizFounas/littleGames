@@ -899,3 +899,11 @@ body {
   border-radius: 2em;
   transform: translateX(-50%);
 }
+
+.arena-result__score {
+  margin: 0;
+  font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  font-size: clamp(1.6rem, 6vmin, 4rem);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.08em;
+}

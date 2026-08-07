@@ -62,12 +62,15 @@ export function ArenaPreviewRoute(): ReactNode {
           {
             camera: flythroughAt((now - startedAt) / 1000),
             players: [],
+            shots: [],
             hud: {
               ownScore: 0,
               opponentScore: 0,
               message: 'Arena preview',
               respawnSeconds: 0,
               crosshair: false,
+              hitMarker: 0,
+              damage: 0,
             },
           },
           0,

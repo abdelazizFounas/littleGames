@@ -300,7 +300,12 @@ export function ArenaSettingsPanel({
 
         <footer className="arena-settings__footer">
           <p className="hint">
-            <kbd>P</kbd> or <kbd>Esc</kbd> to go back. Changes are saved as you make them.
+            {touchLayout ? 'Changes are saved as you make them.' : null}
+            {touchLayout ? null : (
+              <>
+                <kbd>P</kbd> or <kbd>Esc</kbd> to go back. Changes are saved as you make them.
+              </>
+            )}
           </p>
           <button
             type="button"
