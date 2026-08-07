@@ -47,6 +47,8 @@ export interface FramePlayer {
   readonly score: number;
   readonly respawnTicks: number;
   readonly spawnEpoch: number;
+  /** Whether they have said they are ready. Only meaningful before the start. */
+  readonly ready: boolean;
 }
 
 /** A whole snapshot as the client keeps it, plus who we are in it. */
@@ -202,7 +204,10 @@ export function smoothCamera(
 function messageFor(frame: ArenaFrame): string {
   switch (frame.phase) {
     case 'waiting':
-      return 'Waiting for an opponent';
+      // Nothing: before the round opens the ready panel is over the arena and
+      // says everything there is to say. A second message under it would only
+      // repeat it.
+      return '';
     case 'countdown':
       // Rounded up, so the last whole second is shown as 1 rather than 0.
       return String(Math.ceil(frame.phaseTicks / TICK_RATE));

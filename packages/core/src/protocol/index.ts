@@ -32,6 +32,7 @@ export type {
   Body as ArenaBody,
   PlayerInput as ArenaPlayerInput,
   PlayerState as ArenaPlayerState,
+  Ready as ArenaReady,
   ShotEvent as ArenaShotEvent,
   Snapshot as ArenaSnapshot,
   Vector3 as ArenaVector3,

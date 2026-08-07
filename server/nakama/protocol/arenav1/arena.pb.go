@@ -41,6 +41,7 @@ const (
 	OpCode_OP_CODE_UNSPECIFIED OpCode = 0
 	// Client to server.
 	OpCode_OP_CODE_PLAYER_INPUT OpCode = 1
+	OpCode_OP_CODE_READY        OpCode = 3
 	// Server to client.
 	OpCode_OP_CODE_SNAPSHOT OpCode = 2
 )
@@ -50,11 +51,13 @@ var (
 	OpCode_name = map[int32]string{
 		0: "OP_CODE_UNSPECIFIED",
 		1: "OP_CODE_PLAYER_INPUT",
+		3: "OP_CODE_READY",
 		2: "OP_CODE_SNAPSHOT",
 	}
 	OpCode_value = map[string]int32{
 		"OP_CODE_UNSPECIFIED":  0,
 		"OP_CODE_PLAYER_INPUT": 1,
+		"OP_CODE_READY":        3,
 		"OP_CODE_SNAPSHOT":     2,
 	}
 )
@@ -345,6 +348,55 @@ func (x *PlayerInput) GetShotsFired() uint32 {
 	return 0
 }
 
+// Client to server: whether this player is ready to start.
+//
+// The countdown waits for both. A player who is still tuning their controls is
+// not kept waiting by an opponent who arrived first, and neither of them is
+// dropped into a round they were not looking at.
+type Ready struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Ready         bool                   `protobuf:"varint,1,opt,name=ready,proto3" json:"ready,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *Ready) Reset() {
+	*x = Ready{}
+	mi := &file_littlegames_arena_v1_arena_proto_msgTypes[1]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Ready) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Ready) ProtoMessage() {}
+
+func (x *Ready) ProtoReflect() protoreflect.Message {
+	mi := &file_littlegames_arena_v1_arena_proto_msgTypes[1]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Ready.ProtoReflect.Descriptor instead.
+func (*Ready) Descriptor() ([]byte, []int) {
+	return file_littlegames_arena_v1_arena_proto_rawDescGZIP(), []int{1}
+}
+
+func (x *Ready) GetReady() bool {
+	if x != nil {
+		return x.Ready
+	}
+	return false
+}
+
 // A body, as the server holds it. Exact doubles, in metres.
 //
 // Every field the simulation needs to advance from here is present, because
@@ -367,7 +419,7 @@ type Body struct {
 
 func (x *Body) Reset() {
 	*x = Body{}
-	mi := &file_littlegames_arena_v1_arena_proto_msgTypes[1]
+	mi := &file_littlegames_arena_v1_arena_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -379,7 +431,7 @@ func (x *Body) String() string {
 func (*Body) ProtoMessage() {}
 
 func (x *Body) ProtoReflect() protoreflect.Message {
-	mi := &file_littlegames_arena_v1_arena_proto_msgTypes[1]
+	mi := &file_littlegames_arena_v1_arena_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -392,7 +444,7 @@ func (x *Body) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Body.ProtoReflect.Descriptor instead.
 func (*Body) Descriptor() ([]byte, []int) {
-	return file_littlegames_arena_v1_arena_proto_rawDescGZIP(), []int{1}
+	return file_littlegames_arena_v1_arena_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *Body) GetX() float64 {
@@ -449,7 +501,7 @@ type Vector3 struct {
 
 func (x *Vector3) Reset() {
 	*x = Vector3{}
-	mi := &file_littlegames_arena_v1_arena_proto_msgTypes[2]
+	mi := &file_littlegames_arena_v1_arena_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -461,7 +513,7 @@ func (x *Vector3) String() string {
 func (*Vector3) ProtoMessage() {}
 
 func (x *Vector3) ProtoReflect() protoreflect.Message {
-	mi := &file_littlegames_arena_v1_arena_proto_msgTypes[2]
+	mi := &file_littlegames_arena_v1_arena_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -474,7 +526,7 @@ func (x *Vector3) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Vector3.ProtoReflect.Descriptor instead.
 func (*Vector3) Descriptor() ([]byte, []int) {
-	return file_littlegames_arena_v1_arena_proto_rawDescGZIP(), []int{2}
+	return file_littlegames_arena_v1_arena_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *Vector3) GetX() float64 {
@@ -520,15 +572,18 @@ type PlayerState struct {
 	// beat after reappearing. The client throws away its unacknowledged commands
 	// when its own changes, so it does not replay a dead player's movement onto a
 	// fresh spawn and skate out of it.
-	SpawnEpoch    uint32 `protobuf:"varint,11,opt,name=spawn_epoch,json=spawnEpoch,proto3" json:"spawn_epoch,omitempty"`
-	Zoomed        bool   `protobuf:"varint,12,opt,name=zoomed,proto3" json:"zoomed,omitempty"`
+	SpawnEpoch uint32 `protobuf:"varint,11,opt,name=spawn_epoch,json=spawnEpoch,proto3" json:"spawn_epoch,omitempty"`
+	Zoomed     bool   `protobuf:"varint,12,opt,name=zoomed,proto3" json:"zoomed,omitempty"`
+	// Whether this player has said they are ready to start. Only meaningful
+	// before the countdown opens; it is never cleared once a match is under way.
+	Ready         bool `protobuf:"varint,13,opt,name=ready,proto3" json:"ready,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *PlayerState) Reset() {
 	*x = PlayerState{}
-	mi := &file_littlegames_arena_v1_arena_proto_msgTypes[3]
+	mi := &file_littlegames_arena_v1_arena_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -540,7 +595,7 @@ func (x *PlayerState) String() string {
 func (*PlayerState) ProtoMessage() {}
 
 func (x *PlayerState) ProtoReflect() protoreflect.Message {
-	mi := &file_littlegames_arena_v1_arena_proto_msgTypes[3]
+	mi := &file_littlegames_arena_v1_arena_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -553,7 +608,7 @@ func (x *PlayerState) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PlayerState.ProtoReflect.Descriptor instead.
 func (*PlayerState) Descriptor() ([]byte, []int) {
-	return file_littlegames_arena_v1_arena_proto_rawDescGZIP(), []int{3}
+	return file_littlegames_arena_v1_arena_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *PlayerState) GetUserId() string {
@@ -640,6 +695,13 @@ func (x *PlayerState) GetZoomed() bool {
 	return false
 }
 
+func (x *PlayerState) GetReady() bool {
+	if x != nil {
+		return x.Ready
+	}
+	return false
+}
+
 // A shot the server resolved, for the client to draw.
 type ShotEvent struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
@@ -657,7 +719,7 @@ type ShotEvent struct {
 
 func (x *ShotEvent) Reset() {
 	*x = ShotEvent{}
-	mi := &file_littlegames_arena_v1_arena_proto_msgTypes[4]
+	mi := &file_littlegames_arena_v1_arena_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -669,7 +731,7 @@ func (x *ShotEvent) String() string {
 func (*ShotEvent) ProtoMessage() {}
 
 func (x *ShotEvent) ProtoReflect() protoreflect.Message {
-	mi := &file_littlegames_arena_v1_arena_proto_msgTypes[4]
+	mi := &file_littlegames_arena_v1_arena_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -682,7 +744,7 @@ func (x *ShotEvent) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ShotEvent.ProtoReflect.Descriptor instead.
 func (*ShotEvent) Descriptor() ([]byte, []int) {
-	return file_littlegames_arena_v1_arena_proto_rawDescGZIP(), []int{4}
+	return file_littlegames_arena_v1_arena_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *ShotEvent) GetId() uint32 {
@@ -744,7 +806,7 @@ type Snapshot struct {
 
 func (x *Snapshot) Reset() {
 	*x = Snapshot{}
-	mi := &file_littlegames_arena_v1_arena_proto_msgTypes[5]
+	mi := &file_littlegames_arena_v1_arena_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -756,7 +818,7 @@ func (x *Snapshot) String() string {
 func (*Snapshot) ProtoMessage() {}
 
 func (x *Snapshot) ProtoReflect() protoreflect.Message {
-	mi := &file_littlegames_arena_v1_arena_proto_msgTypes[5]
+	mi := &file_littlegames_arena_v1_arena_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -769,7 +831,7 @@ func (x *Snapshot) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Snapshot.ProtoReflect.Descriptor instead.
 func (*Snapshot) Descriptor() ([]byte, []int) {
-	return file_littlegames_arena_v1_arena_proto_rawDescGZIP(), []int{5}
+	return file_littlegames_arena_v1_arena_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *Snapshot) GetTick() uint32 {
@@ -832,7 +894,9 @@ const file_littlegames_arena_v1_arena_proto_rawDesc = "" +
 	"\tseen_tick\x18\n" +
 	" \x01(\rR\bseenTick\x12\x1f\n" +
 	"\vshots_fired\x18\v \x01(\rR\n" +
-	"shotsFired\"z\n" +
+	"shotsFired\"\x1d\n" +
+	"\x05Ready\x12\x14\n" +
+	"\x05ready\x18\x01 \x01(\bR\x05ready\"z\n" +
 	"\x04Body\x12\f\n" +
 	"\x01x\x18\x01 \x01(\x01R\x01x\x12\f\n" +
 	"\x01y\x18\x02 \x01(\x01R\x01y\x12\f\n" +
@@ -843,7 +907,7 @@ const file_littlegames_arena_v1_arena_proto_rawDesc = "" +
 	"\aVector3\x12\f\n" +
 	"\x01x\x18\x01 \x01(\x01R\x01x\x12\f\n" +
 	"\x01y\x18\x02 \x01(\x01R\x01y\x12\f\n" +
-	"\x01z\x18\x03 \x01(\x01R\x01z\"\xb2\x03\n" +
+	"\x01z\x18\x03 \x01(\x01R\x01z\"\xc8\x03\n" +
 	"\vPlayerState\x12\x17\n" +
 	"\auser_id\x18\x01 \x01(\tR\x06userId\x12\x1a\n" +
 	"\busername\x18\x02 \x01(\tR\busername\x12.\n" +
@@ -858,7 +922,8 @@ const file_littlegames_arena_v1_arena_proto_rawDesc = "" +
 	" \x01(\rR\rcooldownTicks\x12\x1f\n" +
 	"\vspawn_epoch\x18\v \x01(\rR\n" +
 	"spawnEpoch\x12\x16\n" +
-	"\x06zoomed\x18\f \x01(\bR\x06zoomed\"\xe2\x01\n" +
+	"\x06zoomed\x18\f \x01(\bR\x06zoomed\x12\x14\n" +
+	"\x05ready\x18\r \x01(\bR\x05ready\"\xe2\x01\n" +
 	"\tShotEvent\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\rR\x02id\x124\n" +
 	"\ashooter\x18\x02 \x01(\x0e2\x1a.littlegames.arena.v1.SeatR\ashooter\x125\n" +
@@ -873,10 +938,11 @@ const file_littlegames_arena_v1_arena_proto_rawDesc = "" +
 	"phaseTicks\x12;\n" +
 	"\aplayers\x18\x04 \x03(\v2!.littlegames.arena.v1.PlayerStateR\aplayers\x122\n" +
 	"\x06winner\x18\x05 \x01(\x0e2\x1a.littlegames.arena.v1.SeatR\x06winner\x125\n" +
-	"\x05shots\x18\x06 \x03(\v2\x1f.littlegames.arena.v1.ShotEventR\x05shots*Q\n" +
+	"\x05shots\x18\x06 \x03(\v2\x1f.littlegames.arena.v1.ShotEventR\x05shots*d\n" +
 	"\x06OpCode\x12\x17\n" +
 	"\x13OP_CODE_UNSPECIFIED\x10\x00\x12\x18\n" +
-	"\x14OP_CODE_PLAYER_INPUT\x10\x01\x12\x14\n" +
+	"\x14OP_CODE_PLAYER_INPUT\x10\x01\x12\x11\n" +
+	"\rOP_CODE_READY\x10\x03\x12\x14\n" +
 	"\x10OP_CODE_SNAPSHOT\x10\x02*m\n" +
 	"\x05Phase\x12\x15\n" +
 	"\x11PHASE_UNSPECIFIED\x10\x00\x12\x11\n" +
@@ -904,29 +970,30 @@ func file_littlegames_arena_v1_arena_proto_rawDescGZIP() []byte {
 }
 
 var file_littlegames_arena_v1_arena_proto_enumTypes = make([]protoimpl.EnumInfo, 3)
-var file_littlegames_arena_v1_arena_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
+var file_littlegames_arena_v1_arena_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
 var file_littlegames_arena_v1_arena_proto_goTypes = []any{
 	(OpCode)(0),         // 0: littlegames.arena.v1.OpCode
 	(Phase)(0),          // 1: littlegames.arena.v1.Phase
 	(Seat)(0),           // 2: littlegames.arena.v1.Seat
 	(*PlayerInput)(nil), // 3: littlegames.arena.v1.PlayerInput
-	(*Body)(nil),        // 4: littlegames.arena.v1.Body
-	(*Vector3)(nil),     // 5: littlegames.arena.v1.Vector3
-	(*PlayerState)(nil), // 6: littlegames.arena.v1.PlayerState
-	(*ShotEvent)(nil),   // 7: littlegames.arena.v1.ShotEvent
-	(*Snapshot)(nil),    // 8: littlegames.arena.v1.Snapshot
+	(*Ready)(nil),       // 4: littlegames.arena.v1.Ready
+	(*Body)(nil),        // 5: littlegames.arena.v1.Body
+	(*Vector3)(nil),     // 6: littlegames.arena.v1.Vector3
+	(*PlayerState)(nil), // 7: littlegames.arena.v1.PlayerState
+	(*ShotEvent)(nil),   // 8: littlegames.arena.v1.ShotEvent
+	(*Snapshot)(nil),    // 9: littlegames.arena.v1.Snapshot
 }
 var file_littlegames_arena_v1_arena_proto_depIdxs = []int32{
 	2,  // 0: littlegames.arena.v1.PlayerState.seat:type_name -> littlegames.arena.v1.Seat
-	4,  // 1: littlegames.arena.v1.PlayerState.body:type_name -> littlegames.arena.v1.Body
-	5,  // 2: littlegames.arena.v1.PlayerState.aim:type_name -> littlegames.arena.v1.Vector3
+	5,  // 1: littlegames.arena.v1.PlayerState.body:type_name -> littlegames.arena.v1.Body
+	6,  // 2: littlegames.arena.v1.PlayerState.aim:type_name -> littlegames.arena.v1.Vector3
 	2,  // 3: littlegames.arena.v1.ShotEvent.shooter:type_name -> littlegames.arena.v1.Seat
-	5,  // 4: littlegames.arena.v1.ShotEvent.origin:type_name -> littlegames.arena.v1.Vector3
-	5,  // 5: littlegames.arena.v1.ShotEvent.endpoint:type_name -> littlegames.arena.v1.Vector3
+	6,  // 4: littlegames.arena.v1.ShotEvent.origin:type_name -> littlegames.arena.v1.Vector3
+	6,  // 5: littlegames.arena.v1.ShotEvent.endpoint:type_name -> littlegames.arena.v1.Vector3
 	1,  // 6: littlegames.arena.v1.Snapshot.phase:type_name -> littlegames.arena.v1.Phase
-	6,  // 7: littlegames.arena.v1.Snapshot.players:type_name -> littlegames.arena.v1.PlayerState
+	7,  // 7: littlegames.arena.v1.Snapshot.players:type_name -> littlegames.arena.v1.PlayerState
 	2,  // 8: littlegames.arena.v1.Snapshot.winner:type_name -> littlegames.arena.v1.Seat
-	7,  // 9: littlegames.arena.v1.Snapshot.shots:type_name -> littlegames.arena.v1.ShotEvent
+	8,  // 9: littlegames.arena.v1.Snapshot.shots:type_name -> littlegames.arena.v1.ShotEvent
 	10, // [10:10] is the sub-list for method output_type
 	10, // [10:10] is the sub-list for method input_type
 	10, // [10:10] is the sub-list for extension type_name
@@ -945,7 +1012,7 @@ func file_littlegames_arena_v1_arena_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_littlegames_arena_v1_arena_proto_rawDesc), len(file_littlegames_arena_v1_arena_proto_rawDesc)),
 			NumEnums:      3,
-			NumMessages:   6,
+			NumMessages:   7,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

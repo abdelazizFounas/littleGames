@@ -488,24 +488,47 @@ Loading validates **per field**: a blob written by an older build, hand-edited i
 the console or truncated by a quota costs the player the one setting that is
 broken, not every setting they have.
 
-### Pointer lock, and the overlay every browser shooter needs
+### Nobody starts before they say so
 
-A browser will not let a page keep pointer lock through Escape, and that cannot
-be intercepted. Losing it therefore raises a resume overlay — clicking anywhere
-on it takes the mouse back, which is what everyone tries first, with a real
-button underneath for the keyboard. **P** opens the settings and releases the
-lock so the mouse can reach the panel; releasing the pointer does not leave
-fullscreen, so the panel appears over the game where it belongs.
+A round opens when **both** players press Ready, not when the second one
+connects. Until then the arena is drawn with a panel over it, and that is where
+the settings are reached — so controls get tuned before they matter rather than
+after somebody is shot for it. Readiness lives in the match handler rather than
+in the rules: it is a lobby protocol, not a law of the simulation, and keeping
+it out means the conformance vectors are untouched by it.
 
-The panel renders inside `.stage__frame`. That is a structural requirement
-rather than a styling one: `requestFullscreen` is called on that element, and
-anything outside it is not on the screen at all while fullscreen is active.
-Sizes are `vmin`-based so the panel is a panel on a large display rather than a
-postage stamp marooned in the middle of one.
+### Everything is in the game, and nothing is a pause
 
-**The match does not pause, and the panel says so.** This is a live duel: the
-opponent is still playing, and a player reading the settings is standing still
-and can be shot.
+There is no pause anywhere, because there is no pause: the opponent is always
+playing. What the player gets instead is the settings, over the arena, with the
+arena still being drawn and blurred behind them.
+
+That is a positioning problem before it is a styling one, and it was a real bug
+for a while: `.stage__frame` was not a positioning context, so the panels
+anchored to the page and appeared *beside* the game instead of in it. It is also
+the element `requestFullscreen` is called on, so anything outside it is not on
+the screen at all in fullscreen — which is why the panel is fullscreen whenever
+the game is. Sizes are `vmin`-based, so a panel on a large display is a panel
+rather than a postage stamp marooned in the middle of one.
+
+**P** and **Escape** both open the settings and both close them. Escape cannot
+do the opening directly: a browser spends that key exiting pointer lock and
+never delivers it, so an unexpected loss of the pointer *is* the request, and it
+opens the settings rather than a menu of its own.
+
+Two browser behaviours had to be measured rather than assumed, and both are
+guarded in `arena-stage.tsx` with what was observed:
+
+- Releasing the pointer to show a panel arrives back a moment later as a change
+  event, indistinguishable from the player asking for the menu. It is therefore
+  flagged as expected at the source.
+- Chrome will not hand the pointer straight back inside the Escape event that
+  took it: it grants the lock and drops it again within a few hundred
+  milliseconds. Without allowing for that, the settings closed on Escape and
+  bounced immediately back open.
+
+When the game does not hold the mouse, one line says so over the running game —
+not a box, not a blur, and not a claim that anything has stopped.
 
 ## How the picture is built
 

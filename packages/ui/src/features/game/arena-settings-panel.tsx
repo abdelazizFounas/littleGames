@@ -95,12 +95,15 @@ export function ArenaSettingsPanel({
   onChange,
   onClose,
   touchLayout,
+  live,
 }: {
   readonly settings: ArenaSettings;
   readonly onChange: (next: ArenaSettings) => void;
   readonly onClose: () => void;
   /** Whether to show the touch group at all. */
   readonly touchLayout: boolean;
+  /** Whether the round is already under way behind the panel. */
+  readonly live: boolean;
 }): ReactNode {
   const [capturing, setCapturing] = useState<ArenaAction | null>(null);
   const [refusal, setRefusal] = useState<string | null>(null);
@@ -154,21 +157,24 @@ export function ArenaSettingsPanel({
   );
 
   return (
-    <div className="arena-settings" role="dialog" aria-label="Arena settings">
-      <div className="arena-settings__panel">
+    <div className="arena-panel arena-settings" role="dialog" aria-label="Arena settings">
+      <div className="arena-panel__card arena-settings__panel">
         <header className="arena-settings__header">
-          <h2>Settings</h2>
-          <button type="button" className="button" onClick={onClose}>
-            Back to the match
+          <h2 className="arena-panel__title">Settings</h2>
+          <button type="button" className="button button--primary" onClick={onClose}>
+            Back to the game
           </button>
         </header>
 
-        {/* Said plainly rather than implied. This is a live duel: the opponent
-            is still playing, and a player reading this is standing still and
-            can be shot. Pretending otherwise would be worse than saying it. */}
-        <p className="arena-settings__warning" role="status">
-          The match does not pause. You are standing still out there.
-        </p>
+        {/* Only once there is a round to be shot in. Said plainly rather than
+            implied: the opponent is still playing, and a player reading this is
+            standing still out there. Before the round opens there is nothing to
+            warn about, and a warning that is not true is noise. */}
+        {live && (
+          <p className="arena-settings__warning" role="status">
+            The round is still running. You are standing still out there.
+          </p>
+        )}
 
         <section className="arena-settings__group">
           <h3>Look</h3>
@@ -293,6 +299,9 @@ export function ArenaSettingsPanel({
         )}
 
         <footer className="arena-settings__footer">
+          <p className="hint">
+            <kbd>P</kbd> or <kbd>Esc</kbd> to go back. Changes are saved as you make them.
+          </p>
           <button
             type="button"
             className="button"

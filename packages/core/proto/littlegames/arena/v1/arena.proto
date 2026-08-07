@@ -22,6 +22,7 @@ enum OpCode {
 
   // Client to server.
   OP_CODE_PLAYER_INPUT = 1;
+  OP_CODE_READY = 3;
 
   // Server to client.
   OP_CODE_SNAPSHOT = 2;
@@ -92,6 +93,15 @@ message PlayerInput {
   uint32 shots_fired = 11;
 }
 
+// Client to server: whether this player is ready to start.
+//
+// The countdown waits for both. A player who is still tuning their controls is
+// not kept waiting by an opponent who arrived first, and neither of them is
+// dropped into a round they were not looking at.
+message Ready {
+  bool ready = 1;
+}
+
 // A body, as the server holds it. Exact doubles, in metres.
 //
 // Every field the simulation needs to advance from here is present, because
@@ -144,6 +154,10 @@ message PlayerState {
   uint32 spawn_epoch = 11;
 
   bool zoomed = 12;
+
+  // Whether this player has said they are ready to start. Only meaningful
+  // before the countdown opens; it is never cleared once a match is under way.
+  bool ready = 13;
 }
 
 // A shot the server resolved, for the client to draw.

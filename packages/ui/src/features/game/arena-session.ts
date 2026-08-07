@@ -38,13 +38,40 @@ export interface ArenaSession {
   updateSettings: (next: ArenaSettings) => void;
   /** Takes the pointer back. Must be called from a real user gesture. */
   resume: () => void;
+  /** Hands the pointer back to the page, so a menu can be used. */
+  release: () => void;
+  /** Says this player is ready. The countdown waits for both. */
+  setReady: (ready: boolean) => void;
+}
+
+/**
+ * What the screen around the game needs to know, and nothing else.
+ *
+ * Reported only when one of these actually changes, never every frame: React
+ * draws the panels around the arena and must not be woken sixty times a second
+ * to redraw a score that changed once.
+ */
+export interface ArenaLobbyState {
+  readonly phase: 'waiting' | 'countdown' | 'playing' | 'finished';
+  readonly youAreReady: boolean;
+  readonly opponentPresent: boolean;
+  readonly opponentReady: boolean;
+  readonly opponentName: string;
 }
 
 export interface ArenaSessionListeners {
   onStatus: (status: ArenaSessionStatus) => void;
-  /** Pointer lock came or went. Losing it is what raises the resume overlay. */
-  onLockChange: (locked: boolean) => void;
+  /**
+   * Pointer lock came or went.
+   *
+   * Losing it is how Escape arrives: a browser will not let a page keep the
+   * pointer through Escape and does not deliver the key either, so the only
+   * signal that the player asked to get out is the lock going away.
+   */
+  onLockChange: (locked: boolean, expected: boolean) => void;
   onOpenSettings: () => void;
+  /** The lobby changed. Not called every frame — only when it really changed. */
+  onLobbyChange: (lobby: ArenaLobbyState) => void;
 }
 
 const PHASES: Record<number, ArenaFrame['phase']> = {
@@ -80,7 +107,29 @@ function playerOf(player: ArenaPlayerState, seat: Seat): FramePlayer {
     score: player.score,
     respawnTicks: player.respawnTicks,
     spawnEpoch: player.spawnEpoch,
+    ready: player.ready,
   };
+}
+
+function lobbyOf(frame: ArenaFrame, opponentName: string): ArenaLobbyState {
+  return {
+    phase: frame.phase,
+    youAreReady: frame.self.ready,
+    opponentPresent: frame.opponent !== null,
+    opponentReady: frame.opponent?.ready ?? false,
+    opponentName,
+  };
+}
+
+function sameLobby(a: ArenaLobbyState | null, b: ArenaLobbyState): boolean {
+  return (
+    a !== null &&
+    a.phase === b.phase &&
+    a.youAreReady === b.youAreReady &&
+    a.opponentPresent === b.opponentPresent &&
+    a.opponentReady === b.opponentReady &&
+    a.opponentName === b.opponentName
+  );
 }
 
 /** Rebuilds the rules' view of the world from a wire snapshot, for one seat. */
@@ -152,6 +201,7 @@ export async function startArenaSession(
   let lastFrameAt = 0;
   let seq = 0;
   let smoothing: CameraSmoothing = NO_SMOOTHING;
+  let lobby: ArenaLobbyState | null = null;
   let drawnEye: { x: number; y: number; z: number } | null = null;
   let predicted: PlayerBody = restingBody({ x: 0, y: 0, z: 0 });
 
@@ -224,6 +274,14 @@ export async function startArenaSession(
           }
           buffer.push(next, performance.now());
           history.acknowledge(next.acknowledgedSeq);
+
+          const opponentName =
+            snapshot.players.find((player) => player.userId !== userId)?.username ?? 'your opponent';
+          const nextLobby = lobbyOf(next, opponentName);
+          if (!sameLobby(lobby, nextLobby)) {
+            lobby = nextLobby;
+            listeners.onLobbyChange(nextLobby);
+          }
           // The tick the server rewinds from is the newest one this client
           // holds. The interpolation delay is added by the server, from the
           // constant both sides share, rather than being claimed here.
@@ -362,6 +420,12 @@ export async function startArenaSession(
     },
     resume() {
       input.requestLock();
+    },
+    release() {
+      input.releaseLock();
+    },
+    setReady(ready) {
+      void connection.setReady(ready);
     },
   };
 }

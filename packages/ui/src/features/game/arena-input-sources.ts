@@ -43,6 +43,8 @@ export interface ArenaInput {
   isLocked: () => boolean;
   /** Asks for pointer lock. Must be called from a real user gesture. */
   requestLock: () => void;
+  /** Gives the pointer back on purpose, so a menu can be used. */
+  releaseLock: () => void;
   setSettings: (next: ArenaSettings) => void;
   /** The newest server tick drawn, which is what the server rewinds from. */
   setSeenTick: (tick: number) => void;
@@ -51,8 +53,15 @@ export interface ArenaInput {
 }
 
 export interface ArenaInputListeners {
-  /** Pointer lock was gained or lost. Losing it raises the resume overlay. */
-  onLockChange: (locked: boolean) => void;
+  /**
+   * Pointer lock was gained or lost.
+   *
+   * `expected` says the loss was this client's own doing — a menu being opened
+   * — rather than the player asking to get out. The difference matters: an
+   * unexpected loss is how Escape arrives, because a browser spends that key
+   * exiting the lock and never delivers it.
+   */
+  onLockChange: (locked: boolean, expected: boolean) => void;
   /** The settings key was pressed. */
   onOpenSettings: () => void;
 }
@@ -90,6 +99,16 @@ export function createArenaInput(
 
   const held = new Set<string>();
   let zoomPressed = false;
+
+  /**
+   * Whether the next loss of the pointer is one we asked for.
+   *
+   * Without it, opening the settings releases the lock, the release arrives a
+   * moment later as a change event, and that event is indistinguishable from
+   * the player pressing Escape — so a panel the player had just closed would
+   * open again behind them.
+   */
+  let releasing = false;
 
   /**
    * The direction the crosshair had when the trigger was pulled.
@@ -207,13 +226,15 @@ export function createArenaInput(
       return;
     }
     locked = next;
+    const expected = releasing;
+    releasing = false;
     if (!locked) {
       // Whatever was held when the lock went is not held any more as far as the
       // player is concerned, and a forward key stuck down would walk them into
       // a wall while they read the menu.
       onBlur();
     }
-    listeners.onLockChange(locked);
+    listeners.onLockChange(locked, expected);
   };
 
   function isZoomedNow(): boolean {
@@ -325,7 +346,14 @@ export function createArenaInput(
     requestLock() {
       // Nothing is assumed about the outcome: the browser may refuse, and the
       // truth arrives on `pointerlockchange` rather than from this call.
+      releasing = false;
       void surface.requestPointerLock();
+    },
+    releaseLock() {
+      if (document.pointerLockElement === surface) {
+        releasing = true;
+        document.exitPointerLock();
+      }
     },
     setSettings(next) {
       settings = next;

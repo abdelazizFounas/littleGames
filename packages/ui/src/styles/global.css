@@ -354,6 +354,11 @@ body {
 }
 
 .stage__frame {
+  /* A positioning context, and it is load-bearing: everything the game draws
+     over itself — the ready panel, the settings — is absolutely positioned
+     inside this box. Without it they anchor to the page instead and appear
+     beside the game rather than in it. */
+  position: relative;
   background: #101319;
   border: 1px solid var(--border);
   overflow: hidden;
@@ -609,70 +614,87 @@ body {
 }
 
 /* Everything below renders inside .stage__frame, which is the element that
-   goes fullscreen. Anything outside it is not merely mispositioned while
-   fullscreen is active — it is not on the screen at all. Sizes are relative to
-   the surface rather than fixed in pixels, so a panel on a 27-inch display in
-   fullscreen is a panel rather than a postage stamp. */
+   goes fullscreen and the box these are positioned against. Anything outside
+   it is not merely mispositioned while fullscreen is active — it is not on the
+   screen at all. Sizes are relative to that box rather than fixed in pixels,
+   so a panel on a 27-inch display in fullscreen is a panel rather than a
+   postage stamp. */
 
-.arena-overlay,
-.arena-settings {
+.arena-panel {
   position: absolute;
   inset: 0;
   z-index: 2;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 2vmin;
-  background: rgb(11 13 18 / 78%);
-  backdrop-filter: blur(2px);
+  padding: clamp(0.5rem, 3vmin, 3rem);
+  /* The game is still being drawn behind this, and still being played. Blurring
+     it rather than covering it is what makes the panel read as part of the
+     game instead of as a page that replaced it — and it keeps the arena
+     visible, which is the honest picture: nothing has stopped. */
+  background: rgb(11 13 18 / 55%);
+  backdrop-filter: blur(10px) saturate(0.85);
 }
 
-.arena-overlay__card {
+.arena-panel__card {
   display: flex;
   flex-direction: column;
-  gap: clamp(0.5rem, 1.5vmin, 1rem);
-  align-items: center;
-  padding: clamp(1rem, 4vmin, 2.5rem);
-  text-align: center;
+  gap: clamp(0.5rem, 1.5vmin, 1.25rem);
+  width: 100%;
+  max-width: min(52rem, 100%);
+  max-height: 100%;
+  padding: clamp(0.75rem, 3vmin, 2.5rem);
+  overflow-y: auto;
+  font-size: clamp(0.8rem, 1.7vmin, 1.05rem);
   color: #eef0f4;
-  background: rgb(22 26 34 / 92%);
-  border: 1px solid rgb(255 255 255 / 12%);
-  border-radius: 0.5rem;
+  background: rgb(16 19 25 / 82%);
+  border: 1px solid rgb(255 255 255 / 14%);
+  border-radius: 0.6rem;
+  box-shadow: 0 1.5vmin 6vmin rgb(0 0 0 / 45%);
 }
 
-.arena-overlay__title {
+.arena-panel__title {
   margin: 0;
-  font-size: clamp(1.1rem, 3vmin, 2rem);
+  font-size: clamp(1.1rem, 3.2vmin, 2.2rem);
   font-weight: 700;
 }
 
-.arena-settings {
-  align-items: stretch;
-  justify-content: stretch;
-}
-
-.arena-settings__panel {
-  display: flex;
-  flex-direction: column;
-  gap: clamp(0.75rem, 2vmin, 1.5rem);
-  width: 100%;
-  padding: clamp(0.75rem, 3vmin, 2rem);
-  overflow-y: auto;
-  font-size: clamp(0.8rem, 1.8vmin, 1.1rem);
-  color: #eef0f4;
-  background: rgb(16 19 25 / 96%);
-  border: 1px solid rgb(255 255 255 / 12%);
-  border-radius: 0.5rem;
-}
-
-.arena-settings__panel h2 {
+.arena-panel__status {
   margin: 0;
-  font-size: clamp(1.1rem, 3vmin, 2rem);
+  font-size: clamp(0.85rem, 2vmin, 1.2rem);
+  opacity: 0.85;
+}
+
+.arena-panel__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+}
+
+.arena-panel__hint {
+  margin: 0;
+  font-size: clamp(0.72rem, 1.5vmin, 0.95rem);
+  line-height: 1.5;
+  opacity: 0.65;
+}
+
+.arena-panel kbd {
+  padding: 0.1em 0.4em;
+  font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  background: rgb(255 255 255 / 12%);
+  border-radius: 0.2rem;
+}
+
+/* The settings are the same panel, given the room a form needs. */
+.arena-settings__panel {
+  max-width: min(64rem, 100%);
+  gap: clamp(0.6rem, 1.8vmin, 1.4rem);
 }
 
 .arena-settings__panel h3 {
-  margin: 0 0 0.5em;
-  font-size: clamp(0.9rem, 2.2vmin, 1.3rem);
+  margin: 0 0 0.4em;
+  font-size: clamp(0.85rem, 2vmin, 1.2rem);
   text-transform: uppercase;
   letter-spacing: 0.08em;
   opacity: 0.7;
@@ -687,11 +709,23 @@ body {
   justify-content: space-between;
 }
 
+/* The shared primary button is a full-width call to action, which is right at
+   the bottom of a form and wrong inside a panel where it sits beside others.
+   In here a button is the size of its label. */
+.arena-panel .button {
+  flex: 0 0 auto;
+  width: auto;
+}
+
+.arena-settings__header > h2 {
+  flex: 1 1 auto;
+}
+
 .arena-settings__warning {
   margin: 0;
   padding: 0.5em 0.75em;
   color: #ffd08a;
-  background: rgb(255 160 40 / 12%);
+  background: rgb(255 160 40 / 14%);
   border-left: 3px solid #ffa028;
   border-radius: 0.25rem;
 }
@@ -699,7 +733,7 @@ body {
 .arena-settings__group {
   display: flex;
   flex-direction: column;
-  gap: 0.4em;
+  gap: 0.35em;
 }
 
 .arena-settings__row {
@@ -725,7 +759,7 @@ body {
 
 .arena-settings__keys {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(11em, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(10em, 1fr));
   gap: 0.5em;
 }
 
@@ -847,4 +881,21 @@ body {
 
 .arena-touch__button--zoom {
   grid-area: zoom;
+}
+
+/* Not a panel and not a pause: one line over the running game, saying the only
+   thing the player cannot work out by looking. */
+.arena-hint {
+  position: absolute;
+  bottom: 6%;
+  left: 50%;
+  z-index: 2;
+  margin: 0;
+  padding: 0.4em 0.9em;
+  font-size: clamp(0.75rem, 1.6vmin, 1rem);
+  color: #eef0f4;
+  pointer-events: none;
+  background: rgb(11 13 18 / 65%);
+  border-radius: 2em;
+  transform: translateX(-50%);
 }

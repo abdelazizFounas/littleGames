@@ -12,6 +12,7 @@ export const OpCode = {
   OP_CODE_UNSPECIFIED: 0,
   /** OP_CODE_PLAYER_INPUT - Client to server. */
   OP_CODE_PLAYER_INPUT: 1,
+  OP_CODE_READY: 3,
   /** OP_CODE_SNAPSHOT - Server to client. */
   OP_CODE_SNAPSHOT: 2,
 } as const;
@@ -21,6 +22,7 @@ export type OpCode = typeof OpCode[keyof typeof OpCode];
 export namespace OpCode {
   export type OP_CODE_UNSPECIFIED = typeof OpCode.OP_CODE_UNSPECIFIED;
   export type OP_CODE_PLAYER_INPUT = typeof OpCode.OP_CODE_PLAYER_INPUT;
+  export type OP_CODE_READY = typeof OpCode.OP_CODE_READY;
   export type OP_CODE_SNAPSHOT = typeof OpCode.OP_CODE_SNAPSHOT;
 }
 
@@ -112,6 +114,17 @@ export interface PlayerInput {
 }
 
 /**
+ * Client to server: whether this player is ready to start.
+ *
+ * The countdown waits for both. A player who is still tuning their controls is
+ * not kept waiting by an opponent who arrived first, and neither of them is
+ * dropped into a round they were not looking at.
+ */
+export interface Ready {
+  ready: boolean;
+}
+
+/**
  * A body, as the server holds it. Exact doubles, in metres.
  *
  * Every field the simulation needs to advance from here is present, because
@@ -162,6 +175,11 @@ export interface PlayerState {
    */
   spawnEpoch: number;
   zoomed: boolean;
+  /**
+   * Whether this player has said they are ready to start. Only meaningful
+   * before the countdown opens; it is never cleared once a match is under way.
+   */
+  ready: boolean;
 }
 
 /** A shot the server resolved, for the client to draw. */

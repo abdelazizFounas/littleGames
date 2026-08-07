@@ -34,6 +34,7 @@ function player(over: Partial<FramePlayer> = {}): FramePlayer {
     score: 0,
     respawnTicks: 0,
     spawnEpoch: 0,
+    ready: true,
     ...over,
   };
 }

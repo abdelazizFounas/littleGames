@@ -82,6 +82,9 @@ type arenaPlayer struct {
 	shotsAcked uint32
 
 	zoomed bool
+
+	// Whether they have said they are ready to start.
+	ready bool
 }
 
 type arenaState struct {
@@ -211,15 +214,35 @@ func (m *ArenaMatch) MatchJoin(
 		rememberMatchFor(ctx, logger, nk, presence.GetUserId(), current.matchID, current.label, current.password)
 	}
 
-	// The countdown opens as soon as both seats are taken, and only from
-	// waiting: a rejoin mid-match must not restart the match.
-	if len(current.players) == Capacity && current.sim.Phase == arena.PhaseWaiting {
-		current.sim = arena.StartCountdown(current.sim, arenaCountdownTicks)
-		logger.Info("Both players present, starting the countdown")
+	// Taken out of the waiting list as soon as both seats are filled, whether or
+	// not either has said they are ready: the lobby is full either way, and a
+	// third player looking for a game should not be sent to it.
+	if len(current.players) == Capacity && current.label.State == StateWaiting {
 		current.relabel(logger, dispatcher, StatePlaying)
 	}
+	current.startIfReady(logger)
 
 	return current
+}
+
+// startIfReady opens the countdown once both seats are filled and both players
+// have said so.
+//
+// Waiting for them rather than starting the moment the second one connects is
+// the difference between a duel and an ambush: a player still tuning their
+// sensitivity would otherwise be shot at while reading a menu. Only from
+// waiting, so a rejoin mid-match cannot restart it.
+func (s *arenaState) startIfReady(logger runtime.Logger) {
+	if s.sim.Phase != arena.PhaseWaiting || len(s.players) < Capacity {
+		return
+	}
+	for _, seated := range s.players {
+		if !seated.ready {
+			return
+		}
+	}
+	s.sim = arena.StartCountdown(s.sim, arenaCountdownTicks)
+	logger.Info("Both players ready, starting the countdown")
 }
 
 // freeSeat returns whichever half of the arena nobody holds yet.
@@ -298,6 +321,8 @@ func (m *ArenaMatch) MatchLoop(
 	}
 
 	current.enqueue(logger, messages)
+	// A player who readied this tick may be the second one to do so.
+	current.startIfReady(logger)
 
 	before := current.sim.Phase
 	next, shots := arena.Step(current.sim, current.consume())
@@ -378,12 +403,25 @@ func clampWire(value, limit int32) int32 {
 // answer and costs it nothing it did not deserve.
 func (s *arenaState) enqueue(logger runtime.Logger, messages []runtime.MatchData) {
 	for _, message := range messages {
-		if message.GetOpCode() != int64(arenav1.OpCode_OP_CODE_PLAYER_INPUT) {
+		seated, known := s.players[message.GetUserId()]
+		if !known {
 			continue
 		}
 
-		seated, known := s.players[message.GetUserId()]
-		if !known {
+		if message.GetOpCode() == int64(arenav1.OpCode_OP_CODE_READY) {
+			var request arenav1.Ready
+			if err := proto.Unmarshal(message.GetData(), &request); err != nil {
+				continue
+			}
+			// Only before the countdown. Once a match is under way, readiness
+			// is not something anybody can take back.
+			if s.sim.Phase == arena.PhaseWaiting {
+				seated.ready = request.GetReady()
+			}
+			continue
+		}
+
+		if message.GetOpCode() != int64(arenav1.OpCode_OP_CODE_PLAYER_INPUT) {
 			continue
 		}
 
@@ -616,6 +654,7 @@ func (s *arenaState) broadcast(dispatcher runtime.MatchDispatcher) error {
 			CooldownTicks: uint32(simulated.CooldownTicks),
 			SpawnEpoch:    uint32(simulated.SpawnEpoch),
 			Zoomed:        seated.zoomed,
+			Ready:         seated.ready,
 		})
 	}
 

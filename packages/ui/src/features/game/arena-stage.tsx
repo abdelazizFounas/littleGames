@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import { describeError } from '../../lib/describe-error';
 import { useSession } from '../../session/use-session';
+import { ArenaReadyPanel } from './arena-ready-panel';
 import { ArenaSettingsPanel } from './arena-settings-panel';
 import {
   DEFAULT_ARENA_SETTINGS,
@@ -8,7 +9,12 @@ import {
   writeArenaSettings,
   type ArenaSettings,
 } from './arena-settings';
-import { startArenaSession, type ArenaSession, type ArenaSessionStatus } from './arena-session';
+import {
+  startArenaSession,
+  type ArenaLobbyState,
+  type ArenaSession,
+  type ArenaSessionStatus,
+} from './arena-session';
 
 /**
  * The arena screen.
@@ -27,6 +33,19 @@ import { startArenaSession, type ArenaSession, type ArenaSessionStatus } from '.
 const SETTINGS_SAVE_DEBOUNCE_MS = 800;
 
 const LOCAL_SETTINGS_KEY = 'littlegames.arena.settings';
+
+/**
+ * How long after asking for the pointer back a loss is still that same refusal.
+ *
+ * Escape is the browser's own gesture for giving the pointer up, and it will
+ * not hand it straight back inside the very key event that took it: Chrome
+ * grants the lock and drops it again a moment later. Measured, not guessed —
+ * the sequence is a `pointerlockchange` to locked immediately followed by one
+ * to unlocked. Without this the settings would close on Escape and bounce
+ * straight back open, because that second event is indistinguishable from the
+ * player asking for the menu.
+ */
+const RELOCK_BOUNCE_MS = 400;
 
 export function ArenaStage({
   userId,
@@ -47,8 +66,17 @@ export function ArenaStage({
 
   const [status, setStatus] = useState<ArenaSessionStatus>({ kind: 'connecting' });
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const [locked, setLocked] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  /** Whether the game currently holds the mouse. Drives the one-line hint. */
+  const [holdsPointer, setHoldsPointer] = useState(false);
+  const relockAt = useRef(0);
+  const [lobby, setLobby] = useState<ArenaLobbyState>({
+    phase: 'waiting',
+    youAreReady: false,
+    opponentPresent: false,
+    opponentReady: false,
+    opponentName: 'your opponent',
+  });
   // Read from this browser first so the controls are right on the first frame
   // rather than a round trip later; the account's copy is adopted below if it
   // turns out to be the newer one.
@@ -112,12 +140,58 @@ export function ArenaStage({
 
   const openSettings = useCallback((): void => {
     setSettingsOpen(true);
-    // Releasing the lock is what lets the mouse reach the panel, and it is
-    // needed however the panel was opened — the key inside the game as much as
-    // the button on the overlay. Releasing the pointer does not leave
-    // fullscreen, so the panel still appears over the game where it belongs.
-    document.exitPointerLock();
+    // Releasing the pointer is what lets the mouse reach the panel. It does not
+    // leave fullscreen, so the panel stays over the game where it belongs.
+    sessionRef.current?.release();
   }, []);
+
+  /** Closes the settings and asks for the pointer straight back. */
+  const closeSettings = useCallback((): void => {
+    setSettingsOpen(false);
+    relockAt.current = Date.now();
+    sessionRef.current?.resume();
+  }, []);
+
+  /**
+   * The one key that opens the settings also closes them.
+   *
+   * Escape cannot do the opening: a browser spends it exiting pointer lock and
+   * never delivers the key. Losing the lock is therefore read as the request,
+   * below. Once the panel is open the pointer is free, so Escape arrives
+   * normally and closes it — which is what everyone expects it to do.
+   */
+  const onSettingsKey = useCallback(
+    (event: KeyboardEvent): void => {
+      if (event.code !== 'Escape' && event.code !== 'KeyP') {
+        return;
+      }
+      event.preventDefault();
+      closeSettings();
+    },
+    [closeSettings],
+  );
+
+  useEffect(() => {
+    if (!settingsOpen) {
+      return undefined;
+    }
+    window.addEventListener('keydown', onSettingsKey);
+    return () => {
+      window.removeEventListener('keydown', onSettingsKey);
+    };
+  }, [onSettingsKey, settingsOpen]);
+
+  /** Says this player is ready, and takes the mouse with the same gesture. */
+  const toggleReady = useCallback((): void => {
+    const next = !lobby.youAreReady;
+    sessionRef.current?.setReady(next);
+    setLobby((current) => ({ ...current, youAreReady: next }));
+    if (next) {
+      // The click is the user gesture pointer lock needs, and there will not be
+      // another one before the countdown ends.
+      sessionRef.current?.resume();
+    }
+  }, [lobby.youAreReady]);
 
   // Held in a ref so the session, which is started once, always calls the
   // current one rather than the one that existed when it started.
@@ -158,9 +232,27 @@ export function ArenaStage({
                 onJoined(next.matchId);
               }
             },
-            onLockChange: (next) => {
+            onLockChange: (next, expected) => {
+              if (cancelled) {
+                return;
+              }
+              setHoldsPointer(next);
+              // Losing the pointer mid-round is how Escape reaches us, so it
+              // opens the settings rather than raising a menu of its own. The
+              // game is never paused by it: the opponent is still playing, and
+              // saying otherwise would be a lie told in a box.
+              //
+              // Unless we asked for it. Opening the panel releases the pointer,
+              // and that release arrives here a moment later; taken as a
+              // request it would re-open a panel the player had just closed.
+              const bounced = Date.now() - relockAt.current < RELOCK_BOUNCE_MS;
+              if (!next && !expected && !bounced) {
+                openSettingsRef.current();
+              }
+            },
+            onLobbyChange: (next) => {
               if (!cancelled) {
-                setLocked(next);
+                setLobby(next);
               }
             },
             onOpenSettings: () => {
@@ -225,58 +317,34 @@ export function ArenaStage({
     }
   }, []);
 
-  /** Takes the pointer back. Called from a click, which is what the API needs. */
-  const resume = useCallback((): void => {
-    setSettingsOpen(false);
-    sessionRef.current?.resume();
-  }, []);
-
 
   return (
     <div className="stage">
       <div ref={frameRef} className="stage__frame">
         <div ref={containerRef} className="stage__surface stage__surface--arena" />
 
-        {/* A browser will not let a page keep pointer lock through Escape, and
-            that cannot be intercepted. Losing it therefore raises this, which
-            is the standard answer to a problem every browser shooter has. */}
-        {!locked && !settingsOpen && status.kind === 'playing' && (
-          // Clicking anywhere on it takes the mouse back, because the overlay
-          // covers the whole game and "click to play" is what everyone tries
-          // first. The button underneath stays: it is what a keyboard reaches,
-          // and it is what says out loud that the mouse is about to be taken.
-          <div
-            className="arena-overlay"
-            role="presentation"
-            onClick={resume}
-          >
-            <div
-              className="arena-overlay__card"
-              role="presentation"
-              onClick={(event) => {
-                event.stopPropagation();
-              }}
-            >
-              <p className="arena-overlay__title">Paused for you only</p>
-              <p className="hint">
-                The match is still running and your opponent is still playing.
-              </p>
-              <button type="button" className="button button--primary" onClick={resume}>
-                Resume
-              </button>
-              <button type="button" className="button" onClick={openSettings}>
-                Settings
-              </button>
-            </div>
-          </div>
+        {/* Before the round opens, and only then. There is no pause in this
+            game: the opponent is always playing, so nothing that stops the
+            player ever claims to have stopped the match. */}
+        {status.kind === 'playing' && !settingsOpen && lobby.phase === 'waiting' && (
+          <ArenaReadyPanel lobby={lobby} onReady={toggleReady} onOpenSettings={openSettings} />
+        )}
+
+        {/* One line, not a box: the round is running and nothing about it has
+            stopped, so nothing here behaves as though it had. It says the one
+            thing the player cannot see for themselves — that the mouse is
+            theirs and a click gives it back to the game. */}
+        {status.kind === 'playing' && !settingsOpen && !holdsPointer && lobby.phase !== 'waiting' && (
+          <p className="arena-hint">Click to take the mouse</p>
         )}
 
         {settingsOpen && (
           <ArenaSettingsPanel
             settings={settings}
             onChange={applySettings}
-            onClose={resume}
+            onClose={closeSettings}
             touchLayout={touchLayout}
+            live={lobby.phase !== 'waiting'}
           />
         )}
       </div>
@@ -285,8 +353,8 @@ export function ArenaStage({
         {status.kind === 'connecting' && <p className="hint stage__hint">Joining a match…</p>}
         {status.kind === 'playing' && (
           <p className="hint stage__hint">
-            You hold the <strong>{status.seat}</strong> half. Click to take the mouse, then move
-            with the keys, look with the mouse, click to fire. <kbd>P</kbd> for settings.
+            You hold the <strong>{status.seat}</strong> half. Move with the keys, look with the
+            mouse, click to fire. <kbd>P</kbd> or <kbd>Esc</kbd> for settings.
           </p>
         )}
         {status.kind === 'reconnecting' && (

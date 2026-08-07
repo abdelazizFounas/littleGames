@@ -13,6 +13,7 @@ export const OpCode = {
   OP_CODE_UNSPECIFIED: 0,
   /** OP_CODE_PLAYER_INPUT - Client to server. */
   OP_CODE_PLAYER_INPUT: 1,
+  OP_CODE_READY: 3,
   /** OP_CODE_SNAPSHOT - Server to client. */
   OP_CODE_SNAPSHOT: 2,
 } as const;
@@ -22,6 +23,7 @@ export type OpCode = typeof OpCode[keyof typeof OpCode];
 export namespace OpCode {
   export type OP_CODE_UNSPECIFIED = typeof OpCode.OP_CODE_UNSPECIFIED;
   export type OP_CODE_PLAYER_INPUT = typeof OpCode.OP_CODE_PLAYER_INPUT;
+  export type OP_CODE_READY = typeof OpCode.OP_CODE_READY;
   export type OP_CODE_SNAPSHOT = typeof OpCode.OP_CODE_SNAPSHOT;
 }
 
@@ -33,6 +35,9 @@ export function opCodeFromJSON(object: any): OpCode {
     case 1:
     case "OP_CODE_PLAYER_INPUT":
       return OpCode.OP_CODE_PLAYER_INPUT;
+    case 3:
+    case "OP_CODE_READY":
+      return OpCode.OP_CODE_READY;
     case 2:
     case "OP_CODE_SNAPSHOT":
       return OpCode.OP_CODE_SNAPSHOT;
@@ -47,6 +52,8 @@ export function opCodeToJSON(object: OpCode): string {
       return "OP_CODE_UNSPECIFIED";
     case OpCode.OP_CODE_PLAYER_INPUT:
       return "OP_CODE_PLAYER_INPUT";
+    case OpCode.OP_CODE_READY:
+      return "OP_CODE_READY";
     case OpCode.OP_CODE_SNAPSHOT:
       return "OP_CODE_SNAPSHOT";
     default:
@@ -210,6 +217,17 @@ export interface PlayerInput {
 }
 
 /**
+ * Client to server: whether this player is ready to start.
+ *
+ * The countdown waits for both. A player who is still tuning their controls is
+ * not kept waiting by an opponent who arrived first, and neither of them is
+ * dropped into a round they were not looking at.
+ */
+export interface Ready {
+  ready: boolean;
+}
+
+/**
  * A body, as the server holds it. Exact doubles, in metres.
  *
  * Every field the simulation needs to advance from here is present, because
@@ -260,6 +278,11 @@ export interface PlayerState {
    */
   spawnEpoch: number;
   zoomed: boolean;
+  /**
+   * Whether this player has said they are ready to start. Only meaningful
+   * before the countdown opens; it is never cleared once a match is under way.
+   */
+  ready: boolean;
 }
 
 /** A shot the server resolved, for the client to draw. */
@@ -559,6 +582,64 @@ export const PlayerInput: MessageFns<PlayerInput> = {
   },
 };
 
+function createBaseReady(): Ready {
+  return { ready: false };
+}
+
+export const Ready: MessageFns<Ready> = {
+  encode(message: Ready, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.ready !== false) {
+      writer.uint32(8).bool(message.ready);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): Ready {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseReady();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 8) {
+            break;
+          }
+
+          message.ready = reader.bool();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): Ready {
+    return { ready: isSet(object.ready) ? globalThis.Boolean(object.ready) : false };
+  },
+
+  toJSON(message: Ready): unknown {
+    const obj: any = {};
+    if (message.ready !== false) {
+      obj.ready = message.ready;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<Ready>, I>>(base?: I): Ready {
+    return Ready.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<Ready>, I>>(object: I): Ready {
+    const message = createBaseReady();
+    message.ready = object.ready ?? false;
+    return message;
+  },
+};
+
 function createBaseBody(): Body {
   return { x: 0, y: 0, z: 0, vy: 0, grounded: false, crouching: false };
 }
@@ -805,6 +886,7 @@ function createBasePlayerState(): PlayerState {
     cooldownTicks: 0,
     spawnEpoch: 0,
     zoomed: false,
+    ready: false,
   };
 }
 
@@ -845,6 +927,9 @@ export const PlayerState: MessageFns<PlayerState> = {
     }
     if (message.zoomed !== false) {
       writer.uint32(96).bool(message.zoomed);
+    }
+    if (message.ready !== false) {
+      writer.uint32(104).bool(message.ready);
     }
     return writer;
   },
@@ -952,6 +1037,14 @@ export const PlayerState: MessageFns<PlayerState> = {
           message.zoomed = reader.bool();
           continue;
         }
+        case 13: {
+          if (tag !== 104) {
+            break;
+          }
+
+          message.ready = reader.bool();
+          continue;
+        }
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -995,6 +1088,7 @@ export const PlayerState: MessageFns<PlayerState> = {
         ? globalThis.Number(object.spawn_epoch)
         : 0,
       zoomed: isSet(object.zoomed) ? globalThis.Boolean(object.zoomed) : false,
+      ready: isSet(object.ready) ? globalThis.Boolean(object.ready) : false,
     };
   },
 
@@ -1036,6 +1130,9 @@ export const PlayerState: MessageFns<PlayerState> = {
     if (message.zoomed !== false) {
       obj.zoomed = message.zoomed;
     }
+    if (message.ready !== false) {
+      obj.ready = message.ready;
+    }
     return obj;
   },
 
@@ -1056,6 +1153,7 @@ export const PlayerState: MessageFns<PlayerState> = {
     message.cooldownTicks = object.cooldownTicks ?? 0;
     message.spawnEpoch = object.spawnEpoch ?? 0;
     message.zoomed = object.zoomed ?? false;
+    message.ready = object.ready ?? false;
     return message;
   },
 };

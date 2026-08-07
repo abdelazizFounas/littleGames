@@ -24,6 +24,7 @@ export type {
   ArenaBody,
   ArenaPlayerInput,
   ArenaPlayerState,
+  ArenaReady,
   ArenaShotEvent,
   ArenaSnapshot,
   ArenaVector3,

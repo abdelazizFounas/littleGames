@@ -4,6 +4,7 @@ import type { NakamaConfig } from './config';
 import { openMatchSocket, type ConnectionState } from './match-socket';
 import {
   PlayerInput as PlayerInputCodec,
+  Ready as ReadyCodec,
   Snapshot as SnapshotCodec,
 } from './protocol/generated/littlegames/arena/v1/arena';
 
@@ -41,6 +42,13 @@ export interface ArenaConnection {
    * replay. This package carries it; it does not decide what it means.
    */
   sendInput: (input: ArenaPlayerInput) => Promise<void>;
+  /**
+   * Says whether this player is ready to start.
+   *
+   * The countdown waits for both, so nobody is dropped into a round they were
+   * not looking at. Ignored by the server once a match is under way.
+   */
+  setReady: (ready: boolean) => Promise<void>;
   /** Leaves the match and closes the socket. */
   leave: () => Promise<void>;
 }
@@ -87,6 +95,9 @@ export async function joinArenaMatch(
     matchId: socket.matchId,
     sendInput: async (input) => {
       await socket.send(ArenaOpCode.OP_CODE_PLAYER_INPUT, PlayerInputCodec.encode(input).finish());
+    },
+    setReady: async (ready) => {
+      await socket.send(ArenaOpCode.OP_CODE_READY, ReadyCodec.encode({ ready }).finish());
     },
     leave: socket.leave,
   };
