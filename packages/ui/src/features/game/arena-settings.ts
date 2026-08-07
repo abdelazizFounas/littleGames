@@ -39,13 +39,23 @@ export interface LookSettings {
 }
 
 export interface TouchSettings {
-  /** Radians of turn per pixel dragged. */
+  /**
+   * Radians a second the view turns at full deflection.
+   *
+   * A rate, not a distance: the aiming half of the screen is a stick whose
+   * neutral point is wherever the thumb landed, and the view keeps turning for
+   * as long as the thumb stays away from it.
+   */
   readonly sensitivity: number;
   readonly invertY: boolean;
-  /** Puts the stick under the left thumb rather than the right. */
-  readonly leftHanded: boolean;
-  /** Radius of the stick, as a fraction of the smaller screen dimension. */
-  readonly joystickSize: number;
+  /** Puts moving under the right thumb and aiming under the left. */
+  readonly swapHalves: boolean;
+  /**
+   * How far the thumb travels for full deflection, as a fraction of the smaller
+   * screen dimension. Both sticks float, so this is a distance rather than the
+   * size of anything drawn.
+   */
+  readonly stickReach: number;
 }
 
 export interface ArenaSettings {
@@ -81,10 +91,10 @@ export const DEFAULT_ARENA_SETTINGS: ArenaSettings = {
     zoom: 'KeyQ',
   },
   touch: {
-    sensitivity: 0.005,
+    sensitivity: 2.6,
     invertY: false,
-    leftHanded: false,
-    joystickSize: 0.16,
+    swapHalves: false,
+    stickReach: 0.14,
   },
 };
 
@@ -93,8 +103,8 @@ const LIMITS = {
   sensitivity: { min: 0.0002, max: 0.02 },
   zoomSensitivity: { min: 0.1, max: 2 },
   fieldOfView: { min: 0.7, max: 2 },
-  touchSensitivity: { min: 0.0005, max: 0.05 },
-  joystickSize: { min: 0.08, max: 0.32 },
+  touchSensitivity: { min: 0.4, max: 8 },
+  stickReach: { min: 0.06, max: 0.3 },
 } as const;
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -181,12 +191,12 @@ export function readArenaSettings(stored: unknown): ArenaSettings {
         LIMITS.touchSensitivity,
       ),
       invertY: boolean(touch, 'invertY', DEFAULT_ARENA_SETTINGS.touch.invertY),
-      leftHanded: boolean(touch, 'leftHanded', DEFAULT_ARENA_SETTINGS.touch.leftHanded),
-      joystickSize: number(
+      swapHalves: boolean(touch, 'swapHalves', DEFAULT_ARENA_SETTINGS.touch.swapHalves),
+      stickReach: number(
         touch,
-        'joystickSize',
-        DEFAULT_ARENA_SETTINGS.touch.joystickSize,
-        LIMITS.joystickSize,
+        'stickReach',
+        DEFAULT_ARENA_SETTINGS.touch.stickReach,
+        LIMITS.stickReach,
       ),
     },
   };
@@ -255,6 +265,18 @@ export function clampPitch(pitch: number): number {
 
 /** How narrow the view gets while zoomed. */
 export const ZOOM_FIELD_OF_VIEW_RATIO = 0.55;
+
+/**
+ * Whether this device is driven by fingers rather than a pointer.
+ *
+ * Asked of the device rather than of the user-agent string: a user-agent is a
+ * claim, and a coarse pointer is a fact. It decides the touch layout, and it
+ * also decides that pointer lock is never asked for — asking on a phone is what
+ * made the settings open on almost every touch.
+ */
+export function hasCoarsePointer(): boolean {
+  return typeof window !== 'undefined' && window.matchMedia('(pointer: coarse)').matches;
+}
 
 const CODE_LABELS: Readonly<Record<string, string>> = {
   Space: 'Space',

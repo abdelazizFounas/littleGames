@@ -53,8 +53,9 @@ export function ArenaReadyPanel({
         <p className="arena-panel__hint">
           {touchLayout ? (
             <>
-              Once you are both ready, a three-second countdown opens the round. Use the stick to
-              move and drag anywhere to look.
+              Once you are both ready, a three-second countdown opens the round. One half of the
+              screen moves you and the other turns the view — wherever your thumb lands is the
+              middle. The gear opens the settings.
             </>
           ) : (
             <>

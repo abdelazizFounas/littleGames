@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState, type ReactNode } from 'react';
+import { canLockKeyboard } from './keyboard-lock';
 import {
   ARENA_ACTIONS,
   DEFAULT_ARENA_SETTINGS,
@@ -230,8 +231,13 @@ export function ArenaSettingsPanel({
         <section className="arena-settings__group">
           <h3>Keys</h3>
           <p className="hint">
-            The mouse buttons always fire and zoom. Keys are stored by position, so a binding made
-            on one keyboard layout works on another.
+            Left click fires and right click held raises the scope, whatever else is bound. Keys are
+            stored by position, so a binding made on one keyboard layout works on another.
+          </p>
+          <p className="hint">
+            {canLockKeyboard()
+              ? 'In fullscreen the game holds the keyboard, so browser shortcuts such as Ctrl+W do not reach the browser. Outside fullscreen they do, and no page can prevent that.'
+              : 'This browser does not let a page hold the keyboard, so shortcuts such as Ctrl+W always reach the browser — even in fullscreen.'}
           </p>
           <div className="arena-settings__keys">
             {ARENA_ACTIONS.map((action) => (
@@ -259,42 +265,47 @@ export function ArenaSettingsPanel({
         {touchLayout && (
           <section className="arena-settings__group">
             <h3>Touch</h3>
-            <Slider
-              label="Drag sensitivity"
-              value={settings.touch.sensitivity}
-              min={0.001}
-              max={0.02}
-              step={0.001}
-              format={(value) => (value * 1000).toFixed(0)}
-              onChange={(sensitivity) => {
-                setTouch({ sensitivity });
-              }}
-            />
-            <Slider
-              label="Stick size"
-              value={settings.touch.joystickSize}
-              min={0.1}
-              max={0.3}
-              step={0.01}
-              format={(value) => `${String(Math.round(value * 100))}%`}
-              onChange={(joystickSize) => {
-                setTouch({ joystickSize });
-              }}
-            />
-            <Toggle
-              label="Invert vertical"
-              checked={settings.touch.invertY}
-              onChange={(invertY) => {
-                setTouch({ invertY });
-              }}
-            />
-            <Toggle
-              label="Left-handed layout"
-              checked={settings.touch.leftHanded}
-              onChange={(leftHanded) => {
-                setTouch({ leftHanded });
-              }}
-            />
+          <p className="hint">
+            Each half of the screen is a stick with no fixed place: where your thumb lands is the
+            middle. The left half moves you and the right half turns the view — swap them below if
+            that is the wrong way round for you.
+          </p>
+          <Slider
+            label="Turn speed"
+            value={settings.touch.sensitivity}
+            min={0.6}
+            max={6}
+            step={0.2}
+            format={(value) => `${value.toFixed(1)}×`}
+            onChange={(sensitivity) => {
+              setTouch({ sensitivity });
+            }}
+          />
+          <Slider
+            label="Thumb travel"
+            value={settings.touch.stickReach}
+            min={0.06}
+            max={0.3}
+            step={0.01}
+            format={(value) => `${String(Math.round(value * 100))}%`}
+            onChange={(stickReach) => {
+              setTouch({ stickReach });
+            }}
+          />
+          <Toggle
+            label="Invert vertical"
+            checked={settings.touch.invertY}
+            onChange={(invertY) => {
+              setTouch({ invertY });
+            }}
+          />
+          <Toggle
+            label="Swap the halves"
+            checked={settings.touch.swapHalves}
+            onChange={(swapHalves) => {
+              setTouch({ swapHalves });
+            }}
+          />
           </section>
         )}
 

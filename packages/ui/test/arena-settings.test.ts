@@ -24,7 +24,7 @@ describe('arena settings', () => {
       {
         ...DEFAULT_ARENA_SETTINGS,
         look: { ...DEFAULT_ARENA_SETTINGS.look, invertY: true, sensitivity: 0.004 },
-        touch: { ...DEFAULT_ARENA_SETTINGS.touch, leftHanded: true },
+        touch: { ...DEFAULT_ARENA_SETTINGS.touch, swapHalves: true },
       },
       'jump',
       'KeyE',
@@ -39,18 +39,18 @@ describe('arena settings', () => {
     const restored = readArenaSettings({
       look: { sensitivity: 'fast', invertY: true, fieldOfView: 1.1 },
       keys: { forward: 'KeyZ', jump: 42 },
-      touch: { leftHanded: true, joystickSize: null },
+      touch: { swapHalves: true, stickReach: null },
     });
 
     // The broken ones are back to their defaults...
     expect(restored.look.sensitivity).toBe(DEFAULT_ARENA_SETTINGS.look.sensitivity);
     expect(restored.keys.jump).toBe(DEFAULT_ARENA_SETTINGS.keys.jump);
-    expect(restored.touch.joystickSize).toBe(DEFAULT_ARENA_SETTINGS.touch.joystickSize);
+    expect(restored.touch.stickReach).toBe(DEFAULT_ARENA_SETTINGS.touch.stickReach);
     // ...and everything the player actually chose is still theirs.
     expect(restored.look.invertY).toBe(true);
     expect(restored.look.fieldOfView).toBe(1.1);
     expect(restored.keys.forward).toBe('KeyZ');
-    expect(restored.touch.leftHanded).toBe(true);
+    expect(restored.touch.swapHalves).toBe(true);
   });
 
   it('pull a number that is out of range back into it', () => {

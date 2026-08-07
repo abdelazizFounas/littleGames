@@ -796,49 +796,57 @@ body {
   position: absolute;
   inset: 0;
   z-index: 1;
-  /* The look surface below claims what it wants; this layer itself is not a
-     target, or it would swallow every gesture meant for the game. */
   pointer-events: none;
   touch-action: none;
   user-select: none;
 }
 
-.arena-touch__look {
+/* Half the screen each, and nothing drawn on them: a stick that has to be
+   found before it can be used is a stick that is missed under pressure. Where
+   the thumb lands is the middle. */
+.arena-touch__zone {
   position: absolute;
-  inset: 0;
+  top: 0;
+  bottom: 0;
+  width: 50%;
   pointer-events: auto;
 }
 
-.arena-touch__stick {
-  position: absolute;
-  bottom: 4%;
-  left: 4%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: var(--stick-size, 16vmin);
-  aspect-ratio: 1;
-  pointer-events: auto;
-  background: rgb(255 255 255 / 8%);
-  border: 2px solid rgb(255 255 255 / 25%);
-  border-radius: 50%;
+.arena-touch__zone--move {
+  left: 0;
 }
 
-.arena-touch--left-handed .arena-touch__stick {
-  right: 4%;
+.arena-touch__zone--turn {
+  right: 0;
+}
+
+.arena-touch--swapped .arena-touch__zone--move {
+  right: 0;
   left: auto;
 }
 
-.arena-touch__knob {
-  width: 40%;
-  aspect-ratio: 1;
-  background: rgb(255 255 255 / 55%);
+.arena-touch--swapped .arena-touch__zone--turn {
+  right: auto;
+  left: 0;
+}
+
+/* Where the thumb is, while it is down. Feedback only — it is positioned from
+   JavaScript because the middle moves with every touch. */
+.arena-touch__mark {
+  position: absolute;
+  width: 3.5vmin;
+  height: 3.5vmin;
+  margin: -1.75vmin 0 0 -1.75vmin;
+  pointer-events: none;
+  background: rgb(255 255 255 / 30%);
+  border: 1px solid rgb(255 255 255 / 45%);
   border-radius: 50%;
+  opacity: 0;
 }
 
 .arena-touch__buttons {
   position: absolute;
-  right: 4%;
+  right: 3%;
   bottom: 4%;
   display: grid;
   grid-template-areas:
@@ -848,15 +856,15 @@ body {
   pointer-events: none;
 }
 
-.arena-touch--left-handed .arena-touch__buttons {
+.arena-touch--swapped .arena-touch__buttons {
   right: auto;
-  left: 4%;
+  left: 3%;
 }
 
 .arena-touch__button {
   width: 11vmin;
   aspect-ratio: 1;
-  font-size: 2vmin;
+  font-size: 1.9vmin;
   color: #eef0f4;
   pointer-events: auto;
   background: rgb(255 255 255 / 10%);
@@ -883,21 +891,21 @@ body {
   grid-area: zoom;
 }
 
-/* Not a panel and not a pause: one line over the running game, saying the only
-   thing the player cannot work out by looking. */
-.arena-hint {
+/* The only way into the settings on a phone, and deliberately out of the way of
+   both thumbs. */
+.arena-touch__gear {
   position: absolute;
-  bottom: 6%;
-  left: 50%;
-  z-index: 2;
-  margin: 0;
-  padding: 0.4em 0.9em;
-  font-size: clamp(0.75rem, 1.6vmin, 1rem);
+  top: 2%;
+  right: 3%;
+  width: 8vmin;
+  aspect-ratio: 1;
+  font-size: 4vmin;
+  line-height: 1;
   color: #eef0f4;
-  pointer-events: none;
-  background: rgb(11 13 18 / 65%);
-  border-radius: 2em;
-  transform: translateX(-50%);
+  pointer-events: auto;
+  background: rgb(11 13 18 / 55%);
+  border: 1px solid rgb(255 255 255 / 25%);
+  border-radius: 50%;
 }
 
 .arena-result__score {
@@ -906,4 +914,12 @@ body {
   font-size: clamp(1.6rem, 6vmin, 4rem);
   font-variant-numeric: tabular-nums;
   letter-spacing: 0.08em;
+}
+
+/* A latched button has to look latched: crouch and scope stay where they were
+   put, and the only other evidence is seven centimetres of eye height. */
+.arena-touch__button--on {
+  color: #101319;
+  background: rgb(255 255 255 / 85%);
+  border-color: #eef0f4;
 }

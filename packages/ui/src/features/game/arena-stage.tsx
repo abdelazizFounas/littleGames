@@ -6,6 +6,7 @@ import { ArenaResultPanel } from './arena-result-panel';
 import { ArenaSettingsPanel } from './arena-settings-panel';
 import {
   DEFAULT_ARENA_SETTINGS,
+  hasCoarsePointer,
   readArenaSettings,
   writeArenaSettings,
   type ArenaSettings,
@@ -16,6 +17,7 @@ import {
   type ArenaSession,
   type ArenaSessionStatus,
 } from './arena-session';
+import { lockKeyboard, unlockKeyboard } from './keyboard-lock';
 
 /**
  * The arena screen.
@@ -47,6 +49,18 @@ const LOCAL_SETTINGS_KEY = 'littlegames.arena.settings';
  * player asking for the menu.
  */
 const RELOCK_BOUNCE_MS = 400;
+
+/**
+ * The keys the game asks the browser to hand over while it is fullscreen.
+ *
+ * Escape is deliberately absent: it is how a player leaves, and a game that took
+ * the exit away would be a game nobody could get out of.
+ */
+const GAME_KEY_CODES: readonly string[] = [
+  'KeyW', 'KeyA', 'KeyS', 'KeyD', 'KeyQ', 'KeyE', 'KeyR', 'KeyF', 'KeyC', 'KeyP', 'KeyT',
+  'Space', 'ShiftLeft', 'ShiftRight', 'ControlLeft', 'ControlRight', 'AltLeft', 'AltRight',
+  'Tab', 'Digit1', 'Digit2', 'Digit3', 'Digit4',
+];
 
 export function ArenaStage({
   userId,
@@ -87,9 +101,7 @@ export function ArenaStage({
   const [settings, setSettings] = useState<ArenaSettings>(() =>
     readArenaSettings(readCachedSettings()),
   );
-  const [touchLayout] = useState(
-    () => typeof window !== 'undefined' && window.matchMedia('(pointer: coarse)').matches,
-  );
+  const [touchLayout] = useState(hasCoarsePointer);
 
   // The account's copy, fetched once the screen mounts. Local storage is a
   // cache here, not the record: whichever was written last wins, which is the
@@ -249,8 +261,11 @@ export function ArenaStage({
               // Unless we asked for it. Opening the panel releases the pointer,
               // and that release arrives here a moment later; taken as a
               // request it would re-open a panel the player had just closed.
+              // Only where there is a pointer to lose. A phone has no Escape
+              // key and no lock worth keeping, so nothing there should be read
+              // as a request for the menu — the gear is the request.
               const bounced = Date.now() - relockAt.current < RELOCK_BOUNCE_MS;
-              if (!next && !expected && !bounced) {
+              if (!next && !expected && !bounced && !touchLayout) {
                 openSettingsRef.current();
               }
             },
@@ -292,11 +307,21 @@ export function ArenaStage({
 
   useEffect(() => {
     const onChange = (): void => {
-      setIsFullscreen(document.fullscreenElement !== null);
+      const full = document.fullscreenElement !== null;
+      setIsFullscreen(full);
+      // Only in fullscreen, because that is the only place a browser will hand
+      // its shortcuts over. Ctrl+W closing the tab mid-duel is the reason this
+      // exists at all.
+      if (full) {
+        void lockKeyboard(GAME_KEY_CODES);
+      } else {
+        unlockKeyboard();
+      }
     };
     document.addEventListener('fullscreenchange', onChange);
     return () => {
       document.removeEventListener('fullscreenchange', onChange);
+      unlockKeyboard();
     };
   }, []);
 

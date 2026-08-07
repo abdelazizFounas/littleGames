@@ -434,6 +434,9 @@ export async function startArenaSession(
     frame = requestAnimationFrame(tick);
     const elapsed = lastFrameAt === 0 ? 0 : now - lastFrameAt;
     lastFrameAt = now;
+    // A touch stick says how fast to turn, so it is integrated here against the
+    // frame's own elapsed time rather than once per command.
+    input.advance(elapsed / 1000);
 
     // Input goes out on the server's cadence, not the display's: a 144 Hz
     // screen must not send two and a half times the commands a 60 Hz one does,
