@@ -325,12 +325,43 @@ export function ArenaStage({
         unlockKeyboard();
       }
     };
+    // Run once on the way in as well: arriving already fullscreen is a state
+    // `fullscreenchange` will never announce, and it is exactly the state the
+    // lock is wanted in.
+    onChange();
     document.addEventListener('fullscreenchange', onChange);
     return () => {
       document.removeEventListener('fullscreenchange', onChange);
       unlockKeyboard();
     };
   }, []);
+
+  /**
+   * Asks before the tab closes, for as long as a round is running.
+   *
+   * Crouch is Ctrl and forward is W, so Ctrl+W is a step every player takes,
+   * and in every browser but a fullscreen Chromium it is also the shortcut that
+   * closes the tab. `preventDefault` cannot touch it — a browser shortcut is
+   * the browser's — and the keyboard lock is not offered by Firefox at all. The
+   * one thing a page may always do is refuse to unload quietly, and a
+   * confirmation the player can dismiss is worth a great deal more than a duel
+   * that ends because two keys were held together.
+   *
+   * Only while a round is live: being asked to confirm leaving a lobby would be
+   * a nuisance with nothing behind it.
+   */
+  useEffect(() => {
+    if (lobby.phase !== 'countdown' && lobby.phase !== 'playing') {
+      return undefined;
+    }
+    const onBeforeUnload = (event: BeforeUnloadEvent): void => {
+      event.preventDefault();
+    };
+    window.addEventListener('beforeunload', onBeforeUnload);
+    return () => {
+      window.removeEventListener('beforeunload', onBeforeUnload);
+    };
+  }, [lobby.phase]);
 
   useEffect(
     () => () => {

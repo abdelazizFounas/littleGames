@@ -86,7 +86,7 @@ export const DEFAULT_ARENA_SETTINGS: ArenaSettings = {
     left: 'KeyA',
     right: 'KeyD',
     jump: 'Space',
-    crouch: 'ShiftLeft',
+    crouch: 'ControlLeft',
     fire: 'KeyF',
     zoom: 'KeyQ',
   },

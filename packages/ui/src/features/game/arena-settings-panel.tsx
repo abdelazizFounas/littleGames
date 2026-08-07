@@ -236,8 +236,8 @@ export function ArenaSettingsPanel({
           </p>
           <p className="hint">
             {canLockKeyboard()
-              ? 'In fullscreen the game holds the keyboard, so browser shortcuts such as Ctrl+W do not reach the browser. Outside fullscreen they do, and no page can prevent that.'
-              : 'This browser does not let a page hold the keyboard — Firefox has no such API — so shortcuts like Ctrl+W always reach the browser, even in fullscreen. Nothing a page can do prevents that.'}
+              ? 'Crouch is Ctrl, so Ctrl+W is a step you will take often. In fullscreen the game holds the keyboard and it stays in the game. Outside fullscreen the browser takes it, and the game asks before letting the tab close.'
+              : 'Crouch is Ctrl, so Ctrl+W is a step you will take often. This browser does not let a page hold the keyboard — Firefox has no such API — so the shortcut always reaches the browser, even in fullscreen. The game asks before letting the tab close, which is as far as a page can go.'}
           </p>
           <div className="arena-settings__keys">
             {ARENA_ACTIONS.map((action) => (
