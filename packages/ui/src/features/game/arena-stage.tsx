@@ -38,32 +38,13 @@ const SETTINGS_SAVE_DEBOUNCE_MS = 800;
 const LOCAL_SETTINGS_KEY = 'littlegames.arena.settings';
 
 /**
- * How long after asking for the pointer back a loss is still that same refusal.
+ * How long the pointer must be held for the browser to be taken seriously.
  *
- * Escape is the browser's own gesture for giving the pointer up, and it will
- * not hand it straight back inside the very key event that took it: Chrome
- * grants the lock and drops it again a moment later. Measured, not guessed —
- * the sequence is a `pointerlockchange` to locked immediately followed by one
- * to unlocked. Without this the settings would close on Escape and bounce
- * straight back open, because that second event is indistinguishable from the
- * player asking for the menu.
- */
-const RELOCK_BOUNCE_MS = 400;
-
-/**
- * How long the pointer must have been held for losing it to mean anything.
- *
- * Escape is read from the pointer going away, because no browser delivers that
- * key while the pointer is hidden. But a browser may also take the pointer back
- * on its own the instant after granting it — Firefox does — and a grant
- * followed immediately by a drop is not a player asking for a menu. Treated as
- * one, it opened the settings over the game on every single click, which is a
- * game that cannot be played with a mouse at all.
+ * A grant followed immediately by a drop is a browser that will not keep one —
+ * Firefox does exactly that — and the hint tells the player so rather than the
+ * mouse silently doing nothing.
  */
 const MIN_HELD_MS = 1000;
-
-/** After this many instant drops, the browser plainly will not keep it. */
-const UNRELIABLE_AFTER = 2;
 
 /**
  * The keys the game asks the browser to hand over while it is fullscreen.
@@ -99,9 +80,7 @@ export function ArenaStage({
   const [settingsOpen, setSettingsOpen] = useState(false);
   /** Whether the game currently holds the mouse. Drives the one-line hint. */
   const [holdsPointer, setHoldsPointer] = useState(false);
-  const relockAt = useRef(0);
   const lockGainedAt = useRef(0);
-  const shortLocks = useRef(0);
   /** Why the browser would not hide the pointer, if it would not. */
   const [lockRefusal, setLockRefusal] = useState<string | null>(null);
   /** Set once this browser has proved it will not hold the pointer. */
@@ -185,7 +164,6 @@ export function ArenaStage({
   /** Closes the settings and asks for the pointer straight back. */
   const closeSettings = useCallback((): void => {
     setSettingsOpen(false);
-    relockAt.current = Date.now();
     sessionRef.current?.resume();
   }, []);
 
@@ -269,7 +247,7 @@ export function ArenaStage({
                 onJoined(next.matchId);
               }
             },
-            onLockChange: (next, expected) => {
+            onLockChange: (next) => {
               if (cancelled) {
                 return;
               }
@@ -280,30 +258,18 @@ export function ArenaStage({
                 return;
               }
 
-              // Given straight back by the browser rather than by the player.
-              // Nothing about that is a request for anything.
-              const heldFor = Date.now() - lockGainedAt.current;
-              if (heldFor < MIN_HELD_MS) {
-                shortLocks.current += 1;
-                if (shortLocks.current >= UNRELIABLE_AFTER) {
-                  setLockUnreliable(true);
-                }
-                return;
+              // A pointer handed straight back is a browser that will not keep
+              // one, and the hint says so rather than the mouse silently doing
+              // nothing.
+              if (Date.now() - lockGainedAt.current < MIN_HELD_MS) {
+                setLockUnreliable(true);
               }
 
-              // Losing the pointer mid-round is how Escape reaches us, so it
-              // opens the settings rather than raising a menu of its own. The
-              // game is never paused by it: the opponent is still playing, and
-              // saying otherwise would be a lie told in a box.
-              //
-              // Unless we asked for it — opening the panel releases the pointer,
-              // and that release arrives here a moment later — or unless there
-              // is no pointer to lose, or this browser has already shown it will
-              // not keep one.
-              const bounced = Date.now() - relockAt.current < RELOCK_BOUNCE_MS;
-              if (!expected && !bounced && !touchLayout && !lockUnreliable) {
-                openSettingsRef.current();
-              }
+              // And nothing else. Losing the pointer used to open the settings,
+              // on the reasoning that no browser delivers Escape while it is
+              // hidden — but it also goes when the window loses focus, and a
+              // menu that appears because you alt-tabbed is a menu nobody asked
+              // for. The settings open when they are asked for: P, or the gear.
             },
             onLobbyChange: (next) => {
               if (!cancelled) {

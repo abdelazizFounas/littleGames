@@ -417,7 +417,10 @@ type Body struct {
 	//
 	// Simulated rather than animated: the limbs that are drawn are the limbs that
 	// will be shot at, so both ends have to agree on where they are.
-	GaitPhase     float64 `protobuf:"fixed64,7,opt,name=gait_phase,json=gaitPhase,proto3" json:"gait_phase,omitempty"`
+	GaitPhase float64 `protobuf:"fixed64,7,opt,name=gait_phase,json=gaitPhase,proto3" json:"gait_phase,omitempty"`
+	// How far into a crouch, from standing to fully down. A number rather than a
+	// flag because a body spends most of a crouch between the two.
+	CrouchAmount  float64 `protobuf:"fixed64,8,opt,name=crouch_amount,json=crouchAmount,proto3" json:"crouch_amount,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -497,6 +500,13 @@ func (x *Body) GetCrouching() bool {
 func (x *Body) GetGaitPhase() float64 {
 	if x != nil {
 		return x.GaitPhase
+	}
+	return 0
+}
+
+func (x *Body) GetCrouchAmount() float64 {
+	if x != nil {
+		return x.CrouchAmount
 	}
 	return 0
 }
@@ -908,7 +918,7 @@ const file_littlegames_arena_v1_arena_proto_rawDesc = "" +
 	"\vshots_fired\x18\v \x01(\rR\n" +
 	"shotsFired\"\x1d\n" +
 	"\x05Ready\x12\x14\n" +
-	"\x05ready\x18\x01 \x01(\bR\x05ready\"\x99\x01\n" +
+	"\x05ready\x18\x01 \x01(\bR\x05ready\"\xbe\x01\n" +
 	"\x04Body\x12\f\n" +
 	"\x01x\x18\x01 \x01(\x01R\x01x\x12\f\n" +
 	"\x01y\x18\x02 \x01(\x01R\x01y\x12\f\n" +
@@ -917,7 +927,8 @@ const file_littlegames_arena_v1_arena_proto_rawDesc = "" +
 	"\bgrounded\x18\x05 \x01(\bR\bgrounded\x12\x1c\n" +
 	"\tcrouching\x18\x06 \x01(\bR\tcrouching\x12\x1d\n" +
 	"\n" +
-	"gait_phase\x18\a \x01(\x01R\tgaitPhase\"3\n" +
+	"gait_phase\x18\a \x01(\x01R\tgaitPhase\x12#\n" +
+	"\rcrouch_amount\x18\b \x01(\x01R\fcrouchAmount\"3\n" +
 	"\aVector3\x12\f\n" +
 	"\x01x\x18\x01 \x01(\x01R\x01x\x12\f\n" +
 	"\x01y\x18\x02 \x01(\x01R\x01y\x12\f\n" +

@@ -100,6 +100,13 @@ const (
 	// somebody walking rather than as somebody standing.
 	GaitSettlePerTick float64 = 0.05
 
+	// CrouchPerTick is how much of the way into a crouch a body travels each
+	// tick — about an eighth of a second end to end. Instant is cheaper, but a
+	// hitbox that changes height between one tick and the next is a hitbox
+	// nobody can see moving, and a player dropping behind cover ought to be
+	// seen dropping.
+	CrouchPerTick float64 = 0.14
+
 	// The two phases at which the legs are level under the body. The stride is
 	// a triangle wave, so it passes through zero swing twice.
 	FeetTogetherEarly float64 = 0.25

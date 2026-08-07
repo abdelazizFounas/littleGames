@@ -110,6 +110,16 @@ export const STRIDE_METRES = 2.4;
  */
 export const GAIT_SETTLE_PER_TICK = 0.05;
 
+/**
+ * How much of the way into a crouch a body travels each tick.
+ *
+ * About an eighth of a second end to end. Instant would be cheaper and is what
+ * this had before, but a hitbox that changes height between one tick and the
+ * next is a hitbox nobody can see moving — and a player who drops behind cover
+ * ought to be seen dropping.
+ */
+export const CROUCH_PER_TICK = 0.14;
+
 /* --- Shooting ------------------------------------------------------------- */
 
 /** Ticks between one shot and the next being allowed. */

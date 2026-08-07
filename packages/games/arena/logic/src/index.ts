@@ -27,6 +27,7 @@ export {
   opponentOf,
 } from './arena.ts';
 export type { MoveIntent, PlayerBody } from './body.ts';
+export type { Crouchable } from './body.ts';
 export {
   FEET_TOGETHER_EARLY,
   FEET_TOGETHER_LATE,
@@ -38,7 +39,7 @@ export {
   stepBody,
 } from './body.ts';
 export type { BodyPart, PartBox, Pose } from './pose.ts';
-export { facingOf, poseOf, swing, weaponOf } from './pose.ts';
+export { facingOf, hittablePartsOf, poseOf, swing } from './pose.ts';
 export type { ShotTarget, Trace } from './ray.ts';
 export { rayVsBox, traceShot } from './ray.ts';
 export type {

@@ -260,7 +260,7 @@ describe('the readout', () => {
 describe('the eye', () => {
   it('sits above the feet, and lower when crouched', () => {
     const standing = eyeOf(restingBody(SPAWNS.north));
-    const crouched = eyeOf({ ...restingBody(SPAWNS.north), crouching: true });
+    const crouched = eyeOf({ ...restingBody(SPAWNS.north), crouching: true, crouchAmount: 1 });
     expect(standing.y).toBeGreaterThan(crouched.y);
     expect(standing.x).toBe(SPAWNS.north.x);
   });
@@ -280,6 +280,7 @@ function shot(over: Partial<TimedShot> = {}): TimedShot {
     endpoint: { x: 0, y: 0.9, z: -11.5 },
     hitPlayer: false,
     seenAt: 1000,
+    mine: false,
     ...over,
   };
 }

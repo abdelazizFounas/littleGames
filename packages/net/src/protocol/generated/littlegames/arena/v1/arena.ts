@@ -251,6 +251,11 @@ export interface Body {
    * will be shot at, so both ends have to agree on where they are.
    */
   gaitPhase: number;
+  /**
+   * How far into a crouch, from standing to fully down. A number rather than a
+   * flag because a body spends most of a crouch between the two.
+   */
+  crouchAmount: number;
 }
 
 /** A unit vector. */
@@ -648,7 +653,7 @@ export const Ready: MessageFns<Ready> = {
 };
 
 function createBaseBody(): Body {
-  return { x: 0, y: 0, z: 0, vy: 0, grounded: false, crouching: false, gaitPhase: 0 };
+  return { x: 0, y: 0, z: 0, vy: 0, grounded: false, crouching: false, gaitPhase: 0, crouchAmount: 0 };
 }
 
 export const Body: MessageFns<Body> = {
@@ -673,6 +678,9 @@ export const Body: MessageFns<Body> = {
     }
     if (message.gaitPhase !== 0) {
       writer.uint32(57).double(message.gaitPhase);
+    }
+    if (message.crouchAmount !== 0) {
+      writer.uint32(65).double(message.crouchAmount);
     }
     return writer;
   },
@@ -740,6 +748,14 @@ export const Body: MessageFns<Body> = {
           message.gaitPhase = reader.double();
           continue;
         }
+        case 8: {
+          if (tag !== 65) {
+            break;
+          }
+
+          message.crouchAmount = reader.double();
+          continue;
+        }
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -761,6 +777,11 @@ export const Body: MessageFns<Body> = {
         ? globalThis.Number(object.gaitPhase)
         : isSet(object.gait_phase)
         ? globalThis.Number(object.gait_phase)
+        : 0,
+      crouchAmount: isSet(object.crouchAmount)
+        ? globalThis.Number(object.crouchAmount)
+        : isSet(object.crouch_amount)
+        ? globalThis.Number(object.crouch_amount)
         : 0,
     };
   },
@@ -788,6 +809,9 @@ export const Body: MessageFns<Body> = {
     if (message.gaitPhase !== 0) {
       obj.gaitPhase = message.gaitPhase;
     }
+    if (message.crouchAmount !== 0) {
+      obj.crouchAmount = message.crouchAmount;
+    }
     return obj;
   },
 
@@ -803,6 +827,7 @@ export const Body: MessageFns<Body> = {
     message.grounded = object.grounded ?? false;
     message.crouching = object.crouching ?? false;
     message.gaitPhase = object.gaitPhase ?? 0;
+    message.crouchAmount = object.crouchAmount ?? 0;
     return message;
   },
 };

@@ -1,4 +1,4 @@
-import { poseOf, weaponOf, type PartBox } from '@littlegames/arena-logic';
+import { poseOf, type PartBox } from '@littlegames/arena-logic';
 import { FreeCamera } from '@babylonjs/core/Cameras/freeCamera.js';
 import { Engine } from '@babylonjs/core/Engines/engine.js';
 import { HemisphericLight } from '@babylonjs/core/Lights/hemisphericLight.js';
@@ -18,13 +18,6 @@ import { ARENA_INSTANCES, type BoxInstance } from './instances.ts';
 import { SKY, TRACER, TRACER_HIT, colourOfPart, colourOfSeat, type Rgb } from './palette.ts';
 import { createHud, type Hud } from './hud.ts';
 import type { ArenaRenderer, ArenaView } from './view.ts';
-
-/** A direction in the world, as the rules express one. */
-interface Vec3 {
-  readonly x: number;
-  readonly y: number;
-  readonly z: number;
-}
 
 /**
  * Draws the arena with Babylon.js.
@@ -68,9 +61,9 @@ const TRACER_MUZZLE_METRES = 1.2;
 /** As many tracers as can plausibly be in the air at once. */
 const MAX_TRACERS = 8;
 
-/** Parts per body, plus the rifle, for both seats. */
+/** Parts per body including its rifle, for both seats, plus the view model. */
 const PARTS_PER_PLAYER = 8;
-const MAX_PARTS = PARTS_PER_PLAYER * 2;
+const MAX_PARTS = PARTS_PER_PLAYER * 2 + 4;
 
 function toColor3(colour: Rgb): Color3 {
   return new Color3(colour.r, colour.g, colour.b);
@@ -209,25 +202,6 @@ export function createArenaBabylonRenderer(): ArenaRenderer {
   function drawPlayers(mesh: Mesh, view: ArenaView): void {
     let drawn = 0;
 
-    const place = (piece: PartBox, facing: Vec3, colour: Rgb): void => {
-      if (drawn >= MAX_PARTS) {
-        return;
-      }
-      // Turned to face the same way as the body. `FromUnitVectors` takes the
-      // shortest rotation, which for a horizontal target leaves up alone.
-      along.set(facing.x, 0, facing.z);
-      Quaternion.FromUnitVectorsToRef(forwardAxis, along, turn);
-      Matrix.ComposeToRef(
-        new Vector3(piece.half.x * 2, piece.half.y * 2, piece.half.z * 2),
-        turn,
-        new Vector3(piece.centre.x, piece.centre.y, piece.centre.z),
-        scratch,
-      );
-      scratch.copyToArray(playerMatrices, drawn * 16);
-      playerColours.set([colour.r, colour.g, colour.b, 1], drawn * 4);
-      drawn += 1;
-    };
-
     for (const player of view.players) {
       if (!player.alive) {
         continue;
@@ -235,11 +209,15 @@ export function createArenaBabylonRenderer(): ArenaRenderer {
       const pose = poseOf(player.body, player.aim);
       const seat = colourOfSeat(player.seat);
       for (const piece of pose.parts) {
-        place(piece, pose.forward, colourOfPart(piece.part, seat));
+        drawn = placePart(piece, colourOfPart(piece.part, seat), drawn);
       }
-      for (const piece of weaponOf(player.body, pose)) {
-        place(piece, pose.forward, colourOfPart(piece.part, seat));
-      }
+    }
+
+    // The player's own rifle, in the same buffer as everybody else's parts: it
+    // is the same cube drawn with a different matrix, and a second mesh for it
+    // would be a second draw call for four boxes.
+    for (const piece of view.viewModel) {
+      drawn = placePart(piece, colourOfPart(piece.part, colourOfSeat('north')), drawn);
     }
 
     mesh.thinInstanceCount = drawn;
@@ -251,6 +229,29 @@ export function createArenaBabylonRenderer(): ArenaRenderer {
       mesh.thinInstanceBufferUpdated('matrix');
       mesh.thinInstanceBufferUpdated('color');
     }
+  }
+
+  /**
+   * Writes one part into the instance buffers, in its own frame.
+   *
+   * Each part carries its own axes now — a leg hinged at the hip is not aligned
+   * to anything — so the matrix is built from those three vectors directly
+   * rather than from a rotation about the vertical.
+   */
+  function placePart(piece: PartBox, colour: Rgb, index: number): number {
+    if (index >= MAX_PARTS) {
+      return index;
+    }
+    Matrix.FromValuesToRef(
+      piece.right.x * piece.half.x * 2, piece.right.y * piece.half.x * 2, piece.right.z * piece.half.x * 2, 0,
+      piece.up.x * piece.half.y * 2, piece.up.y * piece.half.y * 2, piece.up.z * piece.half.y * 2, 0,
+      piece.forward.x * piece.half.z * 2, piece.forward.y * piece.half.z * 2, piece.forward.z * piece.half.z * 2, 0,
+      piece.centre.x, piece.centre.y, piece.centre.z, 1,
+      scratch,
+    );
+    scratch.copyToArray(playerMatrices, index * 16);
+    playerColours.set([colour.r, colour.g, colour.b, 1], index * 4);
+    return index + 1;
   }
 
   function drawTracers(mesh: Mesh, view: ArenaView): void {

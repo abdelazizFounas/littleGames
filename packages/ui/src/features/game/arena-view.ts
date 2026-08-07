@@ -19,6 +19,7 @@ import type {
   ArenaShotView,
   ArenaView,
 } from '@littlegames/arena-renderer-babylon';
+import { swing, type PartBox } from '@littlegames/arena-logic';
 import { reconcile } from '@littlegames/net';
 import type { ArenaCommand } from './arena-input-sources';
 
@@ -255,6 +256,8 @@ export interface TimedShot {
   readonly hitPlayer: boolean;
   /** When this client first saw it, on the same clock as `now`. */
   readonly seenAt: number;
+  /** Whether this player fired it, which decides where it is drawn from. */
+  readonly mine: boolean;
 }
 
 /**
@@ -263,7 +266,11 @@ export interface TimedShot {
  * Ageing happens here rather than in the renderer because the renderer holds no
  * clock — it is handed how far through its life each tracer is and draws that.
  */
-export function drawableShots(shots: readonly TimedShot[], now: number): ArenaShotView[] {
+export function drawableShots(
+  shots: readonly TimedShot[],
+  now: number,
+  muzzle: Vec3 | null = null,
+): ArenaShotView[] {
   const drawable: ArenaShotView[] = [];
   for (const shot of shots) {
     const left = fadeSince(now, shot.seenAt, TRACER_SECONDS);
@@ -272,7 +279,11 @@ export function drawableShots(shots: readonly TimedShot[], now: number): ArenaSh
     }
     drawable.push({
       id: shot.id,
-      from: shot.origin,
+      // Your own shots leave your own barrel. The server resolves them from the
+      // eye, which is what keeps the crosshair honest, but a tracer that
+      // appeared out of the middle of the screen would not look like a rifle
+      // firing — so the one you can see starts where the rifle ends.
+      from: shot.mine && muzzle !== null ? muzzle : shot.origin,
       to: shot.endpoint,
       hitPlayer: shot.hitPlayer,
       fade: 1 - left,
@@ -341,7 +352,18 @@ export function composeArenaView(
     readonly lastOwnHitAt: number | null;
     readonly lastDamageAt: number | null;
     readonly scope: number;
-  } = { now: 0, shots: [], lastOwnHitAt: null, lastDamageAt: null, scope: 0 },
+    readonly viewModel: readonly PartBox[];
+    /** Where this player's own shots should appear to come from. */
+    readonly muzzle: Vec3 | null;
+  } = {
+    now: 0,
+    shots: [],
+    lastOwnHitAt: null,
+    lastDamageAt: null,
+    scope: 0,
+    viewModel: [],
+    muzzle: null,
+  },
 ): ArenaView {
   const opponent = interpolateOpponent(from, to, alpha);
 
@@ -353,14 +375,92 @@ export function composeArenaView(
     // Tracers are drawn at the moment they arrive rather than in the
     // interpolated past. A shot is an event, and an event shown late is an
     // event shown at the wrong time.
-    shots: drawableShots(feedback.shots, feedback.now),
+    shots: drawableShots(feedback.shots, feedback.now, feedback.muzzle),
+    viewModel: feedback.viewModel,
     hud: hudFor(from, feedback.now, feedback.lastOwnHitAt, feedback.lastDamageAt, feedback.scope),
+  };
+}
+
+/**
+ * The rifle as its owner sees it: held at arm's length, in front of the eye.
+ *
+ * Placed against the camera rather than in the world, because it belongs to the
+ * player looking rather than to the arena being looked at. It sways with the
+ * stride — the same stride the rules carry, so it is in step with the legs
+ * underneath it — and it is absent while the sight is up, since somebody
+ * looking down a scope is looking down the scope and not at the rifle.
+ */
+export function viewModelOf(
+  eye: Vec3,
+  forward: Vec3,
+  body: PlayerBody,
+  scope: number,
+): PartBox[] {
+  if (scope > 0.05) {
+    return [];
+  }
+
+  // A frame from the camera: right is across the view, up is whatever is left.
+  const flat = Math.hypot(forward.x, forward.z) || 1;
+  const right: Vec3 = { x: forward.z / flat, y: 0, z: -forward.x / flat };
+  // `forward × right`, not the other way round: the other way round is the
+  // same vector pointing down, and a rifle offset downwards from the eye then
+  // appears above it.
+  const up: Vec3 = {
+    x: forward.y * right.z - forward.z * right.y,
+    y: forward.z * right.x - forward.x * right.z,
+    z: forward.x * right.y - forward.y * right.x,
+  };
+
+  // The sway: a small figure of eight from the stride, so the rifle breathes
+  // with the walk instead of hanging in space.
+  const stride = swing(body.gaitPhase);
+  const bob = swing((body.gaitPhase * 2) % 1) * 0.012;
+  const drift = stride * 0.014;
+
+  const at = (rightward: number, upward: number, forwardward: number): Vec3 => ({
+    x: eye.x + right.x * rightward + up.x * upward + forward.x * forwardward,
+    y: eye.y + right.y * rightward + up.y * upward + forward.y * forwardward,
+    z: eye.z + right.z * rightward + up.z * upward + forward.z * forwardward,
+  });
+
+  const barrel = at(0.16 + drift, -0.14 + bob, 0.5);
+  return [
+    {
+      part: 'weapon',
+      centre: barrel,
+      half: { x: 0.035, y: 0.045, z: 0.34 },
+      right,
+      up,
+      forward,
+    },
+    {
+      part: 'sight',
+      centre: at(0.16 + drift, -0.08 + bob, 0.42),
+      half: { x: 0.025, y: 0.03, z: 0.1 },
+      right,
+      up,
+      forward,
+    },
+  ];
+}
+
+/** Where the muzzle of that rifle is, which is where a tracer should start. */
+export function viewModelMuzzle(viewModel: readonly PartBox[]): Vec3 | null {
+  const barrel = viewModel.find((part) => part.part === 'weapon');
+  if (barrel === undefined) {
+    return null;
+  }
+  return {
+    x: barrel.centre.x + barrel.forward.x * barrel.half.z,
+    y: barrel.centre.y + barrel.forward.y * barrel.half.z,
+    z: barrel.centre.z + barrel.forward.z * barrel.half.z,
   };
 }
 
 /** Where the eye sits for a predicted body, before smoothing is added. */
 export function eyeOf(body: PlayerBody): Vec3 {
-  return { x: body.x, y: body.y + eyeHeight(body.crouching), z: body.z };
+  return { x: body.x, y: body.y + eyeHeight(body), z: body.z };
 }
 
 /** Whether this seat has won, which the stage reports without re-rendering. */

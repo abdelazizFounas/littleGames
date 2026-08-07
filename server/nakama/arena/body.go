@@ -39,6 +39,26 @@ type PlayerBody struct {
 	// that get drawn are the limbs that get shot at, so both sides have to agree
 	// on where they are.
 	GaitPhase float64 `json:"gaitPhase"`
+	// CrouchAmount is how far into a crouch this body is, standing to fully
+	// down. A number rather than a flag, so the body has somewhere to be
+	// between the two: height, eye and hitbox all follow it.
+	CrouchAmount float64 `json:"crouchAmount"`
+}
+
+// settleCrouch moves a body one tick further into a crouch, or out of it.
+func settleCrouch(amount float64, crouching bool) float64 {
+	target := 0.0
+	if crouching {
+		target = 1
+	}
+	gap := target - amount
+	if gap > CrouchPerTick {
+		return amount + CrouchPerTick
+	}
+	if gap < -CrouchPerTick {
+		return amount - CrouchPerTick
+	}
+	return target
 }
 
 // nextGait advances the stride by the ground actually covered, or settles it.
@@ -81,32 +101,26 @@ type MoveIntent struct {
 	Crouch bool
 }
 
-// BodyHeight is how tall a body stands.
-func BodyHeight(crouching bool) float64 {
-	if crouching {
-		return CrouchHeight
-	}
-	return StandHeight
+// BodyHeight is how tall a body stands, at either end of a crouch or anywhere
+// between.
+func BodyHeight(crouchAmount float64) float64 {
+	return StandHeight + float64((CrouchHeight-StandHeight)*crouchAmount)
 }
 
 // EyeHeight is how far the eyes sit above the feet.
-func EyeHeight(crouching bool) float64 {
-	if crouching {
-		return CrouchEye
-	}
-	return StandEye
+func EyeHeight(crouchAmount float64) float64 {
+	return StandEye + float64((CrouchEye-StandEye)*crouchAmount)
 }
 
-// EyePosition is where a body's eyes are, which is where the camera and the
-// muzzle sit.
+// EyePosition is where a body's eyes are, which is where the camera sits.
 func EyePosition(body PlayerBody) Vec3 {
-	return Vec3{X: body.X, Y: body.Y + EyeHeight(body.Crouching), Z: body.Z}
+	return Vec3{X: body.X, Y: body.Y + EyeHeight(body.CrouchAmount), Z: body.Z}
 }
 
 // BodyBounds is the box a body occupies, which is also the box a bullet has to
 // hit.
 func BodyBounds(body PlayerBody) Bounds {
-	return boundsAt(body.X, body.Y, body.Z, BodyHeight(body.Crouching))
+	return boundsAt(body.X, body.Y, body.Z, BodyHeight(body.CrouchAmount))
 }
 
 func boundsAt(x, y, z, height float64) Bounds {
@@ -181,7 +195,10 @@ func StepBody(body PlayerBody, intent MoveIntent) PlayerBody {
 		crouching = false
 	}
 
-	height := BodyHeight(crouching)
+	// Part way down counts as down for what it costs: the height a body occupies
+	// follows the movement rather than waiting for it to finish.
+	crouchAmount := settleCrouch(body.CrouchAmount, crouching)
+	height := BodyHeight(crouchAmount)
 	speed := MoveSpeed
 	if crouching {
 		speed = CrouchSpeed
@@ -247,10 +264,11 @@ func StepBody(body PlayerBody, intent MoveIntent) PlayerBody {
 
 	return PlayerBody{
 		X: x, Y: y, Z: z,
-		VY:        vy,
-		Grounded:  grounded,
-		Crouching: crouching,
-		GaitPhase: nextGait(body.GaitPhase, travelled, grounded),
+		VY:           vy,
+		Grounded:     grounded,
+		Crouching:    crouching,
+		CrouchAmount: crouchAmount,
+		GaitPhase:    nextGait(body.GaitPhase, travelled, grounded),
 	}
 }
 
@@ -260,6 +278,7 @@ func RestingBody(at Vec3) PlayerBody {
 	return PlayerBody{
 		X: at.X, Y: at.Y, Z: at.Z,
 		VY: 0, Grounded: false, Crouching: false,
-		GaitPhase: FeetTogetherEarly,
+		CrouchAmount: 0,
+		GaitPhase:    FeetTogetherEarly,
 	}
 }

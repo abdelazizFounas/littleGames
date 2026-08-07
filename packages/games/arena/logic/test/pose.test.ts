@@ -8,9 +8,15 @@ import {
   type PlayerBody,
 } from '../src/body.ts';
 import { CROUCH_HEIGHT, STAND_HEIGHT, STRIDE_METRES } from '../src/constants.ts';
-import { facingOf, poseOf, swing, weaponOf } from '../src/pose.ts';
+import { facingOf, hittablePartsOf, poseOf, swing } from '../src/pose.ts';
 
 const GROUNDED: PlayerBody = { ...restingBody(SPAWNS.north), grounded: true };
+
+/** Where a standing body's hips are, which is what the legs hang from. */
+function hipHeightOf(body: PlayerBody): number {
+  const legs = poseOf(body, { x: 0, y: 0, z: 1 }).parts.find((part) => part.part === 'legRight');
+  return (legs?.centre.y ?? 0) + (legs?.up.y ?? 0) * (legs?.half.y ?? 0);
+}
 
 /** How high a posed head sits, which is the whole figure's height in one number. */
 function headHeight(pose: { parts: readonly { part: string; centre: { y: number } }[] }): number {
@@ -120,13 +126,16 @@ describe('the pose', () => {
     expect(pose.right).toEqual({ x: aim.z, y: 0, z: -aim.x });
   });
 
-  it('keeps every part inside the body it belongs to', () => {
-    for (const crouching of [false, true]) {
-      const body = { ...GROUNDED, crouching };
-      const height = crouching ? CROUCH_HEIGHT : STAND_HEIGHT;
-      for (const part of poseOf(body, aim).parts) {
-        expect(part.centre.y - part.half.y).toBeGreaterThanOrEqual(body.y - 0.001);
-        expect(part.centre.y + part.half.y).toBeLessThanOrEqual(body.y + height + 0.001);
+  it('keeps every part of the body inside the box that can be hit', () => {
+    // The rifle is deliberately not among these: it is held out in front, and
+    // it is not something a bullet stops against.
+    for (const crouchAmount of [0, 1]) {
+      const body = { ...GROUNDED, crouching: crouchAmount === 1, crouchAmount };
+      const height = crouchAmount === 1 ? CROUCH_HEIGHT : STAND_HEIGHT;
+      for (const part of hittablePartsOf(poseOf(body, aim))) {
+        const reach = Math.abs(part.up.y) * part.half.y + Math.abs(part.forward.y) * part.half.z;
+        expect(part.centre.y - reach).toBeGreaterThanOrEqual(body.y - 0.06);
+        expect(part.centre.y + reach).toBeLessThanOrEqual(body.y + height + 0.06);
       }
     }
   });
@@ -140,17 +149,47 @@ describe('the pose', () => {
     expect(torso?.centre.y).toBeGreaterThan(leg?.centre.y ?? 0);
   });
 
-  it('swings the legs apart and the arms against them', () => {
+  it('swings the legs apart from the hip, and keeps them attached to it', () => {
     const striding = { ...GROUNDED, gaitPhase: 0.5 };
     const parts = new Map(poseOf(striding, aim).parts.map((part) => [part.part, part]));
     const legLeft = parts.get('legLeft');
     const legRight = parts.get('legRight');
-    const armLeft = parts.get('armLeft');
 
     // Facing +z, so a leg that leads is further along z than one that trails.
-    expect(legLeft?.centre.z).toBeGreaterThan(legRight?.centre.z ?? 0);
-    // The arm on the same side goes the other way, as arms do.
-    expect(armLeft?.centre.z).toBeLessThan(legLeft?.centre.z ?? 0);
+    expect(legRight?.centre.z).toBeGreaterThan(legLeft?.centre.z ?? 0);
+
+    // Hinged rather than slid: the top of each leg stays where the hip is,
+    // whatever the stride is doing. The top is the centre plus half the length
+    // back along the leg's own up axis.
+    for (const leg of [legLeft, legRight]) {
+      const hipY = (leg?.centre.y ?? 0) + (leg?.up.y ?? 0) * (leg?.half.y ?? 0);
+      const hipZ = (leg?.centre.z ?? 0) + (leg?.up.z ?? 0) * (leg?.half.y ?? 0);
+      expect(hipY).toBeCloseTo(hipHeightOf(GROUNDED), 6);
+      expect(hipZ).toBeCloseTo(GROUNDED.z, 6);
+    }
+  });
+
+  it('stands the legs straight when nobody is moving', () => {
+    const still = { ...GROUNDED, gaitPhase: FEET_TOGETHER_EARLY };
+    for (const part of poseOf(still, aim).parts) {
+      if (part.part === 'legLeft' || part.part === 'legRight') {
+        // Straight down: the leg's own up axis is the world's.
+        expect(part.up.y).toBeCloseTo(1, 9);
+        expect(part.up.z).toBeCloseTo(0, 9);
+      }
+    }
+  });
+
+  it('puts the arms on the rifle rather than by the sides', () => {
+    const pose = poseOf(GROUNDED, aim);
+    const parts = new Map(pose.parts.map((part) => [part.part, part]));
+    const weapon = parts.get('weapon');
+    // Both arms reach forward towards where the rifle is, rather than hanging.
+    for (const name of ['armLeft', 'armRight'] as const) {
+      const arm = parts.get(name);
+      expect(arm?.centre.z).toBeGreaterThan(GROUNDED.z + 0.02);
+      expect(arm?.centre.z).toBeLessThan((weapon?.centre.z ?? 0) + 0.3);
+    }
   });
 
   it('stands the legs level at a settled phase', () => {
@@ -162,9 +201,9 @@ describe('the pose', () => {
 
   it('shrinks the whole figure when crouched rather than sinking it', () => {
     const standing = poseOf(GROUNDED, aim);
-    const crouched = poseOf({ ...GROUNDED, crouching: true }, aim);
+    const crouched = poseOf({ ...GROUNDED, crouching: true, crouchAmount: 1 }, aim);
     expect(headHeight(crouched)).toBeLessThan(headHeight(standing));
-    for (const part of crouched.parts) {
+    for (const part of hittablePartsOf(crouched)) {
       expect(part.centre.y).toBeGreaterThanOrEqual(GROUNDED.y);
     }
   });
@@ -181,22 +220,38 @@ describe('the pose', () => {
 });
 
 describe('the rifle', () => {
-  it('is held out in front, on the right, at shoulder height', () => {
-    const body = GROUNDED;
-    const pose = poseOf(body, { x: 0, y: 0, z: 1 });
-    const [barrel] = weaponOf(body, pose);
+  const aim = { x: 0, y: 0, z: 1 };
 
-    expect(barrel?.centre.z).toBeGreaterThan(body.z);
-    expect(barrel?.centre.y).toBeGreaterThan(body.y + 1);
+  it('is held out in front, in the hands, at chest height', () => {
+    const pose = poseOf(GROUNDED, aim);
+    const barrel = pose.parts.find((part) => part.part === 'weapon');
+
+    expect(barrel?.centre.z).toBeGreaterThan(GROUNDED.z);
+    expect(barrel?.centre.y).toBeGreaterThan(GROUNDED.y + 1);
     // Longer than it is wide, which is what makes it read as a rifle.
     expect(barrel?.half.z).toBeGreaterThan((barrel?.half.x ?? 0) * 4);
   });
 
-  it('comes down with a crouching player', () => {
-    const pose = poseOf(GROUNDED, { x: 0, y: 0, z: 1 });
-    const crouched = { ...GROUNDED, crouching: true };
-    const [standing] = weaponOf(GROUNDED, pose);
-    const [low] = weaponOf(crouched, poseOf(crouched, { x: 0, y: 0, z: 1 }));
-    expect(low?.centre.y).toBeLessThan(standing?.centre.y ?? 0);
+  it('points where the player aims rather than where they stand', () => {
+    // Aiming upwards has to raise the barrel, or the tracer leaves the muzzle
+    // in a direction the rifle is plainly not pointing.
+    const level = poseOf(GROUNDED, { x: 0, y: 0, z: 1 });
+    const raised = poseOf(GROUNDED, { x: 0, y: 0.7, z: 0.7 });
+    expect(raised.muzzle.y).toBeGreaterThan(level.muzzle.y);
+  });
+
+  it('puts the muzzle at the far end of the barrel', () => {
+    const pose = poseOf(GROUNDED, aim);
+    const barrel = pose.parts.find((part) => part.part === 'weapon');
+    expect(pose.muzzle.z).toBeGreaterThan(barrel?.centre.z ?? 0);
+  });
+
+  it('is not something a bullet can hit', () => {
+    // A rifle that stopped bullets would make hiding behind your own gun a
+    // tactic.
+    const hittable = hittablePartsOf(poseOf(GROUNDED, aim)).map((part) => part.part);
+    expect(hittable).not.toContain('weapon');
+    expect(hittable).not.toContain('sight');
+    expect(hittable).toContain('head');
   });
 });

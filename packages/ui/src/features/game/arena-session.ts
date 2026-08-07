@@ -25,6 +25,8 @@ import {
   eyeOf,
   predictSelf,
   smoothCamera,
+  viewModelMuzzle,
+  viewModelOf,
   type ArenaFrame,
   type CameraSmoothing,
   type FramePlayer,
@@ -116,6 +118,7 @@ function bodyOf(player: ArenaPlayerState): PlayerBody {
     vy: body.vy,
     grounded: body.grounded,
     crouching: body.crouching,
+    crouchAmount: body.crouchAmount,
     gaitPhase: body.gaitPhase,
   };
 }
@@ -321,6 +324,7 @@ export async function startArenaSession(
       camera: { position: eyeOf(opening.north.body), forward: { x: 0, y: 0, z: 1 }, fieldOfView: current.look.fieldOfView },
       players: [],
       shots: [],
+      viewModel: [],
       hud: {
         ownScore: 0,
         opponentScore: 0,
@@ -360,6 +364,7 @@ export async function startArenaSession(
               endpoint: pointOf(shot.endpoint),
               hitPlayer: shot.hitPlayer,
               seenAt: arrivedAt,
+              mine: SEATS[shot.shooter] === next.seat,
             });
             // The only confirmation a shooter gets. The target is a box that
             // does not stagger, and across this arena a miss looks like a hit.
@@ -490,16 +495,35 @@ export async function startArenaSession(
     // frames, which is the difference between raising a rifle and teleporting.
     const wanted = input.isZoomed() ? 1 : 0;
     const step = elapsed / SCOPE_RAISE_MS;
-    scope = wanted > scope ? Math.min(scope + step, 1) : Math.max(scope - step, 0);
+    // Clamped to what is wanted rather than to the ends of the range. Clamping
+    // to one meant that on reaching it exactly the test `wanted > scope` turned
+    // false and the sight began easing back down, then up again the next frame:
+    // a scope that shook at frame rate for as long as the button was held.
+    scope =
+      wanted > scope ? Math.min(scope + step, wanted) : Math.max(scope - step, wanted);
+
+    // The rifle the player can see, held against the camera rather than placed
+    // in the world, swaying with the same stride their legs are walking.
+    const facing = input.forward();
+    const viewModel = viewModelOf(drawn, facing, predicted, scope);
+
     renderer.render(
       composeArenaView(
         from,
         to,
         alpha,
         drawn,
-        input.forward(),
+        facing,
         current.look.fieldOfView * (1 - scope) + (current.look.fieldOfView / SCOPE_MAGNIFICATION) * scope,
-        { now, shots: [...seenShots.values()], lastOwnHitAt, lastDamageAt, scope },
+        {
+          now,
+          shots: [...seenShots.values()],
+          lastOwnHitAt,
+          lastDamageAt,
+          scope,
+          viewModel,
+          muzzle: viewModelMuzzle(viewModel),
+        },
       ),
       alpha,
     );

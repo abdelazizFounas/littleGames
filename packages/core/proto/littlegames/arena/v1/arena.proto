@@ -123,6 +123,10 @@ message Body {
   // Simulated rather than animated: the limbs that are drawn are the limbs that
   // will be shot at, so both ends have to agree on where they are.
   double gait_phase = 7;
+
+  // How far into a crouch, from standing to fully down. A number rather than a
+  // flag because a body spends most of a crouch between the two.
+  double crouch_amount = 8;
 }
 
 // A unit vector.

@@ -1,4 +1,4 @@
-import type { PlayerBody, Seat, Vec3 } from '@littlegames/arena-logic';
+import type { PartBox, PlayerBody, Seat, Vec3 } from '@littlegames/arena-logic';
 import type { GameRenderer } from '@littlegames/core';
 
 /**
@@ -21,6 +21,15 @@ export interface ArenaView {
   readonly players: readonly ArenaPlayerView[];
   /** Shots still worth drawing, newest last. */
   readonly shots: readonly ArenaShotView[];
+  /**
+   * This player's own rifle, held where they can see it.
+   *
+   * Separate from the bodies because it belongs to the camera rather than to
+   * the world: it is drawn at arm's length in front of the eye whatever the eye
+   * is doing, and it goes away entirely while the sight is up, since a player
+   * looking down a scope is looking down the scope.
+   */
+  readonly viewModel: readonly PartBox[];
   readonly hud: ArenaHud;
 }
 

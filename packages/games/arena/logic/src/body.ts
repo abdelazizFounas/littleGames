@@ -4,6 +4,7 @@ import type { Bounds } from './bounds.ts';
 import {
   CROUCH_EYE,
   CROUCH_HEIGHT,
+  CROUCH_PER_TICK,
   CROUCH_SPEED,
   GAIT_SETTLE_PER_TICK,
   GRAVITY,
@@ -47,6 +48,15 @@ export interface PlayerBody {
    * the same on the server, on the client predicting ahead, and in the vectors.
    */
   readonly gaitPhase: number;
+  /**
+   * How far into a crouch this body is, from standing to fully down.
+   *
+   * A number rather than the flag it used to be, so the body has somewhere to
+   * be between the two. Height, eye and hitbox all follow it, which is what
+   * keeps what is drawn and what can be hit the same thing throughout the
+   * movement rather than only at its ends.
+   */
+  readonly crouchAmount: number;
 }
 
 /** One tick of intent, with the move already shortened to at most unit length. */
@@ -56,17 +66,23 @@ export interface MoveIntent {
   readonly crouch: boolean;
 }
 
-export function bodyHeight(crouching: boolean): number {
-  return crouching ? CROUCH_HEIGHT : STAND_HEIGHT;
+/** A body part way into a crouch, which is where most of one is spent. */
+export interface Crouchable {
+  readonly crouchAmount: number;
 }
 
-export function eyeHeight(crouching: boolean): number {
-  return crouching ? CROUCH_EYE : STAND_EYE;
+/** How tall a body stands, at either end of a crouch or anywhere between. */
+export function bodyHeight(body: Crouchable): number {
+  return STAND_HEIGHT + float((CROUCH_HEIGHT - STAND_HEIGHT) * body.crouchAmount);
 }
 
-/** Where a body's eyes are, which is where the camera and the muzzle sit. */
+export function eyeHeight(body: Crouchable): number {
+  return STAND_EYE + float((CROUCH_EYE - STAND_EYE) * body.crouchAmount);
+}
+
+/** Where a body's eyes are, which is where the camera sits. */
 export function eyePosition(body: PlayerBody): { x: number; y: number; z: number } {
-  return { x: body.x, y: body.y + eyeHeight(body.crouching), z: body.z };
+  return { x: body.x, y: body.y + eyeHeight(body), z: body.z };
 }
 
 /** The box a body occupies, which is also the box a bullet has to hit. */
@@ -76,7 +92,7 @@ export function bodyBounds(body: PlayerBody): Bounds {
     minY: body.y,
     minZ: body.z - PLAYER_HALF,
     maxX: body.x + PLAYER_HALF,
-    maxY: body.y + bodyHeight(body.crouching),
+    maxY: body.y + bodyHeight(body),
     maxZ: body.z + PLAYER_HALF,
   };
 }
@@ -164,7 +180,10 @@ export function stepBody(body: PlayerBody, intent: MoveIntent): PlayerBody {
     crouching = false;
   }
 
-  const height = bodyHeight(crouching);
+  // Part way down counts as down for everything it costs: the height a body
+  // occupies follows the movement rather than waiting for it to finish.
+  const crouchAmount = settleCrouch(body.crouchAmount, crouching);
+  const height = bodyHeight({ crouchAmount });
   const speed = crouching ? CROUCH_SPEED : MOVE_SPEED;
 
   let { x, y, z } = body;
@@ -231,8 +250,22 @@ export function stepBody(body: PlayerBody, intent: MoveIntent): PlayerBody {
     vy,
     grounded,
     crouching,
+    crouchAmount,
     gaitPhase: nextGait(body.gaitPhase, travelled, grounded),
   };
+}
+
+/** Moves a body one tick further into a crouch, or one tick out of it. */
+function settleCrouch(amount: number, crouching: boolean): number {
+  const target = crouching ? 1 : 0;
+  const gap = target - amount;
+  if (gap > CROUCH_PER_TICK) {
+    return amount + CROUCH_PER_TICK;
+  }
+  if (gap < -CROUCH_PER_TICK) {
+    return amount - CROUCH_PER_TICK;
+  }
+  return target;
 }
 
 /**
@@ -255,6 +288,7 @@ export function restingBody(at: { x: number; y: number; z: number }): PlayerBody
     vy: 0,
     grounded: false,
     crouching: false,
+    crouchAmount: 0,
     gaitPhase: FEET_TOGETHER_EARLY,
   };
 }

@@ -166,11 +166,21 @@ describe('jumping', () => {
 });
 
 describe('crouching', () => {
-  it('shrinks the body it is hit through', () => {
+  it('shrinks the body it is hit through, over a moment rather than at once', () => {
     const standing = settled(SPAWNS.south);
-    const crouched = stepBody(standing, intent({ crouch: true }));
-
     expect(bodyBounds(standing).maxY - standing.y).toBeCloseTo(STAND_HEIGHT, 12);
+
+    // One tick in, the body is on its way down but not yet there: a hitbox that
+    // changed height between two ticks would be one nobody could see move.
+    const starting = stepBody(standing, intent({ crouch: true }));
+    const partWay = bodyBounds(starting).maxY - starting.y;
+    expect(partWay).toBeLessThan(STAND_HEIGHT);
+    expect(partWay).toBeGreaterThan(CROUCH_HEIGHT);
+
+    let crouched = starting;
+    for (let tick = 0; tick < 20; tick += 1) {
+      crouched = stepBody(crouched, intent({ crouch: true }));
+    }
     expect(bodyBounds(crouched).maxY - crouched.y).toBeCloseTo(CROUCH_HEIGHT, 12);
   });
 

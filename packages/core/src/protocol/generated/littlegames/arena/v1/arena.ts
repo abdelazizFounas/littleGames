@@ -148,6 +148,11 @@ export interface Body {
    * will be shot at, so both ends have to agree on where they are.
    */
   gaitPhase: number;
+  /**
+   * How far into a crouch, from standing to fully down. A number rather than a
+   * flag because a body spends most of a crouch between the two.
+   */
+  crouchAmount: number;
 }
 
 /** A unit vector. */
