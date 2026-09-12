@@ -26,11 +26,11 @@ function rgb(hex: number): Rgb {
 }
 
 const KIND_COLOURS: Readonly<Record<BoxKind, Rgb>> = {
-  floor: rgb(0x454f63),
-  wall: rgb(0x3b4457),
-  crate: rgb(0xc8823c),
-  pillar: rgb(0x59637a),
-  ledge: rgb(0x8d5f8c),
+  floor: rgb(0x536575),
+  wall: rgb(0xa67969),
+  crate: rgb(0xe1aa65),
+  pillar: rgb(0x708c97),
+  ledge: rgb(0x526d76),
   clip: rgb(0x000000),
 };
 
@@ -40,7 +40,7 @@ export function colourOf(kind: BoxKind): Rgb {
 }
 
 /** Above the walls. No texture, no gradient, no sun: the arena is the subject. */
-export const SKY = rgb(0x161a22);
+export const SKY = rgb(0x28394a);
 
 /** Under the arena, seen down the ravine. Darker than the sky, so down reads. */
 export const VOID = rgb(0x0b0d12);
@@ -51,8 +51,8 @@ export const TRACER_HIT = rgb(0xff6b6b);
 
 /** One colour per seat, so a glimpse across the arena is already an answer. */
 const SEAT_COLOURS: Readonly<Record<Seat, Rgb>> = {
-  north: rgb(0x4aa3ff),
-  south: rgb(0xff5d5d),
+  north: rgb(0xb7eb72),
+  south: rgb(0xd69eff),
 };
 
 export function colourOfSeat(seat: Seat): Rgb {
@@ -69,8 +69,8 @@ function shade(colour: Rgb, factor: number): Rgb {
 }
 
 /** Gunmetal. The one thing on a player that is not their team's colour. */
-const WEAPON = rgb(0x2a2d34);
-const SIGHT = rgb(0x14161a);
+const WEAPON = rgb(0x3d4b57);
+const SIGHT = rgb(0x9ccb9e);
 
 /**
  * How each part of a body is coloured, given the seat it belongs to.

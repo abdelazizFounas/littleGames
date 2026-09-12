@@ -5,6 +5,8 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"sort"
+	"sync"
 
 	"github.com/heroiclabs/nakama-common/runtime"
 	"littlegames.local/nakama/match"
@@ -25,6 +27,18 @@ const lobbyListLimit = 50
 
 // How many candidate lobbies to weigh before opening one.
 const lobbyCandidates = 10
+
+// Match labels are indexed asynchronously. Keep the most recently selected
+// lobby per game so simultaneous requests on this node can find a newly opened
+// room before the search index catches up. Live signals always recheck capacity.
+type quickLobby struct {
+	sync.Mutex
+	matchID string
+}
+
+var quickLobbies = map[string]*quickLobby{
+	match.PongName: {}, match.BattleshipName: {}, match.ArenaName: {},
+}
 
 // KnownGames are the match handlers a lobby may be opened for.
 //
@@ -132,14 +146,38 @@ func autoLobby(
 		return "", err
 	}
 
+	quick := quickLobbies[gameID]
+	quick.Lock()
+	defer quick.Unlock()
+
 	matches, err := nk.MatchList(ctx, lobbyCandidates, true, "", nil, nil, waitingQueryFor(gameID, true))
 	if err != nil {
 		logger.Error("Failed to list lobbies: %v", err)
 		return "", runtime.NewError("could not look for a game", codeInternal)
 	}
 
-	if len(matches) > 0 {
-		return encodeLobby(matches[0].GetMatchId())
+	// Prefer a waiting human over an empty room and make equal choices stable.
+	// The index can lag a join, so ask the live match before offering its seat.
+	sort.Slice(matches, func(i, j int) bool {
+		if matches[i].GetSize() != matches[j].GetSize() {
+			return matches[i].GetSize() > matches[j].GetSize()
+		}
+		return matches[i].GetMatchId() < matches[j].GetMatchId()
+	})
+	for _, candidate := range matches {
+		answer, err := nk.MatchSignal(ctx, candidate.GetMatchId(), "")
+		if err == nil && answer == match.SignalOK {
+			quick.matchID = candidate.GetMatchId()
+			return encodeLobby(quick.matchID)
+		}
+	}
+
+	if quick.matchID != "" {
+		answer, err := nk.MatchSignal(ctx, quick.matchID, "")
+		if err == nil && answer == match.SignalOK {
+			return encodeLobby(quick.matchID)
+		}
+		quick.matchID = ""
 	}
 
 	matchID, err := openLobby(ctx, nk, gameID, callerName(ctx), "")
@@ -147,6 +185,7 @@ func autoLobby(
 		logger.Error("Failed to open a lobby: %v", err)
 		return "", runtime.NewError("could not open a lobby", codeInternal)
 	}
+	quick.matchID = matchID
 	return encodeLobby(matchID)
 }
 

@@ -6,20 +6,20 @@
  * keeps the look of a piece with the sharp-edged interface around it. If sprite
  * art ever replaces them, this package is the only one that changes.
  */
-export const BACKGROUND = 0x101319;
+export const BACKGROUND = 0x10212d;
 export const FOREGROUND = 0xeef0f4;
-export const MUTED = 0x8b93a3;
-export const LINE = 0x39404f;
+export const MUTED = 0xa1b9c5;
+export const LINE = 0x3d6678;
 
 /** The sea, from its floor upwards. */
-export const SEA_DEEP = 0x0b1c2c;
-export const SEA_WAVE_LOW = 0x1b4d6b;
-export const SEA_WAVE_MID = 0x2f6d94;
-export const SEA_WAVE_HIGH = 0x4f9dc4;
+export const SEA_DEEP = 0x0d3042;
+export const SEA_WAVE_LOW = 0x206378;
+export const SEA_WAVE_MID = 0x368b9d;
+export const SEA_WAVE_HIGH = 0x68bdbb;
 
 /** Hulls, as seen from above. */
-export const HULL = 0x7c8798;
-export const HULL_DECK = 0xa8b2c1;
+export const HULL = 0x73989b;
+export const HULL_DECK = 0xc0d1c3;
 export const HULL_WRECK = 0x2a3140;
 
 /** What a shot found. */
@@ -28,6 +28,6 @@ export const HIT = 0xef6d3a;
 export const SUNK = 0xd0342c;
 
 /** The cell under the pointer, legal and illegal. */
-export const AIM = 0xf2c14e;
-export const LEGAL = 0x4fbf87;
+export const AIM = 0xc5f66a;
+export const LEGAL = 0xb2e887;
 export const ILLEGAL = 0xd0342c;

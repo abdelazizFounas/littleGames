@@ -11,12 +11,9 @@ import type { Vec3 } from './vector.ts';
 /**
  * Where a shot goes, as opposed to where it was aimed.
  *
- * A rifle that always lands on the crosshair makes movement free: there is no
- * reason ever to stop, to crouch, or to raise the sight. Spread is the price of
- * all three, and it is charged from state both sides already hold — how big a
- * step the shooter is taking, whether their feet are on the ground, how far
- * they swung their aim in the last tick — so it needs no accumulator and
- * tightens on its own the moment a player stands still.
+ * Hip-fire spread grows with movement and airborne shots. Scoped shots follow
+ * the crosshair exactly, and turning does not introduce an accuracy penalty.
+ * Spread is derived from shared simulation state on both client and server.
  *
  * Two things make it safe to put in the rules. The randomness is integer, not
  * floating point: a `xorshift32` over a `uint32`, which is exactly the same
@@ -71,11 +68,8 @@ export function unitFrom(state: number): number {
 /**
  * How wide this shooter's shot may stray, in sideways metres per metre flown.
  *
- * Everything adds, and everything but the base can be got rid of: stop moving
- * and the movement term goes with the size of the step, land and the airborne
- * term goes, hold the aim still and the turning term goes. Raising the sight
- * shrinks what is left of all of them to almost nothing, which is what makes it
- * a trade rather than a button.
+ * Hip-fire terms add together. Raising the sight removes all spread; the
+ * turning coefficient is currently zero so fast aiming remains predictable.
  */
 export function spreadOf(
   body: PlayerBody,

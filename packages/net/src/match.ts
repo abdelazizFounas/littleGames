@@ -245,7 +245,7 @@ export async function resolveInvitation(
   client: Client,
   session: Session,
   code: string,
-): Promise<{ readonly matchId: string; readonly password: string }> {
+): Promise<{ readonly matchId: string; readonly password: string; readonly game: string }> {
   const payload: unknown = (await client.rpc(session, 'invite.resolve', { code })).payload;
 
   if (!isRecord(payload) || typeof payload['matchId'] !== 'string') {
@@ -254,6 +254,7 @@ export async function resolveInvitation(
   // The link carries the password: the host chose to let this person in, so
   // asking them for it separately would defeat the invitation.
   return {
+    game: typeof payload['game'] === 'string' && ['pong', 'arena', 'battleship'].includes(payload['game']) ? payload['game'] : 'pong',
     matchId: payload['matchId'],
     password: typeof payload['password'] === 'string' ? payload['password'] : '',
   };

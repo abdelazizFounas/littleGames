@@ -202,7 +202,9 @@ export function step(state: ArenaState, inputs: ArenaInputs): StepResult {
   south = settle(south, 'south', damaged.south, fired.south, scored.south);
 
   const winner: Seat | null =
-    north.score >= WINNING_SCORE ? 'north' : south.score >= WINNING_SCORE ? 'south' : null;
+    north.score >= WINNING_SCORE && north.score > south.score
+      ? 'north'
+      : south.score >= WINNING_SCORE && south.score > north.score ? 'south' : null;
 
   return {
     state: {

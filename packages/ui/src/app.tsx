@@ -3,6 +3,9 @@ import { BrowserRouter, Route, Routes } from 'react-router';
 import { AppLayout } from './components/app-layout';
 import { ArenaPreviewRoute } from './routes/arena-preview-route';
 import { GameLobbyRoute } from './routes/game-lobby-route';
+import { GuideRoute, PrivacyRoute } from './routes/guide-route';
+import { LoginRoute } from './routes/login-route';
+import { PracticeRoute } from './routes/practice-route';
 import { HomeRoute } from './routes/home-route';
 import { JoinRoute } from './routes/join-route';
 import { NotFoundRoute } from './routes/not-found-route';
@@ -18,6 +21,10 @@ export function App(): ReactNode {
             <Route path="/" element={<HomeRoute />} />
             <Route path="/games/:gameId" element={<GameLobbyRoute />} />
             <Route path="/join/:code" element={<JoinRoute />} />
+            <Route path="/login" element={<LoginRoute />} />
+            <Route path="/guide" element={<GuideRoute />} />
+            <Route path="/privacy" element={<PrivacyRoute />} />
+            <Route path="/practice/:gameId" element={<PracticeRoute />} />
             <Route path="/profile" element={<ProfileRoute />} />
             {/* A development-only look at the arena, with nothing networked
                 behind it. It is a tool for judging geometry and colour without

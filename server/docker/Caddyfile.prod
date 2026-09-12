@@ -45,6 +45,8 @@
 		X-Content-Type-Options nosniff
 		Referrer-Policy strict-origin-when-cross-origin
 		X-Frame-Options DENY
+		Permissions-Policy "camera=(), microphone=(), geolocation=()"
+		Content-Security-Policy "default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self'; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'"
 		Strict-Transport-Security "max-age=31536000; includeSubDomains"
 		-Server
 	}
@@ -66,6 +68,9 @@
 	# Everything else is the web client.
 	handle {
 		root * /srv/www
+
+		@revalidate not path /assets/*
+		header @revalidate Cache-Control "no-cache"
 
 		# The hashed asset names make these safe to keep for a year; index.html
 		# and the service worker must never be, or a deploy would not reach

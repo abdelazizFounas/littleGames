@@ -1,10 +1,10 @@
 import {
   INTERP_DELAY_TICKS,
   MAX_HEALTH,
+  normalizeAim,
   RESPAWN_TICKS,
   TICK_RATE,
   TICK_SECONDS,
-  WINNING_SCORE,
   clampToUnit,
   eyeHeight,
   moveFromWire,
@@ -121,7 +121,11 @@ export function interpolateOpponent(
           ? before.body.gaitPhase
           : lerp(before.body.gaitPhase, target.body.gaitPhase, at),
     },
-    aim: before.aim,
+    aim: normalizeAim({
+      x: lerp(before.aim.x, target.aim.x, at),
+      y: lerp(before.aim.y, target.aim.y, at),
+      z: lerp(before.aim.z, target.aim.z, at),
+    }),
     alive: before.alive,
   };
 }
@@ -220,6 +224,20 @@ export function smoothCamera(
   };
 }
 
+/** Add only a server correction, never ordinary player movement, to camera smoothing. */
+export function reconcileCamera(
+  previous: CameraSmoothing,
+  before: Vec3,
+  after: Vec3,
+  epoch: number,
+): CameraSmoothing {
+  return smoothCamera(previous, {
+    x: before.x + previous.offset.x,
+    y: before.y + previous.offset.y,
+    z: before.z + previous.offset.z,
+  }, after, epoch, 0);
+}
+
 /**
  * How long a tracer stays on screen, in seconds.
  *
@@ -264,6 +282,7 @@ export interface TimedShot {
   readonly seenAt: number;
   /** Whether this player fired it, which decides where it is drawn from. */
   readonly mine: boolean;
+  readonly muzzle?: Vec3 | null;
 }
 
 /**
@@ -316,7 +335,7 @@ export function drawableShots(
       // eye, which is what keeps the crosshair honest, but a tracer that
       // appeared out of the middle of the screen would not look like a rifle
       // firing — so the one you can see starts where the rifle ends.
-      from: startOf(shot, muzzle),
+      from: startOf(shot, shot.muzzle === undefined ? muzzle : shot.muzzle),
       to: shot.endpoint,
       hitPlayer: shot.hitPlayer,
       fade: 1 - left,
@@ -525,6 +544,9 @@ export function viewModelOf(
       up,
       forward,
     },
+    { part: 'weapon', centre: at(0.34 + drift, -0.49 + bob, 0.77), half: { x: 0.075, y: 0.095, z: 0.18 }, right, up, forward },
+    { part: 'weapon', centre: at(0.34 + drift, -0.57 + bob, 1.04), half: { x: 0.045, y: 0.1, z: 0.075 }, right, up, forward },
+    { part: 'sight', centre: at(0.34 + drift, -0.385 + bob, 1.36), half: { x: 0.025, y: 0.02, z: 0.035 }, right, up, forward },
     limb('armRight', shoulderRight, grip, 0.06),
     limb('armLeft', shoulderLeft, fore, 0.055),
   ];
@@ -550,11 +572,7 @@ export function eyeOf(body: PlayerBody): Vec3 {
 
 /** Whether this seat has won, which the stage reports without re-rendering. */
 export function isDecided(frame: ArenaFrame): boolean {
-  return (
-    frame.phase === 'finished' ||
-    frame.self.score >= WINNING_SCORE ||
-    (frame.opponent?.score ?? 0) >= WINNING_SCORE
-  );
+  return frame.phase === 'finished';
 }
 
 export { opponentOf };

@@ -147,28 +147,13 @@ const (
 // per metre travelled and renormalised, which for the small angles involved is
 // the angle itself. Everything here is in the same unit and they add.
 const (
-	// SpreadBase is what a rifle fired from the hip does at rest — about half a
-	// degree. Enough that a duel across the ravine rewards raising the sight,
-	// not enough to make hip fire pointless in a corridor.
-	SpreadBase float64 = 0.009
-
-	// SpreadMoving is added at a full run, in proportion to the size of the
-	// step being taken.
-	SpreadMoving float64 = 0.03
-
-	// SpreadAirborne is added while both feet are off the ground, where nobody
-	// can brace.
-	SpreadAirborne float64 = 0.045
-
-	// SpreadTurning is added per unit of aim swung in one tick, measured as the
-	// straight-line distance between last tick's aim and this one's. Flicking
-	// onto a target and firing in the same instant is the shot it punishes.
-	SpreadTurning float64 = 0.8
-
-	// SpreadScopedShare is what is left of all of it while the sight is up. Not
-	// zero: a scope that guaranteed the centre of the crosshair would make the
-	// hip an irrelevance rather than a trade.
-	SpreadScopedShare float64 = 0.06
+	// Hip-fire spread; scoped shots follow the aim exactly.
+	SpreadBase     float64 = 0.003
+	SpreadMoving   float64 = 0.012
+	SpreadAirborne float64 = 0.024
+	// Mouse turns do not add invisible random error.
+	SpreadTurning     float64 = 0
+	SpreadScopedShare float64 = 0
 )
 
 // Rounds.

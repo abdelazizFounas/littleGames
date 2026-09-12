@@ -211,9 +211,9 @@ func Step(state State, inputs Inputs) (State, []ShotEvent) {
 
 	winner := ""
 	switch {
-	case north.Score >= WinningScore:
+	case north.Score >= WinningScore && north.Score > south.Score:
 		winner = SeatNorth
-	case south.Score >= WinningScore:
+	case south.Score >= WinningScore && south.Score > north.Score:
 		winner = SeatSouth
 	}
 

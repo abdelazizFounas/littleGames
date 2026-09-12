@@ -19,15 +19,19 @@
     "test:watch": "vitest",
     "server:up": "WEB_UPSTREAM=$(tools/scripts/resolve-web-upstream.sh) docker compose --env-file .env -f server/docker/docker-compose.yml up --build",
     "server:down": "docker compose --env-file .env -f server/docker/docker-compose.yml down",
-    "server:logs": "docker compose --env-file .env -f server/docker/docker-compose.yml logs -f nakama"
+    "server:logs": "docker compose --env-file .env -f server/docker/docker-compose.yml logs -f nakama",
+    "test:e2e": "playwright test",
+    "check": "pnpm typecheck && pnpm lint && pnpm test && pnpm build",
+    "test:production": "playwright test --config playwright.production.config.mjs"
   },
   "devDependencies": {
     "@bufbuild/buf": "1.72.0",
+    "@playwright/test": "1.62.1",
     "@types/node": "26.1.2",
     "oxlint": "1.77.0",
     "oxlint-tsgolint": "7.0.2001",
     "ts-proto": "2.12.0",
     "typescript": "7.0.2",
-    "vitest": "4.1.10"
+    "vitest": "4.1.11"
   }
 }

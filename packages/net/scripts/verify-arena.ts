@@ -13,6 +13,7 @@ import {
   OpCode,
   Phase,
   PlayerInput,
+  Ready,
   Seat,
   Snapshot,
   type PlayerState,
@@ -171,7 +172,7 @@ function startSending(player: Player): void {
           aimZ: player.intent.aimZ,
           jump: player.intent.jump,
           crouch: player.intent.crouch,
-          zoomed: false,
+          zoomed: true,
           seenTick: seen,
           shotsFired: player.intent.shotsFired,
         }).finish(),
@@ -221,6 +222,8 @@ console.log(`  lobby ${arenaMatch}`);
 console.log('\n=== 3. both join, and the countdown opens ===');
 const alice = await seat('alice', aliceSession, arenaMatch);
 const bob = await seat('bob', bobSession, arenaMatch);
+await alice.socket.sendMatchState(arenaMatch, OpCode.OP_CODE_READY, Ready.encode({ready:true}).finish());
+await bob.socket.sendMatchState(arenaMatch, OpCode.OP_CODE_READY, Ready.encode({ready:true}).finish());
 
 const opened = await until(alice, 'the countdown to open', (snapshot) =>
   snapshot.phase === Phase.PHASE_COUNTDOWN || snapshot.phase === Phase.PHASE_PLAYING,

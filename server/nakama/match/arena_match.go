@@ -73,8 +73,9 @@ type arenaPlayer struct {
 	last  arenaCommand
 	hasIn bool
 
-	// Highest sequence number accepted. Echoed back so the client can discard
-	// acknowledged commands and replay the rest.
+	// Separate received and executed watermarks: queued commands must remain
+	// in client prediction until the simulation actually consumes them.
+	lastReceivedSeq  uint32
 	lastProcessedSeq uint32
 
 	// Shots this player has been credited with, matched against the counter
@@ -199,9 +200,10 @@ func (m *ArenaMatch) MatchJoin(
 	for _, presence := range presences {
 		if seated, alreadyIn := current.players[presence.GetUserId()]; alreadyIn {
 			// Same player on a new socket — a reload, or a reconnection. They
-			// keep their seat, their score and their acknowledged input; only
-			// the socket to send to changes.
+			// keep their seat and score, but a reloaded client starts new
+			// input counters. Never replay movement or shot credit from the old socket.
 			seated.presence = presence
+			seated.resetInput()
 			logger.Info("Player %s rejoined on a new socket", presence.GetUsername())
 			continue
 		}
@@ -404,7 +406,7 @@ func clampWire(value, limit int32) int32 {
 func (s *arenaState) enqueue(logger runtime.Logger, messages []runtime.MatchData) {
 	for _, message := range messages {
 		seated, known := s.players[message.GetUserId()]
-		if !known {
+		if !known || message.GetSessionId() != seated.presence.GetSessionId() {
 			continue
 		}
 
@@ -434,10 +436,10 @@ func (s *arenaState) enqueue(logger runtime.Logger, messages []runtime.MatchData
 		// Out of order or already seen. Commands arrive over an unreliable
 		// path, so a duplicate is expected rather than suspicious — it is
 		// simply nothing new.
-		if input.GetSeq() <= seated.lastProcessedSeq {
+		if input.GetSeq() <= seated.lastReceivedSeq {
 			continue
 		}
-		seated.lastProcessedSeq = input.GetSeq()
+		seated.lastReceivedSeq = input.GetSeq()
 
 		command := arenaCommand{
 			seq: input.GetSeq(),
@@ -459,6 +461,17 @@ func (s *arenaState) enqueue(logger runtime.Logger, messages []runtime.MatchData
 
 		seated.push(command)
 	}
+}
+
+// resetInput begins a new transport epoch without changing game state.
+func (p *arenaPlayer) resetInput() {
+	p.queue = p.queue[:0]
+	p.last = arenaCommand{}
+	p.hasIn = false
+	p.lastReceivedSeq = 0
+	p.lastProcessedSeq = 0
+	p.shotsAcked = 0
+	p.zoomed = false
 }
 
 // push adds a command to the queue, dropping the oldest when it is full.
@@ -536,6 +549,7 @@ func (s *arenaState) consume() arena.Inputs {
 func (p *arenaPlayer) take() (arenaCommand, bool) {
 	if len(p.queue) > 0 {
 		p.last = p.queue[0]
+		p.lastProcessedSeq = p.last.seq
 		p.queue = p.queue[1:]
 		p.hasIn = true
 	}
@@ -643,10 +657,10 @@ func (s *arenaState) broadcast(dispatcher runtime.MatchDispatcher) error {
 			// replaying unacknowledged commands from a body missing its
 			// vertical speed would put the player back on the ground mid-jump.
 			Body: &arenav1.Body{
-				X:         simulated.Body.X,
-				Y:         simulated.Body.Y,
-				Z:         simulated.Body.Z,
-				Vy:        simulated.Body.VY,
+				X:            simulated.Body.X,
+				Y:            simulated.Body.Y,
+				Z:            simulated.Body.Z,
+				Vy:           simulated.Body.VY,
 				Grounded:     simulated.Body.Grounded,
 				Crouching:    simulated.Body.Crouching,
 				GaitPhase:    simulated.Body.GaitPhase,

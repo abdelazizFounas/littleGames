@@ -69,6 +69,7 @@ type resolveInviteRequest struct {
 }
 
 type resolveInviteResponse struct {
+	Game    string `json:"game"`
 	MatchID string `json:"matchId"`
 	// The lobby's password, if it has one.
 	//
@@ -105,6 +106,9 @@ func createInvite(
 	payload string,
 ) (string, error) {
 	userID, _ := ctx.Value(runtime.RUNTIME_CTX_USER_ID).(string)
+	if userID == "" {
+		return "", runtime.NewError("sign in first", codePermissionDenied)
+	}
 
 	var request createInviteRequest
 	if payload != "" {
@@ -114,6 +118,7 @@ func createInvite(
 	}
 
 	matchID := request.MatchID
+	password := ""
 	if matchID == "" {
 		// No match named: the caller is inviting before sitting down, so open
 		// one for them to be joined in.
@@ -123,9 +128,28 @@ func createInvite(
 			return "", runtime.NewError("could not open a match", codeInternal)
 		}
 		matchID = created
-	} else if _, err := nk.MatchGet(ctx, matchID); err != nil {
-		// A match that has ended between sitting down and pressing invite.
-		return "", runtime.NewError("that match is no longer running", codeNotFound)
+	} else {
+		live, err := nk.MatchGet(ctx, matchID)
+		if err != nil || live == nil {
+			return "", runtime.NewError("that match is no longer running", codeNotFound)
+		}
+		// Only an admitted participant may invite someone into a private lobby.
+		records, err := nk.StorageRead(ctx, []*runtime.StorageRead{{
+			Collection: match.ActiveCollection, Key: matchID, UserID: userID,
+		}})
+		if err != nil {
+			return "", runtime.NewError("could not check lobby membership", codeInternal)
+		}
+		if len(records) == 0 {
+			return "", runtime.NewError("join the lobby before inviting a friend", codePermissionDenied)
+		}
+		var membership struct {
+			Password string `json:"password"`
+		}
+		if err := json.Unmarshal([]byte(records[0].GetValue()), &membership); err != nil {
+			return "", runtime.NewError("could not read lobby membership", codeInternal)
+		}
+		password = membership.Password
 	}
 
 	code, err := newInviteCode()
@@ -135,7 +159,7 @@ func createInvite(
 	}
 
 	expiresAt := time.Now().Add(inviteLifetime).Unix()
-	value, err := json.Marshal(inviteRecord{MatchID: matchID, CreatedBy: userID, ExpiresAt: expiresAt})
+	value, err := json.Marshal(inviteRecord{MatchID: matchID, Password: password, CreatedBy: userID, ExpiresAt: expiresAt})
 	if err != nil {
 		return "", runtime.NewError("could not create an invitation", codeInternal)
 	}
@@ -143,6 +167,7 @@ func createInvite(
 	if _, err := nk.StorageWrite(ctx, []*runtime.StorageWrite{{
 		Collection:      InviteCollection,
 		Key:             code,
+		Version:         "*",
 		Value:           string(value),
 		PermissionRead:  0,
 		PermissionWrite: 0,
@@ -206,11 +231,20 @@ func resolveInvite(
 
 	// A match that has already ended and been cleaned up leaves a code pointing
 	// nowhere. Saying so beats sending the player into a match that is gone.
-	if _, err := nk.MatchGet(ctx, record.MatchID); err != nil {
+	live, err := nk.MatchGet(ctx, record.MatchID)
+	if err != nil || live == nil {
 		return "", runtime.NewError("that match is no longer running", codeNotFound)
 	}
 
+	var label match.Label
+	if err := json.Unmarshal([]byte(live.GetLabel().GetValue()), &label); err != nil || !KnownGames[label.Game] {
+		return "", runtime.NewError("that game is no longer available", codeNotFound)
+	}
+	if label.State != match.StateWaiting {
+		return "", runtime.NewError("that match has already started", codeNotFound)
+	}
 	response, err := json.Marshal(resolveInviteResponse{
+		Game:     label.Game,
 		MatchID:  record.MatchID,
 		Password: record.Password,
 	})

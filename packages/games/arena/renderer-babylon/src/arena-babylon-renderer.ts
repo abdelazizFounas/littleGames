@@ -1,6 +1,13 @@
 import { PARTS_PER_BODY, poseOf, type PartBox } from '@littlegames/arena-logic';
 import { FreeCamera } from '@babylonjs/core/Cameras/freeCamera.js';
 import { Engine } from '@babylonjs/core/Engines/engine.js';
+import { DynamicTexture } from '@babylonjs/core/Materials/Textures/dynamicTexture.js';
+import { DirectionalLight } from '@babylonjs/core/Lights/directionalLight.js';
+import { ShadowGenerator } from '@babylonjs/core/Lights/Shadows/shadowGenerator.js';
+// Required to register shadow rendering with the scene.
+// oxlint-disable-next-line import/no-unassigned-import
+import '@babylonjs/core/Lights/Shadows/shadowGeneratorSceneComponent.js';
+import { CreateGround } from '@babylonjs/core/Meshes/Builders/groundBuilder.js';
 import { HemisphericLight } from '@babylonjs/core/Lights/hemisphericLight.js';
 import { StandardMaterial } from '@babylonjs/core/Materials/standardMaterial.js';
 import { Color3 } from '@babylonjs/core/Maths/math.color.js';
@@ -27,9 +34,10 @@ import type { ArenaRenderer, ArenaView } from './view.ts';
  * the entry chunk. It receives a finished view and draws it: no rules, no
  * clock, no network, and no camera of its own.
  *
- * The whole arena is one draw call. Every box is a thin instance of a single
+ * The arena walls share one mesh. Every box is a thin instance of a single
  * unit cube, placed by a matrix and coloured by a per-instance attribute, so
- * forty pieces of scenery cost one mesh and one material.
+ * the structural scenery shares one material. Floor markings and shadows
+ * are rendered separately.
  */
 
 /** Just past the far corner of the arena, so nothing is clipped by the sky. */
@@ -44,9 +52,9 @@ const SKY_SIZE = 400;
  * by distance instead makes a tracer subtend the same angle wherever it is, so
  * it reads the same across the gap as it does at your feet.
  */
-const TRACER_ANGULAR_THICKNESS = 0.022;
-const TRACER_MIN_THICKNESS = 0.06;
-const TRACER_MAX_THICKNESS = 0.6;
+const TRACER_ANGULAR_THICKNESS = 0.0018;
+const TRACER_MIN_THICKNESS = 0.012;
+const TRACER_MAX_THICKNESS = 0.07;
 
 /**
  * How much of a tracer is skipped at the muzzle end.
@@ -56,13 +64,13 @@ const TRACER_MAX_THICKNESS = 0.6;
  * screen. Starting it a stride out puts it where a muzzle would be, and costs
  * the opponent's tracers nothing anybody can see from across the arena.
  */
-const TRACER_MUZZLE_METRES = 1.2;
+const TRACER_MUZZLE_METRES = 0.04;
 
 /** As many tracers as can plausibly be in the air at once. */
 const MAX_TRACERS = 8;
 
 /** Parts per body including its rifle, for both seats, plus the view model. */
-const VIEW_MODEL_PARTS = 4;
+const VIEW_MODEL_PARTS = 12;
 const MAX_PARTS = PARTS_PER_BODY * 2 + VIEW_MODEL_PARTS;
 
 function toColor3(colour: Rgb): Color3 {
@@ -91,7 +99,7 @@ function flatMaterial(name: string, owner: Scene): StandardMaterial {
 }
 
 /** The scenery: one cube, one matrix and one colour per box. */
-function buildArena(owner: Scene): void {
+function buildArena(owner: Scene): Mesh {
   const cube = CreateBox('arena', { size: 1 }, owner);
   const matrices = new Float32Array(ARENA_INSTANCES.length * 16);
   const colours = new Float32Array(ARENA_INSTANCES.length * 4);
@@ -103,12 +111,26 @@ function buildArena(owner: Scene): void {
     colours.set([instance.colour.r, instance.colour.g, instance.colour.b, 1], index * 4);
   }
 
-  cube.material = flatMaterial('arena', owner);
+  const material = flatMaterial('arena', owner);
+  const texture = new DynamicTexture('panel-detail', 256, owner, true);
+  const context = texture.getContext();
+  context.fillStyle = '#ececec'; context.fillRect(0, 0, 256, 256);
+  context.strokeStyle = '#b8b8b8'; context.lineWidth = 3; context.strokeRect(5, 5, 246, 246);
+  context.strokeStyle = '#f9f9f9'; context.lineWidth = 2; context.strokeRect(8, 8, 240, 240);
+  context.fillStyle = '#a4a4a4';
+  for (const x of [15, 237]) for (const y of [15, 237]) context.fillRect(x, y, 4, 4);
+  context.fillStyle = '#d8d8d8';
+  for (let y = 85; y < 175; y += 12) context.fillRect(94, y, 68, 3);
+  texture.update();
+  material.diffuseTexture = texture;
+  cube.material = material;
+  cube.receiveShadows = true;
   cube.thinInstanceSetBuffer('matrix', matrices, 16);
   cube.thinInstanceSetBuffer('color', colours, 4);
   // Without this the per-instance colours are uploaded and ignored, and the
   // whole arena comes out white.
   cube.useVertexColors = true;
+  return cube;
 }
 
 /**
@@ -169,6 +191,31 @@ function buildTracers(owner: Scene, matrices: Float32Array, colours: Float32Arra
   return cube;
 }
 
+/** Painted navigation lines stay on existing floors and cannot change cover. */
+function buildFloorMarkings(owner: Scene): void {
+  for (const sign of [-1, 1]) {
+    const texture = new DynamicTexture(`floor-${sign}`, { width: 1024, height: 512 }, owner, true);
+    const context = texture.getContext();
+    context.fillStyle = '#344756'; context.fillRect(0, 0, 1024, 512);
+    context.strokeStyle = '#415766'; context.lineWidth = 2;
+    for (let x = 0; x <= 1024; x += 51.2) { context.beginPath(); context.moveTo(x, 0); context.lineTo(x, 512); context.stroke(); }
+    for (let y = 0; y <= 512; y += 51.2) { context.beginPath(); context.moveTo(0, y); context.lineTo(1024, y); context.stroke(); }
+    context.strokeStyle = sign < 0 ? '#a5d97b' : '#edaa88'; context.lineWidth = 5;
+    context.strokeRect(20, 18, 984, 476);
+    context.setLineDash([28, 18]); context.beginPath(); context.moveTo(20, 255); context.lineTo(1004, 255); context.stroke(); context.setLineDash([]);
+    context.fillStyle = '#c8d3c8'; context.font = 'bold 44px monospace';
+    context.fillText(sign < 0 ? 'SECTOR 01' : 'SECTOR 02', 380, 470);
+    texture.update();
+    const material = flatMaterial(`floor-paint-${sign}`, owner);
+    material.diffuseTexture = texture;
+    const ground = CreateGround(`floor-paint-${sign}`, { width: 20, height: 10 }, owner);
+    ground.position.set(0, 0.003, sign * 8);
+    ground.material = material;
+    ground.receiveShadows = true;
+    ground.isPickable = false;
+  }
+}
+
 export function createArenaBabylonRenderer(): ArenaRenderer {
   let canvas: HTMLCanvasElement | null = null;
   let engine: Engine | null = null;
@@ -176,6 +223,7 @@ export function createArenaBabylonRenderer(): ArenaRenderer {
   let camera: FreeCamera | null = null;
   let players: Mesh | null = null;
   let tracers: Mesh | null = null;
+  let weapon: Mesh | null = null;
   let hud: Hud | null = null;
 
   // Reused every frame. Allocating these per frame is sixty allocations a
@@ -186,6 +234,8 @@ export function createArenaBabylonRenderer(): ArenaRenderer {
   const scratch = Matrix.Identity();
   const playerMatrices = new Float32Array(MAX_PARTS * 16);
   const playerColours = new Float32Array(MAX_PARTS * 4);
+  const weaponMatrices = new Float32Array(VIEW_MODEL_PARTS * 16);
+  const weaponColours = new Float32Array(VIEW_MODEL_PARTS * 4);
   const tracerMatrices = new Float32Array(MAX_TRACERS * 16);
   const tracerColours = new Float32Array(MAX_TRACERS * 4);
   const along = new Vector3(0, 0, 1);
@@ -213,13 +263,6 @@ export function createArenaBabylonRenderer(): ArenaRenderer {
       }
     }
 
-    // The player's own rifle, in the same buffer as everybody else's parts: it
-    // is the same cube drawn with a different matrix, and a second mesh for it
-    // would be a second draw call for four boxes.
-    for (const piece of view.viewModel) {
-      drawn = placePart(piece, colourOfPart(piece.part, colourOfSeat(view.seat)), drawn);
-    }
-
     mesh.thinInstanceCount = drawn;
     // Hidden outright when there is nobody to draw. A thin-instanced mesh with
     // a count of zero does not draw nothing: it falls back to drawing itself,
@@ -238,7 +281,7 @@ export function createArenaBabylonRenderer(): ArenaRenderer {
    * to anything — so the matrix is built from those three vectors directly
    * rather than from a rotation about the vertical.
    */
-  function placePart(piece: PartBox, colour: Rgb, index: number): number {
+  function placePart(piece: PartBox, colour: Rgb, index: number, matrices = playerMatrices, colours = playerColours): number {
     if (index >= MAX_PARTS) {
       return index;
     }
@@ -249,9 +292,22 @@ export function createArenaBabylonRenderer(): ArenaRenderer {
       piece.centre.x, piece.centre.y, piece.centre.z, 1,
       scratch,
     );
-    scratch.copyToArray(playerMatrices, index * 16);
-    playerColours.set([colour.r, colour.g, colour.b, 1], index * 4);
+    scratch.copyToArray(matrices, index * 16);
+    colours.set([colour.r, colour.g, colour.b, 1], index * 4);
     return index + 1;
+  }
+
+  function drawWeapon(mesh: Mesh, view: ArenaView): void {
+    let drawn = 0;
+    for (const piece of view.viewModel.slice(0, VIEW_MODEL_PARTS)) {
+      drawn = placePart(piece, colourOfPart(piece.part, colourOfSeat(view.seat)), drawn, weaponMatrices, weaponColours);
+    }
+    mesh.thinInstanceCount = drawn;
+    mesh.isVisible = drawn > 0;
+    if (drawn) {
+      mesh.thinInstanceBufferUpdated('matrix');
+      mesh.thinInstanceBufferUpdated('color');
+    }
   }
 
   function drawTracers(mesh: Mesh, view: ArenaView): void {
@@ -330,8 +386,11 @@ export function createArenaBabylonRenderer(): ArenaRenderer {
       container.appendChild(element);
       canvas = element;
 
-      const created = new Engine(element, true, { stencil: false }, true);
+      const created = new Engine(element, true, { stencil: false, powerPreference: 'high-performance' }, false);
+      engine = created;
+      created.setHardwareScalingLevel(1 / Math.min(globalThis.devicePixelRatio || 1, 2));
       const built = new Scene(created);
+      scene = built;
       built.clearColor = toColor3(SKY).toColor4(1);
 
       // One light, from above, and a ground bounce dark enough that the
@@ -339,8 +398,8 @@ export function createArenaBabylonRenderer(): ArenaRenderer {
       // cube three distinguishable faces without a single texture; flat unlit
       // faces would make the whole arena one silhouette.
       const sky = new HemisphericLight('sky', new Vector3(0.2, 1, 0.1), built);
-      sky.intensity = 1;
-      sky.groundColor = new Color3(0.22, 0.24, 0.3);
+      sky.intensity = 0.72;
+      sky.groundColor = new Color3(0.28, 0.31, 0.38);
 
       // Never given any input of its own. The session computes where the eye is
       // and hands it over in the view; a camera that also listened to the mouse
@@ -351,8 +410,27 @@ export function createArenaBabylonRenderer(): ArenaRenderer {
       eyeCamera.maxZ = SKY_SIZE;
       built.activeCamera = eyeCamera;
 
-      buildArena(built);
+      const scenery = buildArena(built);
+      buildFloorMarkings(built);
+      const sun = new DirectionalLight('sun', new Vector3(-0.5, -1, 0.35), built);
+      sun.position = new Vector3(15, 24, -14);
+      sun.diffuse = new Color3(1, 0.91, 0.78);
+      sun.intensity = 1.15;
+      const shadows = new ShadowGenerator(1024, sun);
+      shadows.usePercentageCloserFiltering = true;
+      shadows.bias = 0.002;
+      shadows.normalBias = 0.02;
+      shadows.addShadowCaster(scenery);
+      shadows.setDarkness(0.3);
       const bodies = buildPlayers(built, playerMatrices, playerColours);
+      shadows.addShadowCaster(bodies);
+      const hands = buildPlayers(built, weaponMatrices, weaponColours);
+      hands.name = 'first-person-rifle';
+      hands.renderingGroupId = 1;
+      // Clear world depth only for the first-person model, so nearby cover
+      // never cuts through the rifle. World targets still use normal depth.
+      built.setRenderingAutoClearDepthStencil(1, true, true, false);
+      weapon = hands;
       const lines = buildTracers(built, tracerMatrices, tracerColours);
 
       // The sky is a box seen from the inside: its faces are flipped by scaling
@@ -380,7 +458,7 @@ export function createArenaBabylonRenderer(): ArenaRenderer {
     },
 
     render(view: ArenaView): void {
-      if (scene === null || camera === null || players === null || tracers === null || hud === null) {
+      if (scene === null || camera === null || players === null || weapon === null || tracers === null || hud === null) {
         return;
       }
 
@@ -396,6 +474,7 @@ export function createArenaBabylonRenderer(): ArenaRenderer {
 
       drawPlayers(players, view);
       drawTracers(tracers, view);
+      drawWeapon(weapon, view);
       hud.update(view.hud);
       scene.render();
     },
@@ -415,6 +494,7 @@ export function createArenaBabylonRenderer(): ArenaRenderer {
       hud = null;
       tracers = null;
       players = null;
+      weapon = null;
       camera = null;
       scene = null;
       engine = null;

@@ -17,7 +17,7 @@ export function ProfileRoute(): ReactNode {
   }
 
   if (state.status === 'signed-out') {
-    return <Navigate to="/" replace />;
+    return <Navigate to="/login?next=/profile" replace />;
   }
 
   const { profile } = state;

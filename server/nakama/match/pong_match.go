@@ -9,8 +9,8 @@ import (
 	"github.com/heroiclabs/nakama-common/runtime"
 	"google.golang.org/protobuf/proto"
 	"littlegames.local/nakama/pong"
-	"littlegames.local/nakama/stats"
 	matchv1 "littlegames.local/nakama/protocol/matchv1"
+	"littlegames.local/nakama/stats"
 )
 
 // PongName is the handler name Nakama creates matches under.
@@ -432,7 +432,7 @@ func (s *matchState) applyInputs(logger runtime.Logger, messages []runtime.Match
 		}
 
 		participant, known := s.players[message.GetUserId()]
-		if !known {
+		if !known || message.GetSessionId() != participant.presence.GetSessionId() {
 			continue
 		}
 

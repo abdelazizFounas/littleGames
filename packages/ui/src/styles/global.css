@@ -1,6 +1,4 @@
-/* Nothing in this interface is rounded. Square corners throughout, to match
-   the game, which is drawn entirely from straight-edged rectangles. */
-
+/* Shared interface foundations. The arcade theme extends these styles. */
 :root {
   --surface: #ffffff;
   --surface-sunken: #f4f5f7;

@@ -10,31 +10,26 @@ export default defineConfig(({ mode }) => {
   // reuse server-side values without re-declaring them.
   const env = loadEnv(mode, repositoryRoot, '');
 
-  // Caddy is the only entry point, and it serves the client and the API on one
-  // origin. The port the browser reaches the app on is therefore the same one
-  // it reaches Nakama on.
-  const parsedPublicPort = Number(env['VITE_NAKAMA_PORT']);
-  const publicPort = Number.isInteger(parsedPublicPort) ? parsedPublicPort : 80;
-
   return {
     plugins: [
       react(),
       VitePWA({
-        registerType: 'autoUpdate',
+        registerType: 'prompt',
         manifest: {
           name: 'LittleGames',
           short_name: 'LittleGames',
-          description: 'Real-time multiplayer mini-games.',
+          description: 'Small games. Big rivalries. Free multiplayer duels and solo practice.',
           start_url: '/',
-          // Fullscreen rather than standalone: a match wants the whole screen,
-          // and the browser chrome is of no use once a game has started.
-          display: 'fullscreen',
-          orientation: 'landscape',
+          // The shell supports portrait browsing. Games request fullscreen
+          // only when the player chooses it.
+          display: 'standalone',
+          orientation: 'any',
           background_color: '#101319',
           theme_color: '#101319',
           icons: [
             { src: '/icon.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'any' },
-            { src: '/icon.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'maskable' },
+            { src: '/icon-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
+            { src: '/icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'any maskable' },
           ],
         },
         workbox: {
@@ -42,7 +37,7 @@ export default defineConfig(({ mode }) => {
           // under the API is: a match is live state, and a cached snapshot of
           // it would be a lie told confidently.
           navigateFallbackDenylist: [/^\/v2\//, /^\/ws/, /^\/healthcheck/],
-          globPatterns: ['**/*.{js,css,html,svg}'],
+          globPatterns: ['**/*.{js,css,html,svg,png}'],
         },
       }),
     ],
@@ -61,10 +56,9 @@ export default defineConfig(({ mode }) => {
       // routes the API, and duplicating that routing would give development two
       // sets of rules that can disagree.
       host: true,
-      // The page is served through Caddy, so the hot-reload socket must be sent
-      // there too. Left alone it would target this server's own port and never
-      // connect.
-      hmr: { clientPort: publicPort },
+      // Vite derives the HMR address from the page origin, so direct localhost
+      // development and a Caddy reverse proxy both work without a forced port.
+
     },
   };
 });

@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+Disallow: /join/
+Disallow: /profile
+Disallow: /login

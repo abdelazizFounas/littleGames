@@ -42,6 +42,12 @@ for attempt in \$(seq 1 60); do
   [ "\$state" = healthy ] && break
   sleep 2
 done
+if [ "\$state" != healthy ]; then
+  echo "Deployment failed: Nakama did not become healthy." >&2
+  docker compose --env-file "$ROOT/.env" \
+    -f docker-compose.yml -f docker-compose.prod.yml logs --tail=50 nakama
+  exit 1
+fi
 docker compose --env-file "$ROOT/.env" \
   -f docker-compose.yml -f docker-compose.prod.yml ps
 EOF

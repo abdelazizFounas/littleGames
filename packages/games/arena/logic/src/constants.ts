@@ -159,44 +159,17 @@ export const TORSO_DAMAGE = 3;
 /** Three to an arm or a leg, which is what makes hitting the middle worth it. */
 export const LIMB_DAMAGE = 2;
 
-/* --- Where the shot actually goes ----------------------------------------- */
+/* --- Accuracy ------------------------------------------------------------ */
 
-/**
- * How far off the aim a shot can stray, as a fraction of the distance flown.
- *
- * A tangent without the trigonometry: the aim is nudged sideways by this much
- * per metre travelled and renormalised, which for the small angles involved is
- * the angle itself. Everything below is in the same unit and they add.
- *
- * The base is what a rifle fired from the hip does at rest — about half a
- * degree, enough that a duel across the ravine rewards raising the sight and
- * not enough to make hip fire pointless in a corridor.
- */
-export const SPREAD_BASE = 0.009;
-
-/** Added at a full run, and proportional to how big a step is being taken. */
-export const SPREAD_MOVING = 0.03;
-
-/** Added while both feet are off the ground, where nobody can brace. */
-export const SPREAD_AIRBORNE = 0.045;
-
-/**
- * Added for turning, per unit of aim swung in one tick.
- *
- * Measured as the straight-line distance between last tick's aim and this
- * one's, both unit vectors, so it needs no angle. Flicking onto a target and
- * firing in the same instant is the shot this exists to punish.
- */
-export const SPREAD_TURNING = 0.8;
-
-/**
- * What is left of all of it while the sight is up.
- *
- * Not zero. A scope that guaranteed the centre of the crosshair would make the
- * hip an irrelevance rather than a trade, and a shot that can be predicted
- * exactly is a shot a bot fires better than a person.
- */
-export const SPREAD_SCOPED_SHARE = 0.06;
+/** Hip-fire spread in lateral metres per metre of range. */
+export const SPREAD_BASE = 0.003;
+/** Movement increases hip-fire spread; aim-down-sights stays precise. */
+export const SPREAD_MOVING = 0.012;
+export const SPREAD_AIRBORNE = 0.024;
+/** Flicking onto a target must not add invisible random error. */
+export const SPREAD_TURNING = 0;
+/** Scoped shots follow the quantized aim exactly, with no random deflection. */
+export const SPREAD_SCOPED_SHARE = 0;
 
 /* --- Rounds --------------------------------------------------------------- */
 

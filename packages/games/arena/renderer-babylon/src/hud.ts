@@ -42,6 +42,7 @@ export function createHud(container: HTMLElement): Hud {
   }
 
   const root = overlay();
+  root.style.containerType = 'size';
 
   const crosshair = document.createElement('div');
   crosshair.style.position = 'absolute';
@@ -63,6 +64,11 @@ export function createHud(container: HTMLElement): Hud {
   score.style.fontWeight = '700';
   score.style.letterSpacing = '0.1em';
   score.style.textShadow = '0 2px 6px rgba(0, 0, 0, 0.6)';
+  score.style.padding = '0.05em 0.7em';
+  score.style.borderRadius = '10px';
+  score.style.background = 'linear-gradient(90deg, #213d36dd, #202b3ddd)';
+  score.style.border = '1px solid #ffffff25';
+  score.setAttribute('aria-label', 'Match score');
 
   const message = document.createElement('div');
   message.style.position = 'absolute';
@@ -121,7 +127,7 @@ export function createHud(container: HTMLElement): Hud {
   glass.style.position = 'absolute';
   glass.style.left = '50%';
   glass.style.top = '50%';
-  glass.style.width = 'min(86vmin, 86%)';
+  glass.style.width = 'min(86cqh, 86%)';
   glass.style.aspectRatio = '1';
   glass.style.transform = 'translate(-50%, -50%)';
   glass.style.borderRadius = '50%';
@@ -173,7 +179,13 @@ export function createHud(container: HTMLElement): Hud {
   healthFill.style.background = '#e8e2d6';
   healthTrack.appendChild(healthFill);
 
-  root.append(damage, crosshair, hitMarker, scope, healthTrack, score, message);
+  const healthLabel = document.createElement('div');
+  healthLabel.style.cssText = 'position:absolute;left:50%;bottom:calc(4% + 12px);transform:translateX(-50%);font:10px monospace;letter-spacing:.12em;text-shadow:0 1px 4px #000';
+  healthLabel.textContent = 'ARMOR 100';
+  const roundLabel = document.createElement('div');
+  roundLabel.style.cssText = 'position:absolute;top:clamp(3.4rem,9vmin,5.3rem);left:50%;transform:translateX(-50%);font:9px monospace;letter-spacing:.15em;color:#e2e9d5;text-shadow:0 1px 5px #000';
+  roundLabel.textContent = 'FIRST TO 7 · RIFT ARENA';
+  root.append(damage, scope, crosshair, hitMarker, healthTrack, healthLabel, score, roundLabel, message);
   container.appendChild(root);
 
   // What each element currently says. Writing textContent unconditionally
@@ -227,8 +239,9 @@ export function createHud(container: HTMLElement): Hud {
         healthFill.style.width = `${String(wantsHealth * 100)}%`;
         // Red once a single shot anywhere would finish it, which is the only
         // moment the number is worth reacting to.
-        healthFill.style.background = wantsHealth <= 0.5 ? '#d34a4a' : '#e8e2d6';
-        healthTrack.style.opacity = wantsHealth >= 1 ? '0.35' : '1';
+        healthFill.style.background = wantsHealth <= 0.5 ? '#ff9b83' : '#c5f66a';
+        healthLabel.textContent = `ARMOR ${Math.round(wantsHealth * 100)}`;
+        healthTrack.style.opacity = '1';
       }
 
       const wantsDamage = Math.round(state.damage * 20) / 20;

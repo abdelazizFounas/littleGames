@@ -108,3 +108,19 @@ func TestSpawnsAreClear(t *testing.T) {
 		t.Fatal("the two spawns are closer together than the gap between the zones")
 	}
 }
+
+func TestTiedWinningScoreNeedsSuddenDeath(t *testing.T) {
+	state := NewState()
+	state.Phase = PhasePlaying
+	state.North.Score = WinningScore
+	state.South.Score = WinningScore
+	state, _ = Step(state, Inputs{North: NoInput, South: NoInput})
+	if state.Phase != PhasePlaying || state.Winner != "" {
+		t.Fatal("a tied score favored a seat")
+	}
+	state.South.Score++
+	state, _ = Step(state, Inputs{North: NoInput, South: NoInput})
+	if state.Winner != SeatSouth {
+		t.Fatal("the sudden-death leader did not win")
+	}
+}

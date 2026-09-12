@@ -143,15 +143,17 @@ export async function startPongSession(
   }
 
   let connection: MatchConnection;
-  let joinedMatchId = '';
+  let joinedMatchId = matchId;
+  let firstSnapshotDeadline: ReturnType<typeof setTimeout> | undefined;
   try {
     connection = await joinMatch({
       onSnapshot: (snapshot) => {
         const next = toFrame(snapshot, userId);
-        if (next === null) {
+        if (signal.aborted || !running || next === null) {
           return;
         }
         buffer.push(next, performance.now());
+        seq = Math.max(seq, next.acknowledgedSeq);
         history.acknowledge(next.acknowledgedSeq);
 
         // Which seat we took is only known once the server says so. Reporting
@@ -194,12 +196,18 @@ export async function startPongSession(
     throw cause;
   }
 
+  if (signal.aborted) {
+    running = false;
+    void connection.leave();
+    input.stop(); resizeObserver.disconnect(); renderer.destroy();
+    throw new Error('The match was left before it started.');
+  }
   joinedMatchId = connection.matchId;
 
   // Joining can succeed while no state ever follows — a seat lost to a race,
   // a socket that went quiet. Without this the screen sits on "joining" for
   // ever, which tells the player nothing and offers them nothing.
-  const firstSnapshotDeadline = setTimeout(() => {
+  firstSnapshotDeadline = setTimeout(() => {
     if (announcedSide === null) {
       onStatus({
         kind: 'failed',
@@ -217,7 +225,7 @@ export async function startPongSession(
     // Input goes out on the server's cadence, not the display's. A 144 Hz
     // screen must not send five times the inputs a 30 Hz one does.
     if (now - lastInputAt >= INPUT_INTERVAL_MS) {
-      lastInputAt = now;
+      lastInputAt = now - ((now - lastInputAt) % INPUT_INTERVAL_MS);
       seq += 1;
       const command = input.sample(seq);
       history.record(command);

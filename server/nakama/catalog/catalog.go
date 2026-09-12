@@ -40,9 +40,9 @@ type Game struct {
 // Entries the server creates when they are absent.
 var seedEntries = []Game{
 	{
-		ID:          "pong",
-		Name:        "Pong",
-		Tagline:     "Two paddles, one ball, first to eleven.",
+		ID:      "pong",
+		Name:    "Neon Pong",
+		Tagline: "Two paddles, one ball, first to eleven.",
 		Description: "The original head-to-head duel. The ball speeds up on every " +
 			"exchange, and where it hits your paddle decides where it goes next.",
 		MinPlayers: 2,
@@ -50,7 +50,7 @@ var seedEntries = []Game{
 	},
 	{
 		ID:      "battleship",
-		Name:    "Battleship",
+		Name:    "Fleet Command",
 		Tagline: "Hide five ships, then find theirs first.",
 		Description: "Place your fleet on the lower grid, then take turns firing at " +
 			"the upper one. A hit keeps the turn, a miss hands it over, and the " +
@@ -60,7 +60,7 @@ var seedEntries = []Game{
 	},
 	{
 		ID:      "arena",
-		Name:    "Arena",
+		Name:    "Rift Arena",
 		Tagline: "One arena, two players, first to seven.",
 		Description: "A duel across a ravine you cannot cross and bullets can. " +
 			"Crates to climb, cover to crouch behind, and a server that " +

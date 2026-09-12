@@ -38,6 +38,9 @@ export interface ArenaInput {
   /** Builds the command for this tick. */
   sample: (seq: number) => ArenaCommand;
   stop: () => void;
+  /** Release held controls when paused or backgrounded. */
+  reset: () => void;
+  resetShotCounter: () => void;
   /**
    * Advances anything that is a rate rather than an event.
    *
@@ -170,6 +173,7 @@ export function createArenaInput(
    * open again behind them.
    */
   let releasing = false;
+  let requestingLock = false;
 
   /**
    * The direction the crosshair had when the trigger was pulled.
@@ -179,6 +183,8 @@ export function createArenaInput(
    * distances in this arena that is the width of a body.
    */
   let latchedAim: Vec3 | null = null;
+  let latchedZoom: boolean | null = null;
+  let latchedTick: number | null = null;
 
   // Touch, when there is a touch screen. Kept alongside the keyboard rather
   // than instead of it: a tablet with a keyboard should answer to both.
@@ -195,7 +201,7 @@ export function createArenaInput(
   let touchCrouch = false;
   let touchZoom = false;
   let touchLayer: HTMLElement | null = null;
-  let touchControls: { setSettings: (next: ArenaSettings) => void; dispose: () => void } | null =
+  let touchControls: { reset: () => void; setSettings: (next: ArenaSettings) => void; dispose: () => void } | null =
     null;
 
   function look(deltaX: number, deltaY: number, sensitivity: number, invertY: boolean): void {
@@ -211,13 +217,18 @@ export function createArenaInput(
     // there is nothing for holding the button to add.
     shotsFired += 1;
     latchedAim = directionOf(yaw, pitch);
+    latchedZoom = isZoomedNow();
+    latchedTick = seenTick;
   }
 
   const onKeyDown = (event: KeyboardEvent): void => {
+    const target = event.target;
+    if (target instanceof HTMLElement && (target.closest('input, textarea, select, button, [contenteditable]') !== null)) return;
+    if (!locked && document.activeElement !== surface) return;
     if (event.repeat) {
       return;
     }
-    if (event.code === SETTINGS_CODE) {
+    if (event.code === SETTINGS_CODE || event.code === 'Escape') {
       event.preventDefault();
       listeners.onOpenSettings();
       return;
@@ -244,6 +255,12 @@ export function createArenaInput(
     held.clear();
     zoomPressed = false;
     heldButtons = 0;
+    latchedAim = null; latchedZoom = null; latchedTick = null;
+    touchCrouch = false; touchZoom = false;
+    touchControls?.reset();
+    moveStickX = 0; moveStickZ = 0;
+    turnStickX = 0; turnStickY = 0;
+    touchJump = false;
   };
 
   /**
@@ -272,8 +289,8 @@ export function createArenaInput(
 
   /** Every pointer event is a chance to notice a button changed. */
   const onPointerActivity = (event: PointerEvent): void => {
-    onButtons(event);
     onPointerMove(event);
+    onButtons(event);
   };
 
   /**
@@ -285,17 +302,29 @@ export function createArenaInput(
    * request to give the pointer back to the game.
    */
   function takePointer(): void {
-    if (locked) {
+    if (locked || requestingLock) {
       return;
     }
     // The truth arrives on `pointerlockchange`, but a refusal only ever arrives
     // here — and a refusal is the difference between a game that does not answer
     // the mouse and a game that says why.
-    const asked: unknown = surface.requestPointerLock();
-    if (asked instanceof Promise) {
-      asked.catch((cause: unknown) => {
-        listeners.onLockRefused(cause instanceof Error ? cause.message : String(cause));
-      });
+    if (typeof surface.requestPointerLock !== 'function') {
+      listeners.onLockRefused('This browser does not support mouse capture.');
+      return;
+    }
+    requestingLock = true;
+    surface.focus({ preventScroll: true });
+    try {
+      const asked: unknown = surface.requestPointerLock();
+      if (asked instanceof Promise) {
+        void asked.catch((cause: unknown) => {
+          requestingLock = false;
+          listeners.onLockRefused(cause instanceof Error ? cause.message : String(cause));
+        });
+      }
+    } catch (cause) {
+      requestingLock = false;
+      listeners.onLockRefused(cause instanceof Error ? cause.message : String(cause));
     }
   }
 
@@ -356,7 +385,13 @@ export function createArenaInput(
     }
   };
 
+  const onLockError = (): void => {
+    requestingLock = false;
+    listeners.onLockRefused('Mouse capture was refused. Click Resume to try again.');
+  };
+
   const onLockChange = (): void => {
+    requestingLock = false;
     const next = document.pointerLockElement === surface;
     if (next === locked) {
       return;
@@ -406,11 +441,12 @@ export function createArenaInput(
       window.addEventListener('pointermove', onPointerActivity);
       window.addEventListener('pointerdown', onButtons);
       window.addEventListener('pointerup', onButtons);
-      window.addEventListener('contextmenu', onContextMenu, { capture: true });
+      surface.addEventListener('contextmenu', onContextMenu, { capture: true });
       surface.addEventListener('pointerdown', onSurfacePointerDown);
       surface.addEventListener('click', onSurfaceClick);
       container.addEventListener('pointerdown', onAnyPointerDown, { capture: true });
       document.addEventListener('pointerlockchange', onLockChange);
+      document.addEventListener('pointerlockerror', onLockError);
 
       // Chosen by what the device can do, never by what it calls itself: a
       // user-agent string is a claim, and a coarse pointer is a fact.
@@ -451,7 +487,9 @@ export function createArenaInput(
       // The latched aim is spent on the tick after the click, so the shot goes
       // where the crosshair was rather than where it has drifted to.
       const aim = normalizeAim(latchedAim ?? directionOf(yaw, pitch));
-      latchedAim = null;
+      const zoomed = latchedZoom ?? isZoomedNow();
+      const shotTick = latchedTick ?? seenTick;
+      latchedAim = null; latchedZoom = null; latchedTick = null;
 
       const wiredMove = moveToWire(move);
       const wiredAim = aimToWire(aim);
@@ -465,8 +503,8 @@ export function createArenaInput(
         aimZ: wiredAim.z,
         jump: held.has(settings.keys.jump) || touchJump,
         crouch: held.has(settings.keys.crouch) || touchCrouch,
-        zoomed: isZoomedNow(),
-        seenTick,
+        zoomed,
+        seenTick: shotTick,
         shotsFired,
       };
     },
@@ -478,11 +516,12 @@ export function createArenaInput(
       window.removeEventListener('pointermove', onPointerActivity);
       window.removeEventListener('pointerdown', onButtons);
       window.removeEventListener('pointerup', onButtons);
-      window.removeEventListener('contextmenu', onContextMenu, { capture: true });
+      surface.removeEventListener('contextmenu', onContextMenu, { capture: true });
       surface.removeEventListener('pointerdown', onSurfacePointerDown);
       surface.removeEventListener('click', onSurfaceClick);
       container.removeEventListener('pointerdown', onAnyPointerDown, { capture: true });
       document.removeEventListener('pointerlockchange', onLockChange);
+      document.removeEventListener('pointerlockerror', onLockError);
       touchControls?.dispose();
       touchLayer?.remove();
       touchLayer = null;
@@ -504,6 +543,8 @@ export function createArenaInput(
       look(turnStickX, turnStickY, speed * elapsedSeconds, settings.touch.invertY);
     },
 
+    reset: onBlur,
+    resetShotCounter() { shotsFired = 0; latchedAim = null; latchedZoom = null; latchedTick = null; },
     forward: () => directionOf(yaw, pitch),
     isZoomed: isZoomedNow,
     isLocked: () => locked,
@@ -617,7 +658,7 @@ function buildTouchControls(
   container: HTMLElement,
   settings: ArenaSettings,
   handlers: TouchHandlers,
-): { element: HTMLElement; setSettings: (next: ArenaSettings) => void; dispose: () => void } {
+): { element: HTMLElement; reset: () => void; setSettings: (next: ArenaSettings) => void; dispose: () => void } {
   let current = settings;
 
   const layer = document.createElement('div');
@@ -684,9 +725,10 @@ function buildTouchControls(
     const clamped = clampToUnit({ x: offsetX, z: offsetY });
     stick.x = clamped.x;
     stick.y = clamped.z;
+    const bounds = layer.getBoundingClientRect();
     mark.style.transform =
-      `translate(${String(stick.originX + clamped.x * radius)}px, ` +
-      `${String(stick.originY + clamped.z * radius)}px)`;
+      `translate(${String(stick.originX - bounds.left + clamped.x * radius)}px, ` +
+      `${String(stick.originY - bounds.top + clamped.z * radius)}px)`;
   }
 
   function begin(stick: Stick, mark: HTMLElement, zone: HTMLElement, event: PointerEvent): void {
@@ -718,6 +760,7 @@ function buildTouchControls(
     handlers.onMove(move.x, move.y);
   };
   const onMoveUp = (event: PointerEvent): void => {
+    if (event.pointerId !== move.pointerId) return;
     releaseStick(move, moveMark, event);
     handlers.onMove(0, 0);
   };
@@ -734,6 +777,7 @@ function buildTouchControls(
     handlers.onTurn(turn.x, turn.y);
   };
   const onTurnUp = (event: PointerEvent): void => {
+    if (event.pointerId !== turn.pointerId) return;
     releaseStick(turn, turnMark, event);
     handlers.onTurn(0, 0);
   };
@@ -784,6 +828,13 @@ function buildTouchControls(
 
   return {
     element: layer,
+    reset() {
+      move.pointerId = null; turn.pointerId = null;
+      move.x = 0; move.y = 0; turn.x = 0; turn.y = 0;
+      moveMark.style.opacity = '0'; turnMark.style.opacity = '0';
+      handlers.onMove(0, 0); handlers.onTurn(0, 0); handlers.onHold('jump', false);
+      latch(crouchButton, false); latch(zoomButton, false);
+    },
     setSettings(next) {
       current = next;
       applySwap();

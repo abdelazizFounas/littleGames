@@ -7,6 +7,9 @@
  * one place keeps every form from having to guess.
  */
 export function describeError(error: unknown, fallback: string): string {
+  if (error instanceof TypeError && /fetch|network/i.test(error.message)) {
+    return 'Could not reach the game server. Check your connection and try again.';
+  }
   if (error instanceof Error && error.message.length > 0) {
     return error.message;
   }

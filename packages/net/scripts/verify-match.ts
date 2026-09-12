@@ -68,15 +68,12 @@ const alice = await authenticate('alice');
 const bob = await authenticate('bob');
 
 console.log('\n=== 2. both ask the server for a match ===');
-const aliceMatch = await rpcMatchId(alice);
-// A lobby is not listable the instant it exists: the label index is refreshed
-// on a timer, and two humans never click inside one refresh anyway. Waiting a
-// window reproduces real timing instead of a race no player can hit.
-await new Promise((resolve) => setTimeout(resolve, 1500));
-const bobMatch = await rpcMatchId(bob);
+// Exercise the label-index race: both users may click at the same instant.
+const [aliceMatch, bobMatch] = await Promise.all([rpcMatchId(alice), rpcMatchId(bob)]);
 console.log(`  alice -> ${aliceMatch}`);
 console.log(`  bob   -> ${bobMatch}`);
 console.log(`  same match: ${String(aliceMatch === bobMatch)}`);
+if (aliceMatch !== bobMatch) throw new Error('Quick play returned different lobbies.');
 
 console.log('\n=== 3. both join over a socket ===');
 const aliceSocket = client.createSocket(useSSL);
@@ -132,7 +129,7 @@ const later = bobSnapshots.at(-1);
 const laterGame = later?.game;
 console.log(`  four seconds on: phase=${String(laterGame?.phase)} ball x=${laterGame?.ball?.x.toFixed(1) ?? '?'} y=${laterGame?.ball?.y.toFixed(1) ?? '?'}`);
 if (laterGame?.ball?.x === game.ball?.x && laterGame?.ball?.y === game.ball?.y) {
-  console.log('  PROBLEM: the ball never moved');
+  throw new Error('The ball never moved.');
 } else {
   console.log('  the ball is moving under the server simulation');
 }
@@ -147,12 +144,12 @@ console.log('\n=== 6. a third player must be turned away (capacity 2) ===');
 const carol = await authenticate('carol');
 const carolSocket = client.createSocket(useSSL);
 await carolSocket.connect(carol, false);
-try {
-  await carolSocket.joinMatch(aliceMatch);
-  console.log('  PROBLEM: carol got into a full match');
-} catch (error) {
+let refused = false;
+try { await carolSocket.joinMatch(aliceMatch); } catch (error) {
+  refused = true;
   console.log(`  refused, as expected: ${reasonOf(error)}`);
 }
+if (!refused) throw new Error('A third player joined a full match.');
 
 aliceSocket.disconnect(false);
 bobSocket.disconnect(false);

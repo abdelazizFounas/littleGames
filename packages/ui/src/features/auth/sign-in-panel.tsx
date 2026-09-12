@@ -11,7 +11,7 @@ import { useSession } from '../../session/use-session';
  */
 export function SignInPanel(): ReactNode {
   const { signInAsGuest, signInWithEmail } = useSession();
-  const guest = useAsyncAction('Could not start a guest session.');
+  const guest = useAsyncAction('The server is unavailable. Please try again shortly.');
   const email = useAsyncAction('Could not sign in with those credentials.');
   const [showEmailForm, setShowEmailForm] = useState(false);
   const [address, setAddress] = useState('');
@@ -24,8 +24,8 @@ export function SignInPanel(): ReactNode {
 
   return (
     <section className="panel">
-      <h1>LittleGames</h1>
-      <p className="lede">Real-time multiplayer mini-games. No account needed to start.</p>
+      <h1>Get in the game.</h1>
+      <p className="lede">Jump in as a guest in one click. Your next rematch can’t wait.</p>
 
       <button
         type="button"
@@ -35,7 +35,7 @@ export function SignInPanel(): ReactNode {
           guest.run(signInAsGuest);
         }}
       >
-        {guest.pending ? 'Starting…' : 'Play as guest'}
+        {guest.pending ? 'Sign in…' : 'Play as guest →'}
       </button>
       {guest.error !== null && <p role="alert" className="error">{guest.error}</p>}
 
@@ -66,7 +66,7 @@ export function SignInPanel(): ReactNode {
             />
           </label>
           <button type="submit" className="button" disabled={email.pending}>
-            {email.pending ? 'Signing in…' : 'Sign in'}
+            {email.pending ? 'Sign in…' : 'Sign in'}
           </button>
           {email.error !== null && <p role="alert" className="error">{email.error}</p>}
         </form>

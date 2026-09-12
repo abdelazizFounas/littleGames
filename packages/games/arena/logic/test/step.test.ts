@@ -404,3 +404,16 @@ describe('winning', () => {
     expect(state).toEqual(before);
   });
 });
+
+describe('a tied final trade', () => {
+  it('continues to sudden death instead of handing north the match', () => {
+    const initial = playing();
+    const tied: ArenaState = { ...initial, north: { ...initial.north, score: WINNING_SCORE, alive: false, health: 0, respawnTicks: 30 }, south: { ...initial.south, score: WINNING_SCORE, alive: false, health: 0, respawnTicks: 30 } };
+    const next = step(tied, WATCHING).state;
+    expect(next.phase).toBe('playing');
+    expect(next.winner).toBeNull();
+    const decided = step({ ...next, south: { ...next.south, score: WINNING_SCORE + 1 } }, WATCHING).state;
+    expect(decided.phase).toBe('finished');
+    expect(decided.winner).toBe('south');
+  });
+});

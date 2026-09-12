@@ -25,6 +25,8 @@ import {
   eyeOf,
   predictSelf,
   smoothCamera,
+  reconcileCamera,
+  hudFor,
   viewModelMuzzle,
   viewModelOf,
   type ArenaFrame,
@@ -263,11 +265,13 @@ export async function startArenaSession(
   let newestShotId = 0;
   let lastOwnHitAt: number | null = null;
   let lastDamageAt: number | null = null;
-  let wasAlive = true;
-  let drawnEye: { x: number; y: number; z: number } | null = null;
+  let previousHealth: number | null = null;
+  let previousEpoch = 0;
+  let currentMuzzle: ReturnType<typeof viewModelMuzzle> = null;
+  let firstSnapshotDeadline: ReturnType<typeof setTimeout> | undefined;
   let predicted: PlayerBody = restingBody({ x: 0, y: 0, z: 0 });
 
-  await renderer.mount(container);
+  try { await renderer.mount(container); } catch (cause) { renderer.destroy(); throw cause; }
   const surface = renderer.canvas;
   if (surface === null) {
     renderer.destroy();
@@ -298,7 +302,6 @@ export async function startArenaSession(
     buffer.reset();
     history.clear();
     smoothing = NO_SMOOTHING;
-    drawnEye = null;
     // Shots from before the gap describe a moment the match has left, and
     // drawing them now would put tracers in the air for a firefight that is
     // over. The high-water mark stays: those shots are still not new.
@@ -344,17 +347,23 @@ export async function startArenaSession(
   );
 
   let connection: ArenaConnection;
-  let joinedMatchId = '';
+  let joinedMatchId = matchId;
   try {
     connection = await joinArena(
       {
         onSnapshot: (snapshot) => {
           const next = toFrame(snapshot, userId);
-          if (next === null) {
+          if (!running || signal.aborted || next === null) {
             return;
           }
-          buffer.push(next, performance.now());
+          const previous = buffer.latest();
+          const before = previous === null ? null : eyeOf(predictSelf(previous.self, history.pending()));
+          seq = Math.max(seq, next.acknowledgedSeq);
           history.acknowledge(next.acknowledgedSeq);
+          if (before !== null) {
+            smoothing = reconcileCamera(smoothing, before, eyeOf(predictSelf(next.self, history.pending())), next.self.spawnEpoch);
+          }
+          buffer.push(next, performance.now());
 
           const arrivedAt = performance.now();
           for (const shot of snapshot.shots) {
@@ -369,6 +378,7 @@ export async function startArenaSession(
               hitPlayer: shot.hitPlayer,
               seenAt: arrivedAt,
               mine: SEATS[shot.shooter] === next.seat,
+              muzzle: SEATS[shot.shooter] === next.seat ? currentMuzzle : null,
             });
             // The only confirmation a shooter gets. The target is a box that
             // does not stagger, and across this arena a miss looks like a hit.
@@ -387,10 +397,12 @@ export async function startArenaSession(
 
           // Being killed is a transition, not a state: the flash belongs to the
           // moment of it, and `alive` stays false for the whole respawn.
-          if (wasAlive && !next.self.alive) {
+          if (previousHealth !== null && previousEpoch === next.self.spawnEpoch && next.self.health < previousHealth) {
             lastDamageAt = arrivedAt;
           }
-          wasAlive = next.self.alive;
+          previousHealth = next.self.health;
+          if (previousEpoch !== next.self.spawnEpoch) input.faceSeat(next.seat);
+          previousEpoch = next.self.spawnEpoch;
 
           const opponentName =
             snapshot.players.find((player) => player.userId !== userId)?.username ?? 'your opponent';
@@ -424,6 +436,10 @@ export async function startArenaSession(
             return;
           }
           resync();
+          input.reset();
+          input.resetShotCounter();
+          seq = 0;
+          lastInputAt = 0;
           if (announcedSeat !== null) {
             listeners.onStatus({ kind: 'playing', seat: announcedSeat, matchId: joinedMatchId });
           }
@@ -440,11 +456,17 @@ export async function startArenaSession(
     throw cause;
   }
 
+  if (signal.aborted) {
+    running = false;
+    void connection.leave();
+    teardown();
+    throw new Error('The match was left before it started.');
+  }
   joinedMatchId = connection.matchId;
 
   // Joining can succeed while no state ever follows — a seat lost to a race, a
   // socket that went quiet. Without this the screen sits on "joining" for ever.
-  const firstSnapshotDeadline = setTimeout(() => {
+  firstSnapshotDeadline = setTimeout(() => {
     if (announcedSeat === null) {
       listeners.onStatus({
         kind: 'failed',
@@ -458,7 +480,7 @@ export async function startArenaSession(
       return;
     }
     frame = requestAnimationFrame(tick);
-    const elapsed = lastFrameAt === 0 ? 0 : now - lastFrameAt;
+    const elapsed = lastFrameAt === 0 ? 0 : Math.min(now - lastFrameAt, 100);
     lastFrameAt = now;
     // A touch stick says how fast to turn, so it is integrated here against the
     // frame's own elapsed time rather than once per command.
@@ -467,13 +489,21 @@ export async function startArenaSession(
     // Input goes out on the server's cadence, not the display's: a 144 Hz
     // screen must not send two and a half times the commands a 60 Hz one does,
     // and the server consumes exactly one per tick either way.
-    if (now - lastInputAt >= INPUT_INTERVAL_MS) {
-      lastInputAt = now;
+    if (lastInputAt === 0) lastInputAt = now - INPUT_INTERVAL_MS;
+    // Retain the fractional interval: setting the clock to `now` drops nearly
+    // half the inputs on a 60 Hz screen whenever a frame arrives slightly early.
+    let sent = 0;
+    while (now - lastInputAt >= INPUT_INTERVAL_MS && sent < 6) {
+      lastInputAt += INPUT_INTERVAL_MS;
+      sent += 1;
       seq += 1;
       const command = input.sample(seq);
       history.record(command);
-      void connection.sendInput(command);
+      void connection.sendInput(command).catch(() => {
+        if (running) listeners.onStatus({ kind: 'reconnecting' });
+      });
     }
+    if (now - lastInputAt > INPUT_INTERVAL_MS * 6) lastInputAt = now;
 
     const latest = buffer.latest();
     const interpolation = buffer.sampleAt(now);
@@ -483,16 +513,19 @@ export async function startArenaSession(
 
     // This player's own body is replayed forward from the server's copy, so it
     // answers the keys now rather than a round trip from now.
-    predicted = predictSelf(latest.self, history.pending());
+    predicted = latest.phase === 'waiting' || latest.phase === 'finished' ? latest.self.body : predictSelf(latest.self, history.pending());
     const eye = eyeOf(predicted);
-    smoothing = smoothCamera(smoothing, drawnEye, eye, latest.self.spawnEpoch, elapsed);
+    smoothing = smoothCamera(smoothing, {
+      x: eye.x + smoothing.offset.x,
+      y: eye.y + smoothing.offset.y,
+      z: eye.z + smoothing.offset.z,
+    }, eye, latest.self.spawnEpoch, elapsed);
 
     const drawn = {
       x: eye.x + smoothing.offset.x,
       y: eye.y + smoothing.offset.y,
       z: eye.z + smoothing.offset.z,
     };
-    drawnEye = drawn;
 
     const { from, to, alpha } = interpolation;
     // The sight comes up and goes down over a moment rather than between two
@@ -509,10 +542,10 @@ export async function startArenaSession(
     // The rifle the player can see, held against the camera rather than placed
     // in the world, swaying with the same stride their legs are walking.
     const facing = input.forward();
-    const viewModel = viewModelOf(drawn, facing, predicted, scope);
+    const viewModel = latest.self.alive ? viewModelOf(drawn, facing, predicted, scope) : [];
+    currentMuzzle = viewModelMuzzle(viewModel);
 
-    renderer.render(
-      composeArenaView(
+    const view = composeArenaView(
         from,
         to,
         alpha,
@@ -528,15 +561,17 @@ export async function startArenaSession(
           viewModel,
           muzzle: viewModelMuzzle(viewModel),
         },
-      ),
-      alpha,
-    );
+      );
+    renderer.render({ ...view, hud: hudFor(latest, now, lastOwnHitAt, lastDamageAt, scope) }, alpha);
   };
 
   frame = requestAnimationFrame(tick);
 
   const onVisibilityChange = (): void => {
     if (document.hidden) {
+      input.reset();
+      seq += 1;
+      void connection.sendInput(input.sample(seq)).catch(() => {});
       cancelAnimationFrame(frame);
       return;
     }
@@ -569,7 +604,7 @@ export async function startArenaSession(
       input.releaseLock();
     },
     setReady(ready) {
-      void connection.setReady(ready);
+      void connection.setReady(ready).catch(() => { if (running) listeners.onStatus({ kind: 'failed', message: 'Could not update readiness. Please rejoin the lobby.' }); });
     },
   };
 }

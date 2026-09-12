@@ -13,6 +13,9 @@ import {
 } from '@littlegames/battleship-logic';
 import type { GameRenderer } from '@littlegames/core';
 import { Application, Container, Graphics, Text, TextStyle } from 'pixi.js';
+// Use Pixi's static shader bindings under the production Content Security Policy.
+// oxlint-disable-next-line import/no-unassigned-import
+import 'pixi.js/unsafe-eval';
 import { EFFECT_SECONDS, drawEffect, stillFlying, type ShotEffect } from './effects.ts';
 import {
   CELL,
@@ -537,7 +540,7 @@ export function createBattleshipPixiRenderer(): BattleshipRenderer {
           // Matching the device pixel ratio keeps edges crisp on phones and
           // high-density laptops. Capped at 2: beyond that the backing store
           // grows quadratically for a difference nobody can see.
-          resolution: Math.min(globalThis.devicePixelRatio, 2),
+          resolution: Math.min(globalThis.devicePixelRatio || 1, 2),
           autoDensity: true,
           width: layout.width,
           height: layout.height,

@@ -379,3 +379,30 @@ describe('hit and damage', () => {
     expect(opening.damage).toBe(0);
   });
 });
+
+describe('camera correction and tracer stability', () => {
+  it('does not smooth away ordinary movement between server corrections', async () => {
+    const { reconcileCamera } = await import('../src/features/game/arena-view');
+    const corrected = reconcileCamera(NO_SMOOTHING, { x: 1, y: 2, z: 3 }, { x: 1.2, y: 2, z: 3 }, 0);
+    expect(corrected.offset.x).toBeCloseTo(-.2);
+    // Advancing by one metre keeps the same correction offset. Movement itself
+    // is immediate; only the disagreement with the server decays.
+    const movingEye = { x: 2.2, y: 2, z: 3 };
+    const next = smoothCamera(corrected, { ...movingEye, x: movingEye.x + corrected.offset.x }, movingEye, 0, CORRECTION_HALF_LIFE_MS);
+    expect(movingEye.x + next.offset.x).toBeCloseTo(2.1);
+  });
+  it('keeps a confirmed tracer fixed when the shooter turns or walks away', () => {
+    const confirmedShot: TimedShot = { id: 1, origin: {x:0,y:1.6,z:0}, endpoint:{x:0,y:1.6,z:30}, seenAt:100, hitPlayer:true, mine:true, muzzle:{x:.3,y:1.2,z:1} };
+    const first = drawableShots([confirmedShot], 120, {x:4,y:2,z:7});
+    const later = drawableShots([confirmedShot], 150, {x:-8,y:2,z:7});
+    expect(first[0]?.from).toEqual(confirmedShot.muzzle);
+    expect(later[0]?.from).toEqual(confirmedShot.muzzle);
+  });
+  it('interpolates opponent orientation without changing aim length', () => {
+    const before = frame({opponent: player({aim:{x:0,y:0,z:1}})});
+    const after = frame({opponent: player({aim:{x:1,y:0,z:0}})});
+    const drawn = interpolateOpponent(before, after, .5);
+    expect(drawn?.aim.x).toBeCloseTo(Math.SQRT1_2);
+    expect(drawn?.aim.z).toBeCloseTo(Math.SQRT1_2);
+  });
+});

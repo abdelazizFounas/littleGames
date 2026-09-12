@@ -25,3 +25,8 @@ coverage/
 
 # Generator binaries built on demand by tools/scripts/generate-protocol.sh
 .tools/
+
+# Browser verification output
+/artifacts/
+/playwright-report/
+/test-results/

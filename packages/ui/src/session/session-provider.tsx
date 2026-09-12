@@ -263,7 +263,7 @@ export function SessionProvider({ children }: { readonly children: ReactNode }):
   );
 
   const resolveInvitation = useCallback(
-    async (code: string): Promise<{ readonly matchId: string; readonly password: string }> => {
+    async (code: string): Promise<{ readonly matchId: string; readonly password: string; readonly game: string }> => {
       if (internal.status !== 'signed-in') {
         throw new Error('Sign in before opening an invitation.');
       }

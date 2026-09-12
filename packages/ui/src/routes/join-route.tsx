@@ -1,5 +1,6 @@
 import { useCallback, type ReactNode } from 'react';
 import { Link, Navigate, useParams } from 'react-router';
+import { useAsyncAction } from '../lib/use-async-action';
 import { useAsyncData } from '../lib/use-async-data';
 import { useSession } from '../session/use-session';
 
@@ -13,6 +14,7 @@ import { useSession } from '../session/use-session';
  */
 export function JoinRoute(): ReactNode {
   const { code } = useParams();
+  const guest = useAsyncAction('Could not join as a guest. Please try again.');
   const { state, signInAsGuest, resolveInvitation } = useSession();
 
   const load = useCallback(async () => {
@@ -44,12 +46,14 @@ export function JoinRoute(): ReactNode {
         <button
           type="button"
           className="button button--primary"
+          disabled={guest.pending}
           onClick={() => {
-            void signInAsGuest();
+            guest.run(signInAsGuest);
           }}
         >
-          Join as guest
+          {guest.pending ? 'Joining…' : 'Join as guest'}
         </button>
+        {guest.error !== null && <p role="alert" className="error">{guest.error}</p>}
       </section>
     );
   }
@@ -85,5 +89,5 @@ export function JoinRoute(): ReactNode {
   if (resolved.data.password !== '') {
     query.set('key', resolved.data.password);
   }
-  return <Navigate to={`/games/pong?${query.toString()}`} replace />;
+  return <Navigate to={`/games/${resolved.data.game}?${query.toString()}`} replace />;
 }

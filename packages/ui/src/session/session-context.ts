@@ -101,7 +101,7 @@ export interface SessionContextValue {
   /** Turns a code back into the match it points at. */
   readonly resolveInvitation: (
     code: string,
-  ) => Promise<{ readonly matchId: string; readonly password: string }>;
+  ) => Promise<{ readonly matchId: string; readonly password: string; readonly game: string }>;
   /** The signed-in player's record for a game. */
   readonly loadStats: (gameId: string) => Promise<PlayerStats>;
   /** This week's board. */

@@ -7,23 +7,14 @@ authoritative match logic in Go.
 The whole repository — code, identifiers, comments, UI strings, commit
 messages — is written in English.
 
-> **Status: live at [little-games.fr](https://little-games.fr).** All eight
-> phases done, and a second game on top of them: Battleship joins Pong, with
-> placement, turns, per-recipient snapshots and a PixiJS board of its own. It is
-> the first real test of the claim the architecture was built on — that the
-> second game would be cheap.
->
-> And a third game: **Arena**, a 1v1 server-authoritative FPS, built in five
-> phases of its own and finished. Pointer lock and mouse look on a desktop, a
-> stick and four buttons on a phone, client-side prediction of your own body, an
-> interpolated opponent, lag-compensated shooting, tracers, and settings that
-> follow your account rather than your browser.
->
-> The third phase is the one this game exists for. Adding a second rendering
-> engine took **one new package and one line in the version table**: no change to
-> any rule, to the protocol, to the socket, to the lobby, or to either of the
-> games already using PixiJS. That is the claim `SPEC.md` §3 has been making
-> since day one, and it had never been asked to prove it.
+The public arcade includes **Rift Arena**, **Neon Pong**, and **Fleet Command**,
+with searchable game cards, account and guest play, private invitations, profiles,
+and a rules guide. Arena and Pong also have local bot practice with no account
+or server connection required after the app has been cached.
+
+The current redesign and multiplayer fixes have been validated locally. See
+[production validation and deployment](docs/production.md) for commands,
+verification results, and the remaining infrastructure checks before release.
 
 ## Architecture in one paragraph
 
@@ -79,7 +70,7 @@ neither downloads neither.
 
 | Package | Version | Source |
 |---|---|---|
-| vitest | `4.1.10` | `npm view vitest version` |
+| vitest | `4.1.11` | `npm view vitest version` |
 | @bufbuild/protobuf | `2.13.0` | `npm view @bufbuild/protobuf version` |
 | oxlint | `1.77.0` | `npm view oxlint version` |
 | oxlint-tsgolint | `7.0.2001` | `npm view oxlint-tsgolint version` |
@@ -910,8 +901,11 @@ this found it.
 
 The client is a PWA. The shell is precached so it opens without a network;
 nothing under the API is, because a match is live state and a cached snapshot
-of it would be a lie told confidently. It installs in fullscreen and landscape,
-which is what a match wants.
+of it would be misleading. It installs as a standalone app in either orientation.
+The homepage, guides, and solo practice work offline after the first successful
+service-worker installation. Multiplayer requires a connection. Updates prompt
+the player outside an active game. See [production validation](docs/production.md)
+for the release checks.
 
 ## Repository layout
 

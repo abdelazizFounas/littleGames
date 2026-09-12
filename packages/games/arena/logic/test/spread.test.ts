@@ -5,7 +5,6 @@ import {
   SPREAD_AIRBORNE,
   SPREAD_BASE,
   SPREAD_MOVING,
-  SPREAD_SCOPED_SHARE,
 } from '../src/constants.ts';
 import { deflect, seedOf, spreadOf, unitFrom, xorshift32 } from '../src/spread.ts';
 import type { Vec3 } from '../src/vector.ts';
@@ -75,17 +74,19 @@ describe('how wide a shot may stray', () => {
     expect(spreadOf(jumping, AIM, AIM, false)).toBeCloseTo(SPREAD_BASE + SPREAD_AIRBORNE, 12);
   });
 
-  it('punishes firing in the middle of a flick', () => {
+  it('does not punish a correctly aimed flick', () => {
     const swung = { x: 0.3, y: 0, z: -0.954 };
-    expect(spreadOf(STILL, swung, AIM, false)).toBeGreaterThan(
-      spreadOf(STILL, AIM, AIM, false) * 3,
+    expect(spreadOf(STILL, swung, AIM, false)).toBe(
+      spreadOf(STILL, AIM, AIM, false),
     );
   });
 
-  it('nearly disappears down the sights, but not entirely', () => {
-    const scoped = spreadOf(STILL, AIM, AIM, true);
-    expect(scoped).toBeCloseTo(SPREAD_BASE * SPREAD_SCOPED_SHARE, 12);
-    expect(scoped).toBeGreaterThan(0);
+  it('keeps scoped shots exactly on aim while running, jumping, or turning', () => {
+    for (const body of [STILL, { ...STILL, gaitPower: 1 }, { ...STILL, grounded: false, gaitPower: 1 }]) {
+      const spread = spreadOf(body, { x: 1, y: 0, z: 0 }, AIM, true);
+      expect(spread).toBe(0);
+      for (let shot = 1; shot < 30; shot++) expect(deflect(AIM, spread, seedOf(shot, 0))).toEqual(AIM);
+    }
   });
 
   it('tightens on its own when a player stops, with nothing to reset it', () => {

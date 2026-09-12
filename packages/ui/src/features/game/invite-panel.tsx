@@ -27,7 +27,7 @@ export function InvitePanel({ matchId }: { readonly matchId: string | null }): R
       // the only thing every desktop browser agrees on.
       if (typeof navigator.share === 'function') {
         try {
-          await navigator.share({ title: 'LittleGames', text: 'Play a game of Pong', url: link });
+          await navigator.share({ title: 'LittleGames', text: 'Join me for a game on LittleGames', url: link });
           return;
         } catch {
           // Dismissing the share sheet rejects. That is not a failure, and
@@ -61,8 +61,7 @@ export function InvitePanel({ matchId }: { readonly matchId: string | null }): R
     <div className="invite">
       <p className="hint">Send this to whoever you want to play. It works for 30 minutes.</p>
       <p className="hint">
-        Testing on your own? A second tab in this browser is the same account, and a match needs
-        two. Open the link in a private window or another browser.
+        Your friend needs their own player identity. Share the link with them to get started.
       </p>
       <p className="invite__code">{code}</p>
       <div className="actions">

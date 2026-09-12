@@ -166,3 +166,44 @@ func TestClampWire(t *testing.T) {
 		}
 	}
 }
+
+// Acknowledging a queued command prematurely makes the client erase an input
+// that has not contributed to the authoritative position yet.
+func TestAcknowledgementTracksExecution(t *testing.T) {
+	seated := seatedPlayer(arena.SeatNorth)
+	for seq := uint32(1); seq <= 3; seq++ {
+		seated.push(arenaCommand{seq: seq})
+	}
+	if seated.lastProcessedSeq != 0 {
+		t.Fatal("unexecuted input was acknowledged")
+	}
+	for seq := uint32(1); seq <= 3; seq++ {
+		seated.take()
+		if seated.lastProcessedSeq != seq {
+			t.Fatalf("acknowledged %d, executed %d", seated.lastProcessedSeq, seq)
+		}
+	}
+	seated.take()
+	if seated.lastProcessedSeq != 3 {
+		t.Fatal("repeating input advanced the acknowledgement")
+	}
+}
+
+func TestReloadStartsFreshInputCounters(t *testing.T) {
+	player := seatedPlayer(arena.SeatSouth)
+	player.lastReceivedSeq = 2000
+	player.lastProcessedSeq = 1999
+	player.shotsAcked = 90
+	player.push(arenaCommand{seq: 2000, move: arena.Vec2{X: 1}, shotsFired: 90})
+	player.resetInput()
+	if _, running := player.take(); running {
+		t.Fatal("stale input replayed after reload")
+	}
+	if player.lastReceivedSeq != 0 || player.lastProcessedSeq != 0 || player.shotsAcked != 0 {
+		t.Fatal("old socket counters survived")
+	}
+	player.push(arenaCommand{seq: 1, shotsFired: 1})
+	if input := stateWith(player).consume(); !input.South.Fire {
+		t.Fatal("first shot after reload was discarded")
+	}
+}
