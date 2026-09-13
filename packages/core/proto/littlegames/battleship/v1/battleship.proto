@@ -3,8 +3,8 @@ syntax = "proto3";
 // Everything sent over a Battleship match socket.
 //
 // Go and TypeScript are both generated from this file. Note what is absent: a
-// snapshot never carries the opponent's fleet, only the cells the recipient has
-// already fired at. Sending the board and hiding it in the interface would put
+// snapshot never carries afloat enemy ships. It includes fired cells and only
+// the placements of enemy ships whose every cell has already been hit. Sending the board and hiding it in the interface would put
 // the answer in the browser, where anyone can read it.
 package littlegames.battleship.v1;
 
@@ -57,6 +57,13 @@ message Shot {
   ShotResult result = 3;
 }
 
+// A destroyed enemy ship. The index identifies its name and length.
+// Never populated until every cell of this ship has been hit.
+message RevealedShip {
+  uint32 index = 1;
+  Placement placement = 2;
+}
+
 // Client to server: the whole fleet at once.
 //
 // All five at once rather than one ship at a time, because whether an
@@ -100,4 +107,7 @@ message Snapshot {
   // Set once the game is over.
   bool finished = 11;
   bool you_won = 12;
+
+  // Fully sunk enemy ships only; remains present after reconnecting.
+  repeated RevealedShip revealed_ships = 13;
 }

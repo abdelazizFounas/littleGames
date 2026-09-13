@@ -45,7 +45,14 @@ export interface FleetDraft {
   readonly orientation: Orientation;
 }
 
+export interface RevealedShip {
+  readonly index: number;
+  readonly placement: Placement;
+}
+
 export interface BattleshipView {
+  /** Enemy placements disclosed only after every cell has been hit. */
+  readonly revealedShips?: readonly RevealedShip[];
   readonly phase: 'waiting' | 'placement' | 'playing' | 'finished';
   /** True when it is this player's turn to fire. */
   readonly yourTurn: boolean;

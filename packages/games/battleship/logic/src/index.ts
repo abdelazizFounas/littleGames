@@ -21,7 +21,7 @@ export {
 } from './placement.ts';
 export type { ActionProblem } from './shots.ts';
 export { fire, placeFleet, sunkCount } from './shots.ts';
-export type { BattleshipView, FleetDraft, MarkedShot } from './view.ts';
+export type { BattleshipView, FleetDraft, MarkedShot, RevealedShip } from './view.ts';
 export {
   alreadyFired,
   canDrop,

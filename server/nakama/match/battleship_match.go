@@ -461,11 +461,33 @@ func fleetToProto(fleet []battleship.Placement) []*bsv1.Placement {
 	return out
 }
 
+// revealedShips exposes a placement only when every cell is already public.
+func revealedShips(board battleship.Board) []*bsv1.RevealedShip {
+	hit := make(map[battleship.Shot]bool, len(board.Incoming))
+	for _, shot := range board.Incoming {
+		hit[shot] = true
+	}
+	result := make([]*bsv1.RevealedShip, 0)
+	for index, placement := range board.Fleet {
+		sunk := true
+		for _, cell := range battleship.CellsOf(placement, battleship.ShipLengths[index]) {
+			if !hit[cell] {
+				sunk = false
+				break
+			}
+		}
+		if sunk {
+			result = append(result, &bsv1.RevealedShip{Index: uint32(index), Placement: fleetToProto([]battleship.Placement{placement})[0]})
+		}
+	}
+	return result
+}
+
 // broadcast sends every player a snapshot built for them alone.
 //
 // This is the one thing that must not leak. A recipient gets their own fleet in
-// full, and of the opponent's waters nothing but the cells they have already
-// fired at. Sending the whole board and hiding it in the interface would put
+// full, fired cells, and fully sunk enemy ships. Afloat enemy placements
+// remain private. Sending the whole board and hiding it in the interface would put
 // the answer in the browser, where anyone can read it — so the answer never
 // leaves the server.
 func (s *battleshipState) broadcast(logger runtime.Logger, dispatcher runtime.MatchDispatcher) {
@@ -477,6 +499,7 @@ func (s *battleshipState) broadcast(logger runtime.Logger, dispatcher runtime.Ma
 			Phase:             phaseToProto(s.sim.Phase),
 			YourTurn:          s.sim.Turn == seated.side && s.sim.Phase == battleship.PhasePlaying,
 			YourFleet:         fleetToProto(own.Fleet),
+			RevealedShips:     revealedShips(theirs),
 			Incoming:          shotsWithResults(own),
 			YouAreReady:       own.Ready,
 			Outgoing:          shotsWithResults(theirs),

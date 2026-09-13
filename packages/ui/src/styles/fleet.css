@@ -249,15 +249,18 @@
 .fleet-cell:nth-child(3n) {
   background-color: #629dac09;
 }
+.fleet-cell.fleet-cell--occupied {
+  background-color: #82ced526;
+}
 .fleet-cell[aria-disabled='true'] {
   cursor: default;
 }
-.fleet-cell[aria-disabled='false']:hover,
-.fleet-cell--preview {
+.fleet-cell[aria-disabled='false']:hover:not(.fleet-cell--invalid),
+.fleet-cell.fleet-cell--preview {
   background: #8cdda84d;
   box-shadow: inset 0 0 0 1px #b6e9bb;
 }
-.fleet-cell--invalid {
+.fleet-cell.fleet-cell--invalid {
   background: #ed816660;
   box-shadow: inset 0 0 0 1px #ffb19d;
 }
@@ -311,7 +314,7 @@
   width: calc(var(--ship-length) * 10%);
   height: 10%;
   padding: 3px 1px;
-  filter: drop-shadow(0 3px 3px #0008);
+  filter: drop-shadow(0 2px 2px #092d4770);
   opacity: 0.9;
 }
 .fleet-vessel svg {
@@ -819,5 +822,156 @@
 @media (prefers-reduced-motion: reduce) {
   .fleet-cell > span {
     animation: none;
+  }
+}
+
+/* Combat effects use grid geometry so torpedoes land on the selected cell at every viewport. */
+.fleet-operations {
+  position: relative;
+}
+.fleet-effects {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  pointer-events: none;
+}
+.fleet-effects__ocean {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+.fleet-effects__message {
+  position: absolute;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 10px 18px;
+  border: 1px solid #8bd7de;
+  border-radius: 30px;
+  background: #092333f5;
+  box-shadow: 0 8px 30px #03121d80;
+  color: #e3f6ee;
+  font:
+    600 12px ui-monospace,
+    monospace;
+  white-space: nowrap;
+}
+.fleet-torpedo-course {
+  stroke: #93dfec;
+  stroke-width: 1;
+  stroke-dasharray: 3 9;
+  opacity: 0.28;
+}
+.fleet-torpedo {
+  filter: drop-shadow(0 0 6px #a9ebff);
+}
+.fleet-impact-ring {
+  fill: none;
+  stroke: #b1edff;
+  stroke-width: 3;
+  animation: fleet-ripple 1s ease-out both;
+}
+.fleet-impact-ring--second {
+  animation-delay: 0.15s;
+}
+.fleet-impact-core {
+  fill: #e3faff;
+  animation: fleet-burst 0.45s ease-out both;
+}
+.fleet-impact-spray {
+  stroke: #b1edff;
+  stroke-width: 3;
+  stroke-linecap: round;
+  animation: fleet-spray 0.6s ease-out both;
+}
+.fleet-effects--hit .fleet-impact-core,
+.fleet-effects--sunk .fleet-impact-core {
+  fill: #ffe4a8;
+}
+.fleet-effects--hit .fleet-impact-ring,
+.fleet-effects--sunk .fleet-impact-ring,
+.fleet-effects--hit .fleet-impact-spray,
+.fleet-effects--sunk .fleet-impact-spray {
+  stroke: #ffb76b;
+}
+.fleet-effects--sunk .fleet-impact-ring {
+  animation-duration: 1.1s;
+  stroke-width: 5;
+}
+.fleet-vessel--sunk {
+  opacity: 0.52;
+  filter: grayscale(0.75) drop-shadow(0 2px 5px #031622);
+  animation: fleet-sinking 1.1s ease-out both;
+}
+.fleet-operations[data-paused='true'] * {
+  animation-play-state: paused !important;
+}
+@keyframes fleet-ripple {
+  from {
+    transform: scale(0.3);
+    opacity: 1;
+  }
+  to {
+    transform: scale(4);
+    opacity: 0;
+  }
+}
+@keyframes fleet-burst {
+  0% {
+    transform: scale(0.1);
+    opacity: 1;
+  }
+  40% {
+    transform: scale(1.8);
+    opacity: 0.95;
+  }
+  100% {
+    transform: scale(2.5);
+    opacity: 0;
+  }
+}
+@keyframes fleet-spray {
+  from {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateY(-28px);
+    opacity: 0;
+  }
+}
+@keyframes fleet-sinking {
+  0% {
+    opacity: 1;
+    filter: brightness(2) drop-shadow(0 0 12px #ffc47c);
+  }
+  30% {
+    opacity: 0.95;
+    translate: 2px 1px;
+  }
+  55% {
+    translate: -2px 2px;
+  }
+  100% {
+    opacity: 0.52;
+    translate: 0 0;
+    filter: grayscale(0.75) drop-shadow(0 2px 5px #031622);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .fleet-vessel--sunk,
+  .fleet-effects * {
+    animation: none !important;
+  }
+}
+@media (max-width: 600px) {
+  .fleet-effects__message {
+    max-width: calc(100% - 12px);
+    white-space: normal;
+    width: max-content;
+    text-align: center;
+    font-size: 10px;
   }
 }

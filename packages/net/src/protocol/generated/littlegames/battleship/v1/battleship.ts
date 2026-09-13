@@ -229,6 +229,15 @@ export interface Shot {
 }
 
 /**
+ * A destroyed enemy ship. The index identifies its name and length.
+ * Never populated until every cell of this ship has been hit.
+ */
+export interface RevealedShip {
+  index: number;
+  placement: Placement | undefined;
+}
+
+/**
  * Client to server: the whole fleet at once.
  *
  * All five at once rather than one ship at a time, because whether an
@@ -268,6 +277,8 @@ export interface Snapshot {
   /** Set once the game is over. */
   finished: boolean;
   youWon: boolean;
+  /** Fully sunk enemy ships only; remains present after reconnecting. */
+  revealedShips: RevealedShip[];
 }
 
 function createBasePlacement(): Placement {
@@ -450,6 +461,84 @@ export const Shot: MessageFns<Shot> = {
     message.row = object.row ?? 0;
     message.column = object.column ?? 0;
     message.result = object.result ?? 0;
+    return message;
+  },
+};
+
+function createBaseRevealedShip(): RevealedShip {
+  return { index: 0, placement: undefined };
+}
+
+export const RevealedShip: MessageFns<RevealedShip> = {
+  encode(message: RevealedShip, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.index !== 0) {
+      writer.uint32(8).uint32(message.index);
+    }
+    if (message.placement !== undefined) {
+      Placement.encode(message.placement, writer.uint32(18).fork()).join();
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): RevealedShip {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseRevealedShip();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 8) {
+            break;
+          }
+
+          message.index = reader.uint32();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.placement = Placement.decode(reader, reader.uint32());
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): RevealedShip {
+    return {
+      index: isSet(object.index) ? globalThis.Number(object.index) : 0,
+      placement: isSet(object.placement) ? Placement.fromJSON(object.placement) : undefined,
+    };
+  },
+
+  toJSON(message: RevealedShip): unknown {
+    const obj: any = {};
+    if (message.index !== 0) {
+      obj.index = Math.round(message.index);
+    }
+    if (message.placement !== undefined) {
+      obj.placement = Placement.toJSON(message.placement);
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<RevealedShip>, I>>(base?: I): RevealedShip {
+    return RevealedShip.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<RevealedShip>, I>>(object: I): RevealedShip {
+    const message = createBaseRevealedShip();
+    message.index = object.index ?? 0;
+    message.placement = (object.placement !== undefined && object.placement !== null)
+      ? Placement.fromPartial(object.placement)
+      : undefined;
     return message;
   },
 };
@@ -662,6 +751,7 @@ function createBaseSnapshot(): Snapshot {
     opponentShipsSunk: 0,
     finished: false,
     youWon: false,
+    revealedShips: [],
   };
 }
 
@@ -702,6 +792,9 @@ export const Snapshot: MessageFns<Snapshot> = {
     }
     if (message.youWon !== false) {
       writer.uint32(96).bool(message.youWon);
+    }
+    for (const v of message.revealedShips) {
+      RevealedShip.encode(v!, writer.uint32(106).fork()).join();
     }
     return writer;
   },
@@ -809,6 +902,14 @@ export const Snapshot: MessageFns<Snapshot> = {
           message.youWon = reader.bool();
           continue;
         }
+        case 13: {
+          if (tag !== 106) {
+            break;
+          }
+
+          message.revealedShips.push(RevealedShip.decode(reader, reader.uint32()));
+          continue;
+        }
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -864,6 +965,11 @@ export const Snapshot: MessageFns<Snapshot> = {
         : isSet(object.you_won)
         ? globalThis.Boolean(object.you_won)
         : false,
+      revealedShips: globalThis.Array.isArray(object?.revealedShips)
+        ? object.revealedShips.map((e: any) => RevealedShip.fromJSON(e))
+        : globalThis.Array.isArray(object?.revealed_ships)
+        ? object.revealed_ships.map((e: any) => RevealedShip.fromJSON(e))
+        : [],
     };
   },
 
@@ -905,6 +1011,9 @@ export const Snapshot: MessageFns<Snapshot> = {
     if (message.youWon !== false) {
       obj.youWon = message.youWon;
     }
+    if (message.revealedShips?.length) {
+      obj.revealedShips = message.revealedShips.map((e) => RevealedShip.toJSON(e));
+    }
     return obj;
   },
 
@@ -925,6 +1034,7 @@ export const Snapshot: MessageFns<Snapshot> = {
     message.opponentShipsSunk = object.opponentShipsSunk ?? 0;
     message.finished = object.finished ?? false;
     message.youWon = object.youWon ?? false;
+    message.revealedShips = object.revealedShips?.map((e) => RevealedShip.fromPartial(e)) || [];
     return message;
   },
 };

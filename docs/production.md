@@ -110,8 +110,8 @@ player-capacity limit.
 
 ## Validation recorded for this change
 
-- 616 TypeScript unit tests across 44 files passed.
-- 23 desktop/mobile browser tests and the production/offline test cover all nine game/difficulty combinations.
+- 620 TypeScript unit tests across 45 files passed.
+- 25 desktop/mobile browser tests and the production/offline test cover all nine game/difficulty combinations.
 - Type checking, lint, production build, and all Go package tests passed.
 - Go's race detector passed for the match handlers and RPC package.
 - Live Pong, Fleet Command, and Arena verification scripts completed successfully.
@@ -148,3 +148,23 @@ NAKAMA_INTEGRATION=1 NAKAMA_SOCKET_SERVER_KEY=your-public-test-key pnpm test:e2e
 It checks private invitations, deployment before the opponent joins, firing,
 hidden fleets, and reloading an active match. The regular browser suite does not
 require a multiplayer server.
+
+## Fleet combat effects and wreck disclosure
+
+Live shots are presented in order: a torpedo crosses between the boards, then
+the result appears with a splash or impact. A sunk ship becomes a visible wreck.
+Practice pauses both the bot and the current effect; reduced-motion mode skips
+travel. Reconnect snapshots restore shot history and wrecks without replaying
+old torpedoes. Placement tests compare every preview cell's computed color,
+including alternating tiles, vertical ships, board edges, and overlaps.
+
+The protocol adds `Snapshot.revealed_ships` (field 13). The server only includes
+placements whose cells have all been hit. Older clients ignore the extra field;
+the current client also handles older snapshots with no revealed ships. Deploy
+both the Nakama plugin and the web image to enable online wreck revelation.
+
+The two-browser integration test sinks a known carrier, checks that neighboring
+afloat ships stay private, verifies both flight directions and sinking effects,
+and reloads the attacking client to check the retained wreck. All Go package
+tests, type checking, lint, the production build, and production CSP/offline
+validation passed for this update.

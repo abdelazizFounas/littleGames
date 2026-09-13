@@ -1,3 +1,4 @@
+/* eslint-disable no-await-in-loop -- Deployment and authoritative turns must resolve sequentially. */
 import { test, expect } from '@playwright/test';
 
 test('Fleet private match queues deployment, exchanges shots, and survives reload', async ({
@@ -29,16 +30,36 @@ test('Fleet private match queues deployment, exchanges shots, and survives reloa
     await b.goto(invitation);
     await b.getByRole('button', { name: 'Join as guest' }).click();
     await expect(b).toHaveURL(/games\/battleship\?match=/);
-    await b.getByRole('button', { name: 'Auto arrange' }).click();
+    await b.getByRole('button', { name: 'Select carrier, 5 cells' }).click();
+    for (const row of ['A', 'C', 'E', 'G', 'I']) {
+      await b.getByRole('button', { name: `Position ${row}1, unexplored`, exact: true }).click();
+    }
     await b.getByRole('button', { name: 'Deploy fleet' }).click();
     await expect(a.getByRole('heading', { name: 'Your move, commander.' })).toBeVisible();
     await a.getByRole('button', { name: 'Target A1, unexplored', exact: true }).click();
     await a.getByRole('button', { name: 'Fire torpedo' }).click();
+    await Promise.all([
+      expect(a.locator('.fleet-effects--flight[data-direction="outgoing"]')).toBeVisible(),
+      expect(b.locator('.fleet-effects--flight[data-direction="incoming"]')).toBeVisible(),
+    ]);
     await expect(a.getByRole('button', { name: /Target A1, (miss|hit|sunk)/ })).toBeVisible();
     await expect(b.getByRole('button', { name: /Position A1, (miss|hit|sunk)/ })).toBeVisible();
+    await expect(a.locator('.fleet-grid--enemy .fleet-vessel')).toHaveCount(0);
+    for (const column of [2, 3, 4, 5]) {
+      await expect(a.locator('.fleet-effects')).toHaveCount(0);
+      await a.getByRole('button', { name: `Target A${column}, unexplored`, exact: true }).click();
+      await a.getByRole('button', { name: 'Fire torpedo' }).click();
+      await expect(
+        a.getByRole('button', { name: new RegExp(`Target A${column}, (hit|sunk)`) }),
+      ).toBeVisible();
+      await expect(a.locator('.fleet-grid--enemy .fleet-vessel')).toHaveCount(column === 5 ? 1 : 0);
+    }
+    await expect(a.locator('.fleet-effects--sunk.fleet-effects--impact')).toBeVisible();
+    await expect(b.locator('.fleet-grid--own .fleet-vessel--sunk')).toHaveCount(1);
     await a.reload();
     await expect(a.getByRole('button', { name: /Target A1, (miss|hit|sunk)/ })).toBeVisible();
-    await expect(a.locator('.fleet-grid--enemy .fleet-vessel')).toHaveCount(0);
+    await expect(a.locator('.fleet-grid--enemy .fleet-vessel--sunk')).toHaveCount(1);
+    await expect(a.locator('.fleet-effects')).toHaveCount(0);
     await expect(a.locator('.fleet-grid--own .fleet-vessel')).toHaveCount(5);
     expect(errors).toEqual([]);
   } finally {

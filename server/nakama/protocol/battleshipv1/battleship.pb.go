@@ -7,8 +7,8 @@
 // Everything sent over a Battleship match socket.
 //
 // Go and TypeScript are both generated from this file. Note what is absent: a
-// snapshot never carries the opponent's fleet, only the cells the recipient has
-// already fired at. Sending the board and hiding it in the interface would put
+// snapshot never carries afloat enemy ships. It includes fired cells and only
+// the placements of enemy ships whose every cell has already been hit. Sending the board and hiding it in the interface would put
 // the answer in the browser, where anyone can read it.
 
 package battleshipv1
@@ -363,6 +363,60 @@ func (x *Shot) GetResult() ShotResult {
 	return ShotResult_SHOT_RESULT_UNSPECIFIED
 }
 
+// A destroyed enemy ship. The index identifies its name and length.
+// Never populated until every cell of this ship has been hit.
+type RevealedShip struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Index         uint32                 `protobuf:"varint,1,opt,name=index,proto3" json:"index,omitempty"`
+	Placement     *Placement             `protobuf:"bytes,2,opt,name=placement,proto3" json:"placement,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RevealedShip) Reset() {
+	*x = RevealedShip{}
+	mi := &file_littlegames_battleship_v1_battleship_proto_msgTypes[2]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RevealedShip) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RevealedShip) ProtoMessage() {}
+
+func (x *RevealedShip) ProtoReflect() protoreflect.Message {
+	mi := &file_littlegames_battleship_v1_battleship_proto_msgTypes[2]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RevealedShip.ProtoReflect.Descriptor instead.
+func (*RevealedShip) Descriptor() ([]byte, []int) {
+	return file_littlegames_battleship_v1_battleship_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *RevealedShip) GetIndex() uint32 {
+	if x != nil {
+		return x.Index
+	}
+	return 0
+}
+
+func (x *RevealedShip) GetPlacement() *Placement {
+	if x != nil {
+		return x.Placement
+	}
+	return nil
+}
+
 // Client to server: the whole fleet at once.
 //
 // All five at once rather than one ship at a time, because whether an
@@ -376,7 +430,7 @@ type PlaceFleet struct {
 
 func (x *PlaceFleet) Reset() {
 	*x = PlaceFleet{}
-	mi := &file_littlegames_battleship_v1_battleship_proto_msgTypes[2]
+	mi := &file_littlegames_battleship_v1_battleship_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -388,7 +442,7 @@ func (x *PlaceFleet) String() string {
 func (*PlaceFleet) ProtoMessage() {}
 
 func (x *PlaceFleet) ProtoReflect() protoreflect.Message {
-	mi := &file_littlegames_battleship_v1_battleship_proto_msgTypes[2]
+	mi := &file_littlegames_battleship_v1_battleship_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -401,7 +455,7 @@ func (x *PlaceFleet) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PlaceFleet.ProtoReflect.Descriptor instead.
 func (*PlaceFleet) Descriptor() ([]byte, []int) {
-	return file_littlegames_battleship_v1_battleship_proto_rawDescGZIP(), []int{2}
+	return file_littlegames_battleship_v1_battleship_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *PlaceFleet) GetShips() []*Placement {
@@ -422,7 +476,7 @@ type Fire struct {
 
 func (x *Fire) Reset() {
 	*x = Fire{}
-	mi := &file_littlegames_battleship_v1_battleship_proto_msgTypes[3]
+	mi := &file_littlegames_battleship_v1_battleship_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -434,7 +488,7 @@ func (x *Fire) String() string {
 func (*Fire) ProtoMessage() {}
 
 func (x *Fire) ProtoReflect() protoreflect.Message {
-	mi := &file_littlegames_battleship_v1_battleship_proto_msgTypes[3]
+	mi := &file_littlegames_battleship_v1_battleship_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -447,7 +501,7 @@ func (x *Fire) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Fire.ProtoReflect.Descriptor instead.
 func (*Fire) Descriptor() ([]byte, []int) {
-	return file_littlegames_battleship_v1_battleship_proto_rawDescGZIP(), []int{3}
+	return file_littlegames_battleship_v1_battleship_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *Fire) GetRow() uint32 {
@@ -474,7 +528,7 @@ type Refused struct {
 
 func (x *Refused) Reset() {
 	*x = Refused{}
-	mi := &file_littlegames_battleship_v1_battleship_proto_msgTypes[4]
+	mi := &file_littlegames_battleship_v1_battleship_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -486,7 +540,7 @@ func (x *Refused) String() string {
 func (*Refused) ProtoMessage() {}
 
 func (x *Refused) ProtoReflect() protoreflect.Message {
-	mi := &file_littlegames_battleship_v1_battleship_proto_msgTypes[4]
+	mi := &file_littlegames_battleship_v1_battleship_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -499,7 +553,7 @@ func (x *Refused) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Refused.ProtoReflect.Descriptor instead.
 func (*Refused) Descriptor() ([]byte, []int) {
-	return file_littlegames_battleship_v1_battleship_proto_rawDescGZIP(), []int{4}
+	return file_littlegames_battleship_v1_battleship_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *Refused) GetReason() string {
@@ -527,15 +581,17 @@ type Snapshot struct {
 	YourShipsSunk     uint32 `protobuf:"varint,9,opt,name=your_ships_sunk,json=yourShipsSunk,proto3" json:"your_ships_sunk,omitempty"`
 	OpponentShipsSunk uint32 `protobuf:"varint,10,opt,name=opponent_ships_sunk,json=opponentShipsSunk,proto3" json:"opponent_ships_sunk,omitempty"`
 	// Set once the game is over.
-	Finished      bool `protobuf:"varint,11,opt,name=finished,proto3" json:"finished,omitempty"`
-	YouWon        bool `protobuf:"varint,12,opt,name=you_won,json=youWon,proto3" json:"you_won,omitempty"`
+	Finished bool `protobuf:"varint,11,opt,name=finished,proto3" json:"finished,omitempty"`
+	YouWon   bool `protobuf:"varint,12,opt,name=you_won,json=youWon,proto3" json:"you_won,omitempty"`
+	// Fully sunk enemy ships only; remains present after reconnecting.
+	RevealedShips []*RevealedShip `protobuf:"bytes,13,rep,name=revealed_ships,json=revealedShips,proto3" json:"revealed_ships,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *Snapshot) Reset() {
 	*x = Snapshot{}
-	mi := &file_littlegames_battleship_v1_battleship_proto_msgTypes[5]
+	mi := &file_littlegames_battleship_v1_battleship_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -547,7 +603,7 @@ func (x *Snapshot) String() string {
 func (*Snapshot) ProtoMessage() {}
 
 func (x *Snapshot) ProtoReflect() protoreflect.Message {
-	mi := &file_littlegames_battleship_v1_battleship_proto_msgTypes[5]
+	mi := &file_littlegames_battleship_v1_battleship_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -560,7 +616,7 @@ func (x *Snapshot) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Snapshot.ProtoReflect.Descriptor instead.
 func (*Snapshot) Descriptor() ([]byte, []int) {
-	return file_littlegames_battleship_v1_battleship_proto_rawDescGZIP(), []int{5}
+	return file_littlegames_battleship_v1_battleship_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *Snapshot) GetPhase() Phase {
@@ -647,6 +703,13 @@ func (x *Snapshot) GetYouWon() bool {
 	return false
 }
 
+func (x *Snapshot) GetRevealedShips() []*RevealedShip {
+	if x != nil {
+		return x.RevealedShips
+	}
+	return nil
+}
+
 var File_littlegames_battleship_v1_battleship_proto protoreflect.FileDescriptor
 
 const file_littlegames_battleship_v1_battleship_proto_rawDesc = "" +
@@ -659,7 +722,10 @@ const file_littlegames_battleship_v1_battleship_proto_rawDesc = "" +
 	"\x04Shot\x12\x10\n" +
 	"\x03row\x18\x01 \x01(\rR\x03row\x12\x16\n" +
 	"\x06column\x18\x02 \x01(\rR\x06column\x12=\n" +
-	"\x06result\x18\x03 \x01(\x0e2%.littlegames.battleship.v1.ShotResultR\x06result\"H\n" +
+	"\x06result\x18\x03 \x01(\x0e2%.littlegames.battleship.v1.ShotResultR\x06result\"h\n" +
+	"\fRevealedShip\x12\x14\n" +
+	"\x05index\x18\x01 \x01(\rR\x05index\x12B\n" +
+	"\tplacement\x18\x02 \x01(\v2$.littlegames.battleship.v1.PlacementR\tplacement\"H\n" +
 	"\n" +
 	"PlaceFleet\x12:\n" +
 	"\x05ships\x18\x01 \x03(\v2$.littlegames.battleship.v1.PlacementR\x05ships\"0\n" +
@@ -667,7 +733,7 @@ const file_littlegames_battleship_v1_battleship_proto_rawDesc = "" +
 	"\x03row\x18\x01 \x01(\rR\x03row\x12\x16\n" +
 	"\x06column\x18\x02 \x01(\rR\x06column\"!\n" +
 	"\aRefused\x12\x16\n" +
-	"\x06reason\x18\x01 \x01(\tR\x06reason\"\xa1\x04\n" +
+	"\x06reason\x18\x01 \x01(\tR\x06reason\"\xf1\x04\n" +
 	"\bSnapshot\x126\n" +
 	"\x05phase\x18\x01 \x01(\x0e2 .littlegames.battleship.v1.PhaseR\x05phase\x12\x1b\n" +
 	"\tyour_turn\x18\x02 \x01(\bR\byourTurn\x12C\n" +
@@ -682,7 +748,8 @@ const file_littlegames_battleship_v1_battleship_proto_rawDesc = "" +
 	"\x13opponent_ships_sunk\x18\n" +
 	" \x01(\rR\x11opponentShipsSunk\x12\x1a\n" +
 	"\bfinished\x18\v \x01(\bR\bfinished\x12\x17\n" +
-	"\ayou_won\x18\f \x01(\bR\x06youWon*w\n" +
+	"\ayou_won\x18\f \x01(\bR\x06youWon\x12N\n" +
+	"\x0erevealed_ships\x18\r \x03(\v2'.littlegames.battleship.v1.RevealedShipR\rrevealedShips*w\n" +
 	"\x06OpCode\x12\x17\n" +
 	"\x13OP_CODE_UNSPECIFIED\x10\x00\x12\x17\n" +
 	"\x13OP_CODE_PLACE_FLEET\x10\x01\x12\x10\n" +
@@ -719,32 +786,35 @@ func file_littlegames_battleship_v1_battleship_proto_rawDescGZIP() []byte {
 }
 
 var file_littlegames_battleship_v1_battleship_proto_enumTypes = make([]protoimpl.EnumInfo, 4)
-var file_littlegames_battleship_v1_battleship_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
+var file_littlegames_battleship_v1_battleship_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
 var file_littlegames_battleship_v1_battleship_proto_goTypes = []any{
-	(OpCode)(0),        // 0: littlegames.battleship.v1.OpCode
-	(Phase)(0),         // 1: littlegames.battleship.v1.Phase
-	(Orientation)(0),   // 2: littlegames.battleship.v1.Orientation
-	(ShotResult)(0),    // 3: littlegames.battleship.v1.ShotResult
-	(*Placement)(nil),  // 4: littlegames.battleship.v1.Placement
-	(*Shot)(nil),       // 5: littlegames.battleship.v1.Shot
-	(*PlaceFleet)(nil), // 6: littlegames.battleship.v1.PlaceFleet
-	(*Fire)(nil),       // 7: littlegames.battleship.v1.Fire
-	(*Refused)(nil),    // 8: littlegames.battleship.v1.Refused
-	(*Snapshot)(nil),   // 9: littlegames.battleship.v1.Snapshot
+	(OpCode)(0),          // 0: littlegames.battleship.v1.OpCode
+	(Phase)(0),           // 1: littlegames.battleship.v1.Phase
+	(Orientation)(0),     // 2: littlegames.battleship.v1.Orientation
+	(ShotResult)(0),      // 3: littlegames.battleship.v1.ShotResult
+	(*Placement)(nil),    // 4: littlegames.battleship.v1.Placement
+	(*Shot)(nil),         // 5: littlegames.battleship.v1.Shot
+	(*RevealedShip)(nil), // 6: littlegames.battleship.v1.RevealedShip
+	(*PlaceFleet)(nil),   // 7: littlegames.battleship.v1.PlaceFleet
+	(*Fire)(nil),         // 8: littlegames.battleship.v1.Fire
+	(*Refused)(nil),      // 9: littlegames.battleship.v1.Refused
+	(*Snapshot)(nil),     // 10: littlegames.battleship.v1.Snapshot
 }
 var file_littlegames_battleship_v1_battleship_proto_depIdxs = []int32{
 	2, // 0: littlegames.battleship.v1.Placement.orientation:type_name -> littlegames.battleship.v1.Orientation
 	3, // 1: littlegames.battleship.v1.Shot.result:type_name -> littlegames.battleship.v1.ShotResult
-	4, // 2: littlegames.battleship.v1.PlaceFleet.ships:type_name -> littlegames.battleship.v1.Placement
-	1, // 3: littlegames.battleship.v1.Snapshot.phase:type_name -> littlegames.battleship.v1.Phase
-	4, // 4: littlegames.battleship.v1.Snapshot.your_fleet:type_name -> littlegames.battleship.v1.Placement
-	5, // 5: littlegames.battleship.v1.Snapshot.incoming:type_name -> littlegames.battleship.v1.Shot
-	5, // 6: littlegames.battleship.v1.Snapshot.outgoing:type_name -> littlegames.battleship.v1.Shot
-	7, // [7:7] is the sub-list for method output_type
-	7, // [7:7] is the sub-list for method input_type
-	7, // [7:7] is the sub-list for extension type_name
-	7, // [7:7] is the sub-list for extension extendee
-	0, // [0:7] is the sub-list for field type_name
+	4, // 2: littlegames.battleship.v1.RevealedShip.placement:type_name -> littlegames.battleship.v1.Placement
+	4, // 3: littlegames.battleship.v1.PlaceFleet.ships:type_name -> littlegames.battleship.v1.Placement
+	1, // 4: littlegames.battleship.v1.Snapshot.phase:type_name -> littlegames.battleship.v1.Phase
+	4, // 5: littlegames.battleship.v1.Snapshot.your_fleet:type_name -> littlegames.battleship.v1.Placement
+	5, // 6: littlegames.battleship.v1.Snapshot.incoming:type_name -> littlegames.battleship.v1.Shot
+	5, // 7: littlegames.battleship.v1.Snapshot.outgoing:type_name -> littlegames.battleship.v1.Shot
+	6, // 8: littlegames.battleship.v1.Snapshot.revealed_ships:type_name -> littlegames.battleship.v1.RevealedShip
+	9, // [9:9] is the sub-list for method output_type
+	9, // [9:9] is the sub-list for method input_type
+	9, // [9:9] is the sub-list for extension type_name
+	9, // [9:9] is the sub-list for extension extendee
+	0, // [0:9] is the sub-list for field type_name
 }
 
 func init() { file_littlegames_battleship_v1_battleship_proto_init() }
@@ -758,7 +828,7 @@ func file_littlegames_battleship_v1_battleship_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_littlegames_battleship_v1_battleship_proto_rawDesc), len(file_littlegames_battleship_v1_battleship_proto_rawDesc)),
 			NumEnums:      4,
-			NumMessages:   6,
+			NumMessages:   7,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

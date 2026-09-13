@@ -52,6 +52,23 @@ export function fleetView(snapshot: BattleshipSnapshot): BattleshipView {
             : 'waiting',
     yourTurn: snapshot.yourTurn,
     yourFleet,
+    revealedShips: snapshot.revealedShips.flatMap(({ index, placement }) =>
+      placement && index < 5 && placement.row < 10 && placement.column < 10
+        ? [
+            {
+              index,
+              placement: {
+                row: placement.row,
+                column: placement.column,
+                orientation:
+                  placement.orientation === BattleshipOrientation.ORIENTATION_VERTICAL
+                    ? ('vertical' as const)
+                    : ('horizontal' as const),
+              },
+            },
+          ]
+        : [],
+    ),
     incoming: snapshot.incoming.map(shot),
     outgoing: snapshot.outgoing.map(shot),
     youAreReady: snapshot.youAreReady,

@@ -24,6 +24,8 @@ import {
   type MarkedShot,
   type Placement,
 } from '@littlegames/battleship-logic';
+import { useFleetPresentation } from './fleet-presentation';
+import { TorpedoEffects } from './torpedo-effects';
 
 export function ShipArt({ ship = 0 }: { readonly ship?: number }) {
   if (ship === 3)
@@ -35,10 +37,10 @@ export function ShipArt({ ship = 0 }: { readonly ship?: number }) {
           stroke="#9bd6cf"
           strokeWidth="2"
         />
-        <path d="M38 24h125" stroke="#82b3b1" strokeWidth="2" />
+        <path fill="none" d="M38 24h125" stroke="#82b3b1" strokeWidth="2" />
         <rect x="84" y="15" width="32" height="18" rx="7" fill="#b4d0c4" />
         <path d="M96 15V9h8M33 13l-15-7v36l15-7" stroke="#a6d4cb" strokeWidth="2" fill="#2b6776" />
-        <path d="M15 18v12m-6-7h12" stroke="#d6dbae" strokeWidth="3" />
+        <path fill="none" d="M15 18v12m-6-7h12" stroke="#d6dbae" strokeWidth="3" />
       </svg>
     );
   return (
@@ -51,20 +53,19 @@ export function ShipArt({ ship = 0 }: { readonly ship?: number }) {
       />
       <path d="m19 15 137-3 36 12-36 12-137-3 9-9Z" fill="#3e8190" />
       <path d="M35 17h94v14H35z" fill="#84b4b3" />
-      <path d="M48 17v14m25-14v14m25-14v14" stroke="#254e63" strokeWidth="2" />
+      <path fill="none" d="M48 17v14m25-14v14m25-14v14" stroke="#254e63" strokeWidth="2" />
       {ship === 0 ? (
         <>
-          <path d="M33 24h114" stroke="#ecdda9" strokeWidth="2" strokeDasharray="9 4" />
+          <path fill="none" d="M33 24h114" stroke="#ecdda9" strokeWidth="2" strokeDasharray="9 4" />
           <path d="m85 13 8 11-8 11 2-11Z" fill="#f3eddb" />
         </>
       ) : (
         <>
           <rect x="70" y="12" width="33" height="24" rx="5" fill="#c9ded1" />
-          <path d="M99 24h35m-85 0h15" stroke="#edf5dc" strokeWidth="4" />
+          <path fill="none" d="M99 24h35m-85 0h15" stroke="#edf5dc" strokeWidth="4" />
           {ship < 3 && <circle cx="140" cy="24" r="7" fill="#bdcfbb" />}
         </>
       )}
-      <path d="M25 40h122" stroke="#051e32" strokeWidth="3" />
     </svg>
   );
 }
@@ -155,7 +156,7 @@ function OceanGrid({
               type="button"
               key={cell}
               data-cell={cell}
-              className={`fleet-cell${result ? ` fleet-cell--${result}` : ''}${selected === cell ? ' fleet-cell--selected' : ''}${preview.includes(cell) ? (invalid ? ' fleet-cell--invalid' : ' fleet-cell--preview') : ''}`}
+              className={`fleet-cell${occupied.has(cell) ? ' fleet-cell--occupied' : ''}${result ? ` fleet-cell--${result}` : ''}${selected === cell ? ' fleet-cell--selected' : ''}${preview.includes(cell) ? (invalid ? ' fleet-cell--invalid' : ' fleet-cell--preview') : ''}`}
               aria-label={label}
               aria-pressed={selected === cell}
               aria-disabled={!interactive || (kind === 'enemy' && !!result)}
@@ -179,7 +180,7 @@ function OceanGrid({
               ship && (
                 <div
                   key={index}
-                  className={`fleet-vessel${ship.orientation === 'vertical' ? ' fleet-vessel--vertical' : ''}`}
+                  className={`fleet-vessel${cellsOf(ship, shipLength(index)).every((cell) => observed.has(cell.row * 10 + cell.column)) ? ' fleet-vessel--sunk' : ''}${ship.orientation === 'vertical' ? ' fleet-vessel--vertical' : ''}`}
                   style={vesselStyle(ship, index)}
                 >
                   <ShipArt ship={index} />
@@ -200,9 +201,10 @@ export interface FleetCommandProps {
   readonly opponent?: string;
   readonly overlay?: ReactNode;
   readonly controls?: ReactNode;
+  readonly onAnimationChange?: (busy: boolean) => void;
 }
 export function FleetCommand({
-  view,
+  view: source,
   onConfirm,
   onFire,
   blocked = false,
@@ -210,7 +212,17 @@ export function FleetCommand({
   opponent = 'Opponent',
   overlay,
   controls,
+  onAnimationChange,
 }: FleetCommandProps) {
+  const { view, active, reducedMotion } = useFleetPresentation(source, !!overlay);
+  const animating = active !== null;
+  useEffect(() => {
+    onAnimationChange?.(animating);
+  }, [animating, onAnimationChange]);
+  const revealedFleet = Array.from(
+    { length: 5 },
+    (_, index) => view.revealedShips?.find((ship) => ship.index === index)?.placement ?? null,
+  );
   const [draft, setDraft] = useState(createDraft);
   const [hover, setHover] = useState<number | null>(null);
   const [target, setTarget] = useState<number | null>(null);
@@ -221,7 +233,12 @@ export function FleetCommand({
   const readyFleet = draftFleet(draft);
   const selectedShot = view.outgoing.some((shot) => shot.row * 10 + shot.column === target);
   const canFire =
-    view.phase === 'playing' && view.yourTurn && !blocked && target !== null && !selectedShot;
+    view.phase === 'playing' &&
+    view.yourTurn &&
+    !blocked &&
+    !animating &&
+    target !== null &&
+    !selectedShot;
   const placement =
     hover === null ? null : heldPlacement(draft, Math.floor(hover / 10), hover % 10);
   const preview =
@@ -356,7 +373,10 @@ export function FleetCommand({
             {notice || placementNotice}
           </p>
         )}
-        <div className={`fleet-operations${placing ? ' fleet-operations--deployment' : ''}`}>
+        <div
+          data-paused={!!overlay}
+          className={`fleet-operations${placing ? ' fleet-operations--deployment' : ''}`}
+        >
           {placing ? (
             <section className="fleet-board-card">
               <div className="fleet-board-heading">
@@ -398,12 +418,12 @@ export function FleetCommand({
               </div>
               <OceanGrid
                 kind="enemy"
-                ships={[]}
+                ships={revealedFleet}
                 shots={view.outgoing}
                 selected={selectedShot ? null : target}
                 preview={[]}
                 invalid={false}
-                interactive={view.yourTurn && !blocked && !view.finished}
+                interactive={view.yourTurn && !blocked && !animating && !view.finished}
                 onCell={setTarget}
               />
               <div className="fleet-fire-control">
@@ -554,6 +574,14 @@ export function FleetCommand({
                 })}
               </div>
             </section>
+          )}
+          {active && (
+            <TorpedoEffects
+              event={active}
+              frame={frame}
+              reducedMotion={reducedMotion}
+              paused={!!overlay}
+            />
           )}
         </div>
         <footer className="fleet-telemetry">

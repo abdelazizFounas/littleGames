@@ -87,6 +87,15 @@ export interface Shot {
 }
 
 /**
+ * A destroyed enemy ship. The index identifies its name and length.
+ * Never populated until every cell of this ship has been hit.
+ */
+export interface RevealedShip {
+  index: number;
+  placement: Placement | undefined;
+}
+
+/**
  * Client to server: the whole fleet at once.
  *
  * All five at once rather than one ship at a time, because whether an
@@ -126,4 +135,6 @@ export interface Snapshot {
   /** Set once the game is over. */
   finished: boolean;
   youWon: boolean;
+  /** Fully sunk enemy ships only; remains present after reconnecting. */
+  revealedShips: RevealedShip[];
 }

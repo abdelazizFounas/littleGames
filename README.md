@@ -12,7 +12,11 @@ with searchable game cards, account and guest play, private invitations, profile
 and a rules guide. All three games have Easy, Hard, and Extra Hard local bot
 practice with no account or server connection required after the app has been
 cached. Fleet Command shares a responsive DOM/SVG command console between
-online and practice games.
+online and practice games, with torpedo flights, impact effects, and revealed wrecks.
+Only fully sunk enemy placements are disclosed by the server.
+
+Future game ideas and optional Fleet Command abilities are recorded in the
+[game and Fleet proposals](docs/game-and-fleet-proposals.md); these are proposals only.
 
 The current redesign and multiplayer fixes have been validated locally. See
 [production validation and deployment](docs/production.md) for commands,

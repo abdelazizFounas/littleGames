@@ -11,12 +11,19 @@ import { DIFFICULTY_LABELS, type PracticeDifficulty } from './difficulty';
 
 export function FleetPractice({ difficulty }: { readonly difficulty: PracticeDifficulty }) {
   const [round, setRound] = useState(() => createFleetRound());
+  const [animating, setAnimating] = useState(false);
   const [started, setStarted] = useState(false);
   const [paused, setPaused] = useState(false);
   const [attempt, setAttempt] = useState(0);
   const finished = round.state.phase === 'finished';
   useEffect(() => {
-    if (!started || paused || round.state.phase !== 'playing' || round.state.turn !== 'b')
+    if (
+      !started ||
+      paused ||
+      animating ||
+      round.state.phase !== 'playing' ||
+      round.state.turn !== 'b'
+    )
       return undefined;
     const timeout = setTimeout(
       () => {
@@ -26,7 +33,7 @@ export function FleetPractice({ difficulty }: { readonly difficulty: PracticeDif
       difficulty === 'easy' ? 1250 : difficulty === 'hard' ? 850 : 550,
     );
     return () => clearTimeout(timeout);
-  }, [round, difficulty, started, paused]);
+  }, [round, difficulty, started, paused, animating]);
   useEffect(() => {
     const pause = (event: KeyboardEvent) => {
       if (event.key === 'Escape' && started && !finished) setPaused(true);
@@ -42,6 +49,7 @@ export function FleetPractice({ difficulty }: { readonly difficulty: PracticeDif
     };
   }, [started, finished]);
   function restart() {
+    setAnimating(false);
     setRound(createFleetRound());
     setPaused(false);
     setStarted(false);
@@ -52,6 +60,7 @@ export function FleetPractice({ difficulty }: { readonly difficulty: PracticeDif
       <div className="fleet-practice__frame">
         <FleetCommand
           key={attempt}
+          onAnimationChange={setAnimating}
           view={practiceFleetView(round)}
           opponent={`${DIFFICULTY_LABELS[difficulty]} bot`}
           blocked={!started || paused}

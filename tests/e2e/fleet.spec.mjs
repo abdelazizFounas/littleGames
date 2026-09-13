@@ -82,3 +82,57 @@ test('Fleet pause controls remain usable in fullscreen', async ({ page }) => {
   await page.getByRole('button', { name: 'Exit fullscreen', exact: true }).click();
   await expect.poll(() => page.evaluate(() => document.fullscreenElement === null)).toBe(true);
 });
+
+test('Fleet placement illuminates every cell, including alternating tiles and invalid positions', async ({
+  page,
+}) => {
+  await page.goto('/practice/battleship');
+  await page.getByRole('button', { name: 'Let’s play' }).click();
+  await page.getByRole('button', { name: 'Select carrier, 5 cells' }).click();
+  async function uniform(selector, count, color) {
+    const cells = page.locator(selector);
+    await expect(cells).toHaveCount(count);
+    expect(
+      await cells.evaluateAll((items) => [
+        ...new Set(items.map((item) => getComputedStyle(item).backgroundColor)),
+      ]),
+    ).toEqual([color]);
+  }
+  await page.getByRole('button', { name: 'Position A1, unexplored', exact: true }).hover();
+  await uniform('.fleet-cell--preview', 5, 'rgba(140, 221, 168, 0.3)');
+  await page.getByRole('button', { name: 'Rotate', exact: false }).click();
+  await page.getByRole('button', { name: 'Position A3, unexplored', exact: true }).hover();
+  await uniform('.fleet-cell--preview', 5, 'rgba(140, 221, 168, 0.3)');
+  await page.getByRole('button', { name: 'Position I3, unexplored', exact: true }).hover();
+  await uniform('.fleet-cell--invalid', 2, 'rgba(237, 129, 102, 0.376)');
+  await page.getByRole('button', { name: 'Position A3, unexplored', exact: true }).click();
+  await expect(page.locator('.fleet-cell--occupied')).toHaveCount(5);
+  await page.getByRole('button', { name: 'Position A3, carrier', exact: true }).hover();
+  await uniform('.fleet-cell--invalid', 4, 'rgba(237, 129, 102, 0.376)');
+});
+
+test('Fleet pauses an in-flight torpedo and reduced motion skips travel', async ({ page }) => {
+  await page.goto('/practice/battleship');
+  await page.getByRole('button', { name: 'Let’s play' }).click();
+  await page.getByRole('button', { name: 'Auto arrange' }).click();
+  await page.getByRole('button', { name: 'Deploy fleet' }).click();
+  await page.getByRole('button', { name: 'Target A1, unexplored', exact: true }).click();
+  await page.getByRole('button', { name: 'Fire torpedo' }).click();
+  await expect(page.locator('.fleet-effects--flight')).toBeVisible();
+  await page.getByRole('button', { name: 'Pause', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Resume game' })).toBeVisible();
+  await expect
+    .poll(() => page.locator('.fleet-effects__ocean').evaluate((svg) => svg.animationsPaused()))
+    .toBe(true);
+  await page.getByRole('button', { name: 'Resume game' }).click();
+  await expect(page.getByRole('button', { name: /Target A1, (miss|hit|sunk)/ })).toBeVisible();
+  await page.getByRole('button', { name: 'Restart', exact: true }).click();
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.getByRole('button', { name: 'Let’s play' }).click();
+  await page.getByRole('button', { name: 'Auto arrange' }).click();
+  await page.getByRole('button', { name: 'Deploy fleet' }).click();
+  await page.getByRole('button', { name: 'Target A1, unexplored', exact: true }).click();
+  await page.getByRole('button', { name: 'Fire torpedo' }).click();
+  await expect(page.getByRole('button', { name: /Target A1, (miss|hit|sunk)/ })).toBeVisible();
+  await expect(page.locator('.fleet-effects__ocean')).toHaveCount(0);
+});

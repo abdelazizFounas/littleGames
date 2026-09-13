@@ -5,6 +5,8 @@ import {
   randomFleet,
   fire,
   sunkCount,
+  cellsOf,
+  shipLength,
   type BattleshipState,
   type BattleshipView,
   type MarkedShot,
@@ -52,6 +54,15 @@ export function practiceFleetView(round: FleetPracticeRound): BattleshipView {
     yourFleet: round.state.boards.a.fleet,
     incoming: round.incoming,
     outgoing: round.outgoing,
+    revealedShips: round.state.boards.b.fleet.flatMap((placement, index) =>
+      cellsOf(placement, shipLength(index)).every((cell) =>
+        round.outgoing.some(
+          (shot) => shot.row === cell.row && shot.column === cell.column && shot.result !== 'miss',
+        ),
+      )
+        ? [{ index, placement }]
+        : [],
+    ),
     youAreReady: round.state.boards.a.ready,
     opponentReady: true,
     opponentPresent: true,
