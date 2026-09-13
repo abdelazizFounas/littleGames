@@ -9,7 +9,12 @@ import {
 } from '@littlegames/arena-logic';
 import type { ArenaRenderer } from '@littlegames/arena-renderer-babylon';
 import type { ArenaPlayerState, ArenaSnapshot } from '@littlegames/core';
-import { createInputHistory, createSnapshotBuffer, type ArenaConnection, type ArenaMatchListeners } from '@littlegames/net';
+import {
+  createInputHistory,
+  createSnapshotBuffer,
+  type ArenaConnection,
+  type ArenaMatchListeners,
+} from '@littlegames/net';
 import { createArenaInput, type ArenaCommand, type ArenaInput } from './arena-input-sources';
 import {
   DEFAULT_ARENA_SETTINGS,
@@ -271,7 +276,12 @@ export async function startArenaSession(
   let firstSnapshotDeadline: ReturnType<typeof setTimeout> | undefined;
   let predicted: PlayerBody = restingBody({ x: 0, y: 0, z: 0 });
 
-  try { await renderer.mount(container); } catch (cause) { renderer.destroy(); throw cause; }
+  try {
+    await renderer.mount(container);
+  } catch (cause) {
+    renderer.destroy();
+    throw cause;
+  }
   const surface = renderer.canvas;
   if (surface === null) {
     renderer.destroy();
@@ -326,7 +336,11 @@ export async function startArenaSession(
   const opening = createInitialState();
   renderer.render(
     {
-      camera: { position: eyeOf(opening.north.body), forward: { x: 0, y: 0, z: 1 }, fieldOfView: current.look.fieldOfView },
+      camera: {
+        position: eyeOf(opening.north.body),
+        forward: { x: 0, y: 0, z: 1 },
+        fieldOfView: current.look.fieldOfView,
+      },
       seat: 'north',
       players: [],
       shots: [],
@@ -357,11 +371,17 @@ export async function startArenaSession(
             return;
           }
           const previous = buffer.latest();
-          const before = previous === null ? null : eyeOf(predictSelf(previous.self, history.pending()));
+          const before =
+            previous === null ? null : eyeOf(predictSelf(previous.self, history.pending()));
           seq = Math.max(seq, next.acknowledgedSeq);
           history.acknowledge(next.acknowledgedSeq);
           if (before !== null) {
-            smoothing = reconcileCamera(smoothing, before, eyeOf(predictSelf(next.self, history.pending())), next.self.spawnEpoch);
+            smoothing = reconcileCamera(
+              smoothing,
+              before,
+              eyeOf(predictSelf(next.self, history.pending())),
+              next.self.spawnEpoch,
+            );
           }
           buffer.push(next, performance.now());
 
@@ -397,7 +417,11 @@ export async function startArenaSession(
 
           // Being killed is a transition, not a state: the flash belongs to the
           // moment of it, and `alive` stays false for the whole respawn.
-          if (previousHealth !== null && previousEpoch === next.self.spawnEpoch && next.self.health < previousHealth) {
+          if (
+            previousHealth !== null &&
+            previousEpoch === next.self.spawnEpoch &&
+            next.self.health < previousHealth
+          ) {
             lastDamageAt = arrivedAt;
           }
           previousHealth = next.self.health;
@@ -405,7 +429,8 @@ export async function startArenaSession(
           previousEpoch = next.self.spawnEpoch;
 
           const opponentName =
-            snapshot.players.find((player) => player.userId !== userId)?.username ?? 'your opponent';
+            snapshot.players.find((player) => player.userId !== userId)?.username ??
+            'your opponent';
           const nextLobby = lobbyOf(next, opponentName);
           if (!sameLobby(lobby, nextLobby)) {
             lobby = nextLobby;
@@ -445,7 +470,10 @@ export async function startArenaSession(
           }
         },
         onError: () => {
-          listeners.onStatus({ kind: 'failed', message: 'The match connection ran into an error.' });
+          listeners.onStatus({
+            kind: 'failed',
+            message: 'The match connection ran into an error.',
+          });
         },
       },
       matchId,
@@ -513,13 +541,22 @@ export async function startArenaSession(
 
     // This player's own body is replayed forward from the server's copy, so it
     // answers the keys now rather than a round trip from now.
-    predicted = latest.phase === 'waiting' || latest.phase === 'finished' ? latest.self.body : predictSelf(latest.self, history.pending());
+    predicted =
+      latest.phase === 'waiting' || latest.phase === 'finished'
+        ? latest.self.body
+        : predictSelf(latest.self, history.pending());
     const eye = eyeOf(predicted);
-    smoothing = smoothCamera(smoothing, {
-      x: eye.x + smoothing.offset.x,
-      y: eye.y + smoothing.offset.y,
-      z: eye.z + smoothing.offset.z,
-    }, eye, latest.self.spawnEpoch, elapsed);
+    smoothing = smoothCamera(
+      smoothing,
+      {
+        x: eye.x + smoothing.offset.x,
+        y: eye.y + smoothing.offset.y,
+        z: eye.z + smoothing.offset.z,
+      },
+      eye,
+      latest.self.spawnEpoch,
+      elapsed,
+    );
 
     const drawn = {
       x: eye.x + smoothing.offset.x,
@@ -536,8 +573,7 @@ export async function startArenaSession(
     // to one meant that on reaching it exactly the test `wanted > scope` turned
     // false and the sight began easing back down, then up again the next frame:
     // a scope that shook at frame rate for as long as the button was held.
-    scope =
-      wanted > scope ? Math.min(scope + step, wanted) : Math.max(scope - step, wanted);
+    scope = wanted > scope ? Math.min(scope + step, wanted) : Math.max(scope - step, wanted);
 
     // The rifle the player can see, held against the camera rather than placed
     // in the world, swaying with the same stride their legs are walking.
@@ -546,23 +582,27 @@ export async function startArenaSession(
     currentMuzzle = viewModelMuzzle(viewModel);
 
     const view = composeArenaView(
-        from,
-        to,
-        alpha,
-        drawn,
-        facing,
-        current.look.fieldOfView * (1 - scope) + (current.look.fieldOfView / SCOPE_MAGNIFICATION) * scope,
-        {
-          now,
-          shots: [...seenShots.values()],
-          lastOwnHitAt,
-          lastDamageAt,
-          scope,
-          viewModel,
-          muzzle: viewModelMuzzle(viewModel),
-        },
-      );
-    renderer.render({ ...view, hud: hudFor(latest, now, lastOwnHitAt, lastDamageAt, scope) }, alpha);
+      from,
+      to,
+      alpha,
+      drawn,
+      facing,
+      current.look.fieldOfView * (1 - scope) +
+        (current.look.fieldOfView / SCOPE_MAGNIFICATION) * scope,
+      {
+        now,
+        shots: [...seenShots.values()],
+        lastOwnHitAt,
+        lastDamageAt,
+        scope,
+        viewModel,
+        muzzle: viewModelMuzzle(viewModel),
+      },
+    );
+    renderer.render(
+      { ...view, hud: hudFor(latest, now, lastOwnHitAt, lastDamageAt, scope) },
+      alpha,
+    );
   };
 
   frame = requestAnimationFrame(tick);
@@ -598,13 +638,21 @@ export async function startArenaSession(
       input.setSettings(next);
     },
     resume() {
+      input.setEnabled(true);
       input.requestLock();
     },
     release() {
+      input.setEnabled(false);
       input.releaseLock();
     },
     setReady(ready) {
-      void connection.setReady(ready).catch(() => { if (running) listeners.onStatus({ kind: 'failed', message: 'Could not update readiness. Please rejoin the lobby.' }); });
+      void connection.setReady(ready).catch(() => {
+        if (running)
+          listeners.onStatus({
+            kind: 'failed',
+            message: 'Could not update readiness. Please rejoin the lobby.',
+          });
+      });
     },
   };
 }

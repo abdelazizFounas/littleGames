@@ -33,6 +33,7 @@ export async function createPractice(
   listeners: PracticeListeners,
   difficulty: PracticeDifficulty = 'easy',
 ): Promise<PracticeSession> {
+  let settings = DEFAULT_ARENA_SETTINGS;
   const renderer = createArenaBabylonRenderer();
   try {
     await renderer.mount(container);
@@ -71,8 +72,9 @@ export async function createPractice(
     },
     onOpenSettings: () => {
       active = false;
+      input.setEnabled(false);
       input.releaseLock();
-      listeners.onPause();
+      (listeners.onSettings ?? listeners.onPause)();
     },
   });
   input.start();
@@ -167,8 +169,7 @@ export async function createPractice(
     const facing = input.forward();
     const model = state.north.alive ? viewModelOf(eye, facing, state.north.body, scope) : [];
     shots = shots.filter((shot) => now - shot.seenAt < 300);
-    const fieldOfView =
-      DEFAULT_ARENA_SETTINGS.look.fieldOfView * (1 - scope + scope / SCOPE_MAGNIFICATION);
+    const fieldOfView = settings.look.fieldOfView * (1 - scope + scope / SCOPE_MAGNIFICATION);
     renderer.render(
       {
         camera: { position: eye, forward: facing, fieldOfView },
@@ -200,6 +201,7 @@ export async function createPractice(
   function pause() {
     active = false;
     accumulator = 0;
+    input.setEnabled(false);
     input.reset();
     input.releaseLock();
     listeners.onPause();
@@ -210,7 +212,12 @@ export async function createPractice(
   };
   document.addEventListener('visibilitychange', onVisibility);
   return {
+    updateSettings(next) {
+      settings = next;
+      input.setSettings(next);
+    },
     start() {
+      input.setEnabled(true);
       active = true;
       accumulator = 0;
       lastAt = 0;

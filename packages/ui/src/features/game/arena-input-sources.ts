@@ -57,6 +57,7 @@ export interface ArenaInput {
   requestLock: () => void;
   /** Gives the pointer back on purpose, so a menu can be used. */
   releaseLock: () => void;
+  setEnabled: (enabled: boolean) => void;
   setSettings: (next: ArenaSettings) => void;
   /** The newest server tick drawn, which is what the server rewinds from. */
   setSeenTick: (tick: number) => void;
@@ -131,6 +132,7 @@ export function createArenaInput(
   initial: ArenaSettings = DEFAULT_ARENA_SETTINGS,
 ): ArenaInput {
   let settings = initial;
+  let enabled = true;
 
   let yaw = 0;
   let pitch = 0;
@@ -201,8 +203,11 @@ export function createArenaInput(
   let touchCrouch = false;
   let touchZoom = false;
   let touchLayer: HTMLElement | null = null;
-  let touchControls: { reset: () => void; setSettings: (next: ArenaSettings) => void; dispose: () => void } | null =
-    null;
+  let touchControls: {
+    reset: () => void;
+    setSettings: (next: ArenaSettings) => void;
+    dispose: () => void;
+  } | null = null;
 
   function look(deltaX: number, deltaY: number, sensitivity: number, invertY: boolean): void {
     const turn = applyLook(deltaX, deltaY, sensitivity, settings.look.invertX, invertY);
@@ -211,6 +216,7 @@ export function createArenaInput(
   }
 
   function fire(): void {
+    if (!enabled) return;
     // A counter, not a flag: the server credits one shot per number it has not
     // seen, so a command lost on the way costs nothing and a duplicate fires
     // nothing. One shot per press — the cooldown is most of half a second, so
@@ -223,7 +229,13 @@ export function createArenaInput(
 
   const onKeyDown = (event: KeyboardEvent): void => {
     const target = event.target;
-    if (target instanceof HTMLElement && (target.closest('input, textarea, select, button, [contenteditable]') !== null)) return;
+    if (!enabled || event.defaultPrevented) return;
+    if (
+      !locked &&
+      target instanceof HTMLElement &&
+      target.closest('input, textarea, select, button, [contenteditable]')
+    )
+      return;
     if (!locked && document.activeElement !== surface) return;
     if (event.repeat) {
       return;
@@ -255,11 +267,16 @@ export function createArenaInput(
     held.clear();
     zoomPressed = false;
     heldButtons = 0;
-    latchedAim = null; latchedZoom = null; latchedTick = null;
-    touchCrouch = false; touchZoom = false;
+    latchedAim = null;
+    latchedZoom = null;
+    latchedTick = null;
+    touchCrouch = false;
+    touchZoom = false;
     touchControls?.reset();
-    moveStickX = 0; moveStickZ = 0;
-    turnStickX = 0; turnStickY = 0;
+    moveStickX = 0;
+    moveStickZ = 0;
+    turnStickX = 0;
+    turnStickY = 0;
     touchJump = false;
   };
 
@@ -276,7 +293,7 @@ export function createArenaInput(
     if (event.pointerType !== 'mouse') {
       return;
     }
-    if (!locked) {
+    if (!locked || !enabled) {
       // Without the lock the pointer is the page's, and moving it must not turn
       // the player. This is also what stops the view spinning while the
       // settings panel is open.
@@ -419,9 +436,7 @@ export function createArenaInput(
       (held.has(settings.keys.back) ? 1 : 0) -
       moveStickZ;
     const strafeAmount =
-      (held.has(settings.keys.right) ? 1 : 0) -
-      (held.has(settings.keys.left) ? 1 : 0) +
-      moveStickX;
+      (held.has(settings.keys.right) ? 1 : 0) - (held.has(settings.keys.left) ? 1 : 0) + moveStickX;
 
     // Rotated by the player's own yaw here, in the input source, so that the
     // rules receive a direction in the world and never an angle.
@@ -462,6 +477,15 @@ export function createArenaInput(
             turnStickX = x;
             turnStickY = y;
           },
+          onSwipe: (x, y) => {
+            if (enabled)
+              look(
+                x,
+                y,
+                settings.touch.sensitivity * (isZoomedNow() ? settings.look.zoomSensitivity : 1),
+                settings.touch.invertY,
+              );
+          },
           onFire: fire,
           onHold: (_action, pressed) => {
             touchJump = pressed;
@@ -483,13 +507,15 @@ export function createArenaInput(
     },
 
     sample(seq) {
-      const move = moveVector();
+      const move = enabled ? moveVector() : { x: 0, z: 0 };
       // The latched aim is spent on the tick after the click, so the shot goes
       // where the crosshair was rather than where it has drifted to.
       const aim = normalizeAim(latchedAim ?? directionOf(yaw, pitch));
       const zoomed = latchedZoom ?? isZoomedNow();
       const shotTick = latchedTick ?? seenTick;
-      latchedAim = null; latchedZoom = null; latchedTick = null;
+      latchedAim = null;
+      latchedZoom = null;
+      latchedTick = null;
 
       const wiredMove = moveToWire(move);
       const wiredAim = aimToWire(aim);
@@ -533,10 +559,12 @@ export function createArenaInput(
     },
 
     advance(elapsedSeconds) {
+      if (!enabled) return;
       if (turnStickX === 0 && turnStickY === 0) {
         return;
       }
-      const speed = settings.touch.sensitivity * (isZoomedNow() ? settings.look.zoomSensitivity : 1);
+      const speed =
+        settings.touch.sensitivity * (isZoomedNow() ? settings.look.zoomSensitivity : 1);
       // Through the same `applyLook` the mouse uses, so the inversions are
       // applied once and in one place — and so the vertical axis agrees between
       // a thumb and a mouse without either being special.
@@ -544,11 +572,17 @@ export function createArenaInput(
     },
 
     reset: onBlur,
-    resetShotCounter() { shotsFired = 0; latchedAim = null; latchedZoom = null; latchedTick = null; },
+    resetShotCounter() {
+      shotsFired = 0;
+      latchedAim = null;
+      latchedZoom = null;
+      latchedTick = null;
+    },
     forward: () => directionOf(yaw, pitch),
     isZoomed: isZoomedNow,
     isLocked: () => locked,
     requestLock() {
+      if (pointerMode === 'touch') return;
       releasing = false;
       takePointer();
     },
@@ -558,7 +592,12 @@ export function createArenaInput(
         document.exitPointerLock();
       }
     },
+    setEnabled(next) {
+      enabled = next;
+      if (!next) onBlur();
+    },
     setSettings(next) {
+      onBlur();
       settings = next;
       touchControls?.setSettings(next);
     },
@@ -595,6 +634,7 @@ interface TouchHandlers {
   onMove: (x: number, z: number) => void;
   /** Turn rate, in units of full deflection, for the frame loop to integrate. */
   onTurn: (x: number, y: number) => void;
+  onSwipe: (x: number, y: number) => void;
   onFire: () => void;
   /** Held only while the thumb is on it. Jumping is an instant, not a stance. */
   onHold: (action: 'jump', pressed: boolean) => void;
@@ -658,7 +698,12 @@ function buildTouchControls(
   container: HTMLElement,
   settings: ArenaSettings,
   handlers: TouchHandlers,
-): { element: HTMLElement; reset: () => void; setSettings: (next: ArenaSettings) => void; dispose: () => void } {
+): {
+  element: HTMLElement;
+  reset: () => void;
+  setSettings: (next: ArenaSettings) => void;
+  dispose: () => void;
+} {
   let current = settings;
 
   const layer = document.createElement('div');
@@ -709,6 +754,7 @@ function buildTouchControls(
 
   function applySwap(): void {
     layer.classList.toggle('arena-touch--swapped', current.touch.swapHalves);
+    layer.dataset['lookMode'] = current.touch.lookMode;
   }
   applySwap();
 
@@ -773,8 +819,20 @@ function buildTouchControls(
     if (event.pointerId !== turn.pointerId) {
       return;
     }
-    track(turn, turnMark, event);
-    handlers.onTurn(turn.x, turn.y);
+    if (current.touch.lookMode === 'touchpad') {
+      const bounds = layer.getBoundingClientRect();
+      const scale = Math.max(200, Math.min(bounds.width, bounds.height));
+      handlers.onSwipe(
+        (event.clientX - turn.originX) / scale,
+        (event.clientY - turn.originY) / scale,
+      );
+      turn.originX = event.clientX;
+      turn.originY = event.clientY;
+      track(turn, turnMark, event);
+    } else {
+      track(turn, turnMark, event);
+      handlers.onTurn(turn.x, turn.y);
+    }
   };
   const onTurnUp = (event: PointerEvent): void => {
     if (event.pointerId !== turn.pointerId) return;
@@ -829,11 +887,19 @@ function buildTouchControls(
   return {
     element: layer,
     reset() {
-      move.pointerId = null; turn.pointerId = null;
-      move.x = 0; move.y = 0; turn.x = 0; turn.y = 0;
-      moveMark.style.opacity = '0'; turnMark.style.opacity = '0';
-      handlers.onMove(0, 0); handlers.onTurn(0, 0); handlers.onHold('jump', false);
-      latch(crouchButton, false); latch(zoomButton, false);
+      move.pointerId = null;
+      turn.pointerId = null;
+      move.x = 0;
+      move.y = 0;
+      turn.x = 0;
+      turn.y = 0;
+      moveMark.style.opacity = '0';
+      turnMark.style.opacity = '0';
+      handlers.onMove(0, 0);
+      handlers.onTurn(0, 0);
+      handlers.onHold('jump', false);
+      latch(crouchButton, false);
+      latch(zoomButton, false);
     },
     setSettings(next) {
       current = next;

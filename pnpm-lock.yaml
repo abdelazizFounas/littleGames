@@ -54,6 +54,8 @@ importers:
         specifier: workspace:*
         version: link:../../../core
 
+  packages/games/artillery/logic: {}
+
   packages/games/battleship/logic: {}
 
   packages/games/battleship/renderer-pixi:
@@ -90,6 +92,9 @@ importers:
       '@heroiclabs/nakama-js':
         specifier: 2.8.0
         version: 2.8.0
+      '@littlegames/artillery-logic':
+        specifier: workspace:*
+        version: link:../games/artillery/logic
       '@littlegames/core':
         specifier: workspace:*
         version: link:../core
@@ -115,6 +120,9 @@ importers:
       '@littlegames/arena-renderer-babylon':
         specifier: workspace:*
         version: link:../games/arena/renderer-babylon
+      '@littlegames/artillery-logic':
+        specifier: workspace:*
+        version: link:../games/artillery/logic
       '@littlegames/battleship-logic':
         specifier: workspace:*
         version: link:../games/battleship/logic

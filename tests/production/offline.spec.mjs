@@ -29,5 +29,9 @@ test('built games run under production CSP and remain available offline', async 
   await page.getByRole('button', { name: 'Auto arrange' }).click();
   await page.getByRole('button', { name: 'Deploy fleet' }).click();
   await expect(page.getByRole('heading', { name: 'Your move, commander.' })).toBeVisible();
+  await page.goto('/practice/artillery?difficulty=hard');
+  await page.getByRole('button', { name: 'Start battle' }).click();
+  await page.getByRole('button', { name: 'Fire shell' }).click();
+  await expect(page.locator('.artillery-flight-trail')).toBeVisible();
   expect(errors).toEqual([]);
 });

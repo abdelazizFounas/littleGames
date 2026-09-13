@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { ArtilleryStage } from '../artillery/artillery-stage';
 import { ArenaStage } from './arena-stage';
 import { BattleshipStage } from './battleship-stage';
 import { PongStage } from './pong-stage';
@@ -27,6 +28,7 @@ export function GameStage({
   readonly password?: string | undefined;
   readonly onJoined: (matchId: string) => void;
 }): ReactNode {
+  if (gameId === 'artillery') return <ArtilleryStage matchId={matchId} password={password} onJoined={onJoined}/>;
   if (gameId === 'battleship') {
     // No user id: every snapshot is built for its recipient alone, so this
     // client never has to find itself in a broadcast meant for both players.

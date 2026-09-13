@@ -53,9 +53,29 @@ const MIN_HELD_MS = 1000;
  * the exit away would be a game nobody could get out of.
  */
 const GAME_KEY_CODES: readonly string[] = [
-  'KeyW', 'KeyA', 'KeyS', 'KeyD', 'KeyQ', 'KeyE', 'KeyR', 'KeyF', 'KeyC', 'KeyP', 'KeyT',
-  'Space', 'ShiftLeft', 'ShiftRight', 'ControlLeft', 'ControlRight', 'AltLeft', 'AltRight',
-  'Tab', 'Digit1', 'Digit2', 'Digit3', 'Digit4',
+  'KeyW',
+  'KeyA',
+  'KeyS',
+  'KeyD',
+  'KeyQ',
+  'KeyE',
+  'KeyR',
+  'KeyF',
+  'KeyC',
+  'KeyP',
+  'KeyT',
+  'Space',
+  'ShiftLeft',
+  'ShiftRight',
+  'ControlLeft',
+  'ControlRight',
+  'AltLeft',
+  'AltRight',
+  'Tab',
+  'Digit1',
+  'Digit2',
+  'Digit3',
+  'Digit4',
 ];
 
 export function ArenaStage({
@@ -167,35 +187,6 @@ export function ArenaStage({
     sessionRef.current?.resume();
   }, []);
 
-  /**
-   * The one key that opens the settings also closes them.
-   *
-   * Escape cannot do the opening: a browser spends it exiting pointer lock and
-   * never delivers the key. Losing the lock is therefore read as the request,
-   * below. Once the panel is open the pointer is free, so Escape arrives
-   * normally and closes it — which is what everyone expects it to do.
-   */
-  const onSettingsKey = useCallback(
-    (event: KeyboardEvent): void => {
-      if (event.code !== 'Escape' && event.code !== 'KeyP') {
-        return;
-      }
-      event.preventDefault();
-      closeSettings();
-    },
-    [closeSettings],
-  );
-
-  useEffect(() => {
-    if (!settingsOpen) {
-      return undefined;
-    }
-    window.addEventListener('keydown', onSettingsKey);
-    return () => {
-      window.removeEventListener('keydown', onSettingsKey);
-    };
-  }, [onSettingsKey, settingsOpen]);
-
   /** Says this player is ready, and takes the mouse with the same gesture. */
   const toggleReady = useCallback((): void => {
     const next = !lobby.youAreReady;
@@ -247,7 +238,7 @@ export function ArenaStage({
                 onJoined(next.matchId);
               }
             },
-            onLockChange: (next) => {
+            onLockChange: (next, expected) => {
               if (cancelled) {
                 return;
               }
@@ -265,11 +256,7 @@ export function ArenaStage({
                 setLockUnreliable(true);
               }
 
-              // And nothing else. Losing the pointer used to open the settings,
-              // on the reasoning that no browser delivers Escape while it is
-              // hidden — but it also goes when the window loses focus, and a
-              // menu that appears because you alt-tabbed is a menu nobody asked
-              // for. The settings open when they are asked for: P, or the gear.
+              if (!expected && document.hasFocus() && !document.hidden) openSettingsRef.current();
             },
             onLobbyChange: (next) => {
               if (!cancelled) {
@@ -297,7 +284,10 @@ export function ArenaStage({
         session.updateSettings(settingsAtStart.current);
       } catch (cause) {
         if (!cancelled) {
-          setStatus({ kind: 'failed', message: describeError(cause, 'Could not start the match.') });
+          setStatus({
+            kind: 'failed',
+            message: describeError(cause, 'Could not start the match.'),
+          });
         }
       }
     };
@@ -384,11 +374,19 @@ export function ArenaStage({
     }
   }, []);
 
-
   return (
     <div className="stage">
       <div ref={frameRef} className="stage__frame">
-        <div ref={containerRef} className="stage__surface stage__surface--arena" />
+        <div
+          ref={containerRef}
+          inert={settingsOpen}
+          className="stage__surface stage__surface--arena"
+        />
+        {!settingsOpen && (
+          <button className="button arena-settings-launch" onClick={openSettings}>
+            Settings ⚙
+          </button>
+        )}
 
         {/* Before the round opens, and only then. There is no pause in this
             game: the opponent is always playing, so nothing that stops the
@@ -406,15 +404,19 @@ export function ArenaStage({
             stopped, so nothing here behaves as though it had. It says the one
             thing the player cannot see for themselves — that the mouse is
             theirs and a click gives it back to the game. */}
-        {status.kind === 'playing' && !settingsOpen && !holdsPointer && lobby.phase !== 'waiting' && (
-          <p className="arena-hint">
-            {lockUnreliable
-              ? 'This browser keeps giving the pointer back, so the mouse cannot turn the view. Press P for the settings.'
-              : lockRefusal === null
-                ? 'Click to take the mouse'
-                : `This browser would not hide the pointer: ${lockRefusal}`}
-          </p>
-        )}
+        {status.kind === 'playing' &&
+          !settingsOpen &&
+          !touchLayout &&
+          !holdsPointer &&
+          lobby.phase !== 'waiting' && (
+            <p className="arena-hint">
+              {lockUnreliable
+                ? 'This browser keeps giving the pointer back, so the mouse cannot turn the view. Press P for the settings.'
+                : lockRefusal === null
+                  ? 'Click to take the mouse'
+                  : `This browser would not hide the pointer: ${lockRefusal}`}
+            </p>
+          )}
 
         {/* Once it is decided, over the same arena. The round is over and
             nobody is shooting, so this one really can take the screen. */}

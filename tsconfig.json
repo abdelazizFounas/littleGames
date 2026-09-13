@@ -30,6 +30,9 @@
     },
     {
       "path": "./packages/renderer-headless"
+    },
+    {
+      "path": "./packages/games/artillery/logic"
     }
   ]
 }

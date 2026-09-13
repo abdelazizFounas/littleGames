@@ -145,3 +145,12 @@ describe('key labels', () => {
     expect(labelForCode('IntlBackslash')).toBe('IntlBackslash');
   });
 });
+
+describe('mobile look mode preferences', () => {
+  it('migrates older settings to joystick and preserves touchpad on a storage round trip', () => {
+    expect(readArenaSettings({ touch: { sensitivity: 3 } }).touch.lookMode).toBe('joystick');
+    const next = readArenaSettings({ touch: { lookMode: 'touchpad', sensitivity: 3 } });
+    expect(readArenaSettings(writeArenaSettings(next)).touch.lookMode).toBe('touchpad');
+    expect(readArenaSettings({ touch: { lookMode: 'invalid' } }).touch.lookMode).toBe('joystick');
+  });
+});

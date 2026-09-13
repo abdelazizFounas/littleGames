@@ -28,7 +28,7 @@ export function HomeRoute() {
     </section>
     <div className="ticker" aria-hidden="true"><span>ONE LINK. ONE FRIEND. GAME ON.</span><b>✳</b><span>GOOD OLD-FASHIONED FUN.</span><b>✳</b><span>JUST ONE MORE ROUND?</span><b>✳</b></div>
     <section className="catalog-section" id="games" aria-labelledby="catalog-title">
-      <div className="section-heading"><div><p className="eyebrow">PICK YOUR PLAYGROUND</p><h2 id="catalog-title">A game for every mood<span className="lime">.</span></h2></div><span className="small-label">03 GAMES · ENDLESS REMATCHES</span></div>
+      <div className="section-heading"><div><p className="eyebrow">PICK YOUR PLAYGROUND</p><h2 id="catalog-title">A game for every mood<span className="lime">.</span></h2></div><span className="small-label">04 GAMES · ENDLESS REMATCHES</span></div>
       {state.status === 'signed-in' && <ResumePanel/>}
       <div className="catalog-toolbar"><div className="filter-tabs" role="group" aria-label="Filter games">{['All games', 'Action', 'Arcade', 'Strategy'].map(item => <button key={item} type="button" aria-pressed={filter === item} onClick={() => setFilter(item)}>{item}</button>)}</div><label className="search-field"><span aria-hidden="true">⌕</span><input type="search" value={query} onChange={event => setQuery(event.target.value)} placeholder="Find a game…" aria-label="Search games"/></label></div>
       <div className="catalog-grid">{games.map((game) => <article className={`cover-card cover-card--${game.color}`} key={game.id}>

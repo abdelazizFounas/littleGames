@@ -1,6 +1,13 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router';
 import { GAMES } from '../features/catalog/games';
+import { ArenaSettingsPanel } from '../features/game/arena-settings-panel';
+import {
+  loadLocalArenaSettings,
+  saveLocalArenaSettings,
+  hasCoarsePointer,
+} from '../features/game/arena-settings';
+import { ArtilleryPractice } from '../features/artillery/artillery-practice';
 import { FleetPractice } from '../features/practice/fleet-practice';
 import {
   DIFFICULTIES,
@@ -30,23 +37,29 @@ export function PracticeRoute() {
       </section>
     );
   const descriptions =
-    game.id === 'battleship'
+    game.id === 'artillery'
       ? [
-          'A relaxed, random search.',
-          'Hunts for ships and follows hits.',
-          'Maps likely ship positions.',
+          'Room to learn the arc.',
+          'Accurate shots. Smarter weapons.',
+          'Precise ballistics. Little mercy.',
         ]
-      : game.id === 'arena'
+      : game.id === 'battleship'
         ? [
-            'Slower reactions. Room to learn.',
-            'Faster movement and sharper aim.',
-            'Precise aim. Relentless pressure.',
+            'A relaxed, random search.',
+            'Hunts for ships and follows hits.',
+            'Maps likely ship positions.',
           ]
-        : [
-            'Forgiving rallies. Time to react.',
-            'Predicts bounces and returns faster.',
-            'Quick reactions and precise returns.',
-          ];
+        : game.id === 'arena'
+          ? [
+              'Slower reactions. Room to learn.',
+              'Faster movement and sharper aim.',
+              'Precise aim. Relentless pressure.',
+            ]
+          : [
+              'Forgiving rallies. Time to react.',
+              'Predicts bounces and returns faster.',
+              'Quick reactions and precise returns.',
+            ];
   return (
     <section className="practice-page">
       <div className="practice-heading">
@@ -100,7 +113,9 @@ export function PracticeRoute() {
           Changing difficulty starts a fresh round. Practice results stay on this device.
         </p>
       </fieldset>
-      {game.id === 'battleship' ? (
+      {game.id === 'artillery' ? (
+        <ArtilleryPractice key={`${game.id}:${difficulty}`} difficulty={difficulty} />
+      ) : game.id === 'battleship' ? (
         <FleetPractice key={`${game.id}:${difficulty}`} difficulty={difficulty} />
       ) : (
         <PracticeGame key={`${game.id}:${difficulty}`} gameId={game.id} difficulty={difficulty} />
@@ -126,6 +141,11 @@ function PracticeGame({
   readonly gameId: 'arena' | 'pong';
   readonly difficulty: PracticeDifficulty;
 }) {
+  const [settings, setSettings] = useState(loadLocalArenaSettings);
+  const settingsRef = useRef(settings);
+  settingsRef.current = settings;
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const returnStatus = useRef<'ready' | 'playing' | 'paused' | 'finished'>('ready');
   const container = useRef<HTMLDivElement>(null);
   const frame = useRef<HTMLDivElement>(null);
   const session = useRef<PracticeSession | null>(null);
@@ -149,6 +169,13 @@ function PracticeGame({
       current = await module.createPractice(
         container.current,
         {
+          onSettings: () => {
+            if (!cancelled) {
+              returnStatus.current = 'playing';
+              setStatus('paused');
+              setSettingsOpen(true);
+            }
+          },
           onPause: () => {
             if (!cancelled) setStatus('paused');
           },
@@ -171,6 +198,7 @@ function PracticeGame({
         current.stop();
         return;
       }
+      current.updateSettings?.(settingsRef.current);
       session.current = current;
       setStatus('ready');
     }
@@ -205,9 +233,40 @@ function PracticeGame({
       <div ref={frame} className="practice-frame">
         <div
           ref={container}
+          inert={settingsOpen || status !== 'playing'}
           className={`stage__surface${gameId === 'arena' ? ' stage__surface--arena' : ''}`}
         />
-        {status !== 'playing' && (
+        {gameId === 'arena' && !settingsOpen && (
+          <button
+            className="button arena-settings-launch"
+            disabled={status === 'loading'}
+            onClick={() => {
+              returnStatus.current = status === 'loading' ? 'ready' : status;
+              session.current?.pause();
+              setSettingsOpen(true);
+            }}
+          >
+            Settings ⚙
+          </button>
+        )}
+        {settingsOpen && (
+          <ArenaSettingsPanel
+            settings={settings}
+            touchLayout={hasCoarsePointer()}
+            live={false}
+            onChange={(next) => {
+              setSettings(next);
+              saveLocalArenaSettings(next);
+              session.current?.updateSettings?.(next);
+            }}
+            onClose={() => {
+              setSettingsOpen(false);
+              if (returnStatus.current === 'playing') start();
+              else setStatus(returnStatus.current);
+            }}
+          />
+        )}
+        {status !== 'playing' && !settingsOpen && (
           <div className="practice-overlay">
             <p className="eyebrow">A LITTLE PRACTICE GOES A LONG WAY</p>
             <h2>

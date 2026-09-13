@@ -1,0 +1,34 @@
+import {test,expect} from '@playwright/test';
+for(const width of [390,768,1440])test(`Pocket Artillery setup and combat fit ${width}px`,async({page})=>{
+  await page.setViewportSize({width,height:1000});
+  const errors=[];page.on('pageerror',error=>errors.push(error.message));
+  await page.goto('/practice/artillery?difficulty=extra-hard');
+  await page.getByRole('button',{name:/Lunar Outpost/}).click();
+  await page.getByLabel('Match length').selectOption('1');
+  await page.getByLabel('Tank armor').selectOption('150');
+  await page.getByLabel('Wind conditions').selectOption('0');
+  await page.getByRole('button',{name:'Start battle'}).click();
+  await expect(page.getByRole('slider',{name:'Firing angle'})).toBeEnabled();
+  await page.getByRole('slider',{name:'Firing angle'}).fill('35');
+  await page.getByRole('slider',{name:'Shot power'}).fill('75');
+  await page.getByRole('button',{name:'Heavy rocket 2 remaining'}).click();
+  await page.getByRole('button',{name:'Fire rocket'}).click();
+  await expect(page.locator('.artillery-flight-trail')).toBeVisible();
+  await expect(page.getByRole('button',{name:'Heavy rocket 1 remaining'})).toBeVisible();
+  await expect(page.getByRole('slider',{name:'Firing angle'})).toBeEnabled({timeout:20000});
+  await page.getByRole('button',{name:'Pause',exact:true}).click();
+  await expect(page.getByRole('button',{name:'Resume battle'})).toBeVisible();
+  await expect(page.getByRole('button',{name:'Fire rocket'})).toBeDisabled();
+  await page.getByRole('button',{name:'Resume battle'}).click();
+  await page.getByRole('button',{name:'Raise shield'}).click();
+  await expect(page.getByText('SHIELDED',{exact:false}).first()).toBeVisible();
+  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+  expect(errors).toEqual([]);
+});
+for(const difficulty of ['easy','hard','extra-hard'])test(`Pocket Artillery supports ${difficulty} and restart`,async({page})=>{
+  await page.goto(`/practice/artillery?difficulty=${difficulty}`);
+  await expect(page.locator(`input[value="${difficulty}"]`)).toBeChecked();
+  await page.getByRole('button',{name:'Start battle'}).click();
+  await page.getByRole('button',{name:'New practice match'}).click();
+  await expect(page.getByRole('button',{name:'Start battle'})).toBeVisible();
+});

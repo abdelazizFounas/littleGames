@@ -40,6 +40,7 @@ func InitModule(
 	}
 
 	handlers := map[string]func() runtime.Match{
+		match.ArtilleryName:  func() runtime.Match { return &match.ArtilleryMatch{} },
 		match.PongName:       func() runtime.Match { return &match.PongMatch{} },
 		match.BattleshipName: func() runtime.Match { return &match.BattleshipMatch{} },
 		match.ArenaName:      func() runtime.Match { return &match.ArenaMatch{} },

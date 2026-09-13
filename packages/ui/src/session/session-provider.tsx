@@ -13,6 +13,9 @@ import {
   fetchPlayerStats,
   fetchPlayerProfile,
   joinArenaMatch,
+  joinArtilleryMatch,
+  type ArtilleryMatchListeners,
+  type ArtilleryConnection,
   joinBattleshipMatch,
   joinMatch as joinMatchOnServer,
   linkEmail,
@@ -191,6 +194,10 @@ export function SessionProvider({ children }: { readonly children: ReactNode }):
     [client, config, internal],
   );
 
+  const joinArtillery = useCallback(async (listeners: ArtilleryMatchListeners, matchId: string, password?: string): Promise<ArtilleryConnection> => {
+    if (internal.status !== 'signed-in') throw new Error('Sign in before joining a match.');
+    return joinArtilleryMatch(client, config, internal.session, matchId, listeners, password ?? '');
+  }, [client, config, internal]);
   const joinArena = useCallback(
     async (
       listeners: ArenaMatchListeners,
@@ -342,6 +349,7 @@ export function SessionProvider({ children }: { readonly children: ReactNode }):
       signOutPlayer,
       loadCatalog,
       joinMatch,
+      joinArtillery,
       joinBattleship,
       joinArena,
       createInvitation,
@@ -362,6 +370,7 @@ export function SessionProvider({ children }: { readonly children: ReactNode }):
       createInvitation,
       findOpenLobby,
       joinArena,
+      joinArtillery,
       joinBattleship,
       joinMatch,
       listMyMatches,

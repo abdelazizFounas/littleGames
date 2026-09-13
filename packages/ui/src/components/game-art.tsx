@@ -3,6 +3,17 @@ import { useId } from 'react';
 /** Lightweight vector covers; no download, external font or WebGL on the homepage. */
 export function GameArt({ game, hero = false }: { readonly game: string; readonly hero?: boolean }) {
   const id = useId().replaceAll(':', '');
+  if (game === 'artillery') return <svg viewBox="0 0 600 360" className="game-art" aria-hidden="true">
+    <defs><linearGradient id={id} x2="0" y2="1"><stop stopColor="#342738"/><stop offset="1" stopColor="#c7826d"/></linearGradient></defs>
+    <path d="M0 0h600v360H0Z" fill={`url(#${id})`}/><circle cx="435" cy="89" r="42" fill="#ffddb0"/>
+    <path d="M0 210 95 155 164 206 248 118 353 210 469 158 600 210V360H0Z" fill="#815e75"/>
+    <path d="M0 268 110 236 240 300 350 244 483 265 600 215V360H0Z" fill="#a66f67"/>
+    <path d="M0 275 115 270 215 316 345 298 480 277 600 285V360H0Z" fill="#553e44" stroke="#efb283" strokeWidth="4"/>
+    <path d="M100 243Q265-80 500 250" fill="none" stroke="#ffe8b4" strokeDasharray="5 10" strokeWidth="2" opacity=".6"/>
+    <g transform="translate(95 254)"><rect x="-27" width="62" height="17" rx="8" fill="#253b43"/><path d="M-25 0-18-13H20L32 0Z" fill="#cadd93"/><path d="m0-10 33-32" stroke="#e3e7b2" strokeWidth="9"/><rect x="-10" y="-20" width="25" height="16" rx="5" fill="#d9e6a2"/></g>
+    <g transform="translate(499 261)"><rect x="-27" width="62" height="17" rx="8" fill="#253b43"/><path d="M-25 0-18-13H20L32 0Z" fill="#f1a98e"/><path d="m0-10-30-29" stroke="#ffd3ac" strokeWidth="9"/><rect x="-10" y="-20" width="25" height="16" rx="5" fill="#eeb396"/></g>
+    <circle cx="291" cy="92" r="6" fill="#fff0ba"/><path d="m294 91-22 3" stroke="#f9d191" strokeWidth="3"/><text x="30" y="40" fill="#e2c9aa" fontSize="10" fontFamily="monospace" letterSpacing="3">A LITTLE CALCULATED CHAOS</text>
+  </svg>;
   if (game === 'pong') {
     return <svg viewBox="0 0 600 360" aria-hidden="true" className="game-art">
       <defs><radialGradient id={id}><stop stopColor="#374a96"/><stop offset="1" stopColor="#171c45"/></radialGradient></defs>

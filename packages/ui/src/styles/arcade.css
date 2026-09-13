@@ -204,3 +204,13 @@ kbd { display: inline-block; padding: 2px 6px; font: 11px monospace; background:
 .practice-frame:fullscreen .practice-fullscreen-exit { display: block; position: absolute; z-index: 30; right: 14px; bottom: 14px; }
 /* Keep the keyboard skip link clipped until focused, including full-page captures. */
 .skip-link:not(:focus) { clip-path: inset(50%); }
+
+.arena-settings-launch { position: absolute; z-index: 8; top: 12px; right: 12px; background: #15252de8; min-height: 44px; }
+.arena-settings { z-index: 25; }
+.arena-settings__panel { overscroll-behavior: contain; touch-action: pan-y; }
+.arena-settings__header { position: sticky; top: -1px; z-index: 1; background: #101923; padding: 8px 0; }
+.arena-settings select { min-height: 44px; padding: 8px 12px; color: #edf4ed; background: #20333d; border: 1px solid #5d7884; border-radius: 8px; }
+.arena-touch__gear { display: none; }
+.arena-touch[data-look-mode='touchpad'] .arena-touch__zone--turn { cursor: move; }
+.arena-touch[data-look-mode='touchpad'] .arena-touch__mark:last-of-type { border-radius: 10px; }
+@media (max-width: 600px) { .arena-settings__row { grid-template-columns: minmax(0,1fr) minmax(70px,1fr) auto; gap: 8px; } .arena-settings__header { flex-wrap: wrap; } .arena-settings-launch { top: 8px; right: 8px; } }

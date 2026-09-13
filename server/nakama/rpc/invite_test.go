@@ -40,7 +40,7 @@ func liveGame(game, state string) *api.Match {
 	return &api.Match{MatchId: "test-match", Label: wrapperspb.String(string(value))}
 }
 func TestInvitationsPreserveGameAndPrivatePassword(t *testing.T) {
-	for _, game := range []string{"pong", "arena", "battleship"} {
+	for _, game := range []string{"pong", "arena", "battleship", "artillery"} {
 		t.Run(game, func(t *testing.T) {
 			server := &inviteServer{live: liveGame(game, match.StateWaiting), member: true}
 			if _, err := createInvite(invitationContext(), nil, nil, server, `{"matchId":"test-match"}`); err != nil {

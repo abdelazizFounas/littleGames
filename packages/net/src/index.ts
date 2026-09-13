@@ -80,3 +80,4 @@ export { fetchLeaderboard, fetchPlayerStats } from './stats';
 
 export type { StoredSettings } from './settings';
 export { fetchGameSettings, saveGameSettings } from './settings';
+export { joinArtilleryMatch, type ArtilleryConnection, type ArtilleryMatchListeners } from './artillery-match';

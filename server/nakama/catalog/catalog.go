@@ -39,6 +39,7 @@ type Game struct {
 
 // Entries the server creates when they are absent.
 var seedEntries = []Game{
+	{ID: "artillery", Name: "Pocket Artillery", Tagline: "Big skies. Little tanks. Perfect shots.", Description: "Read the wind, choose your shell, and arc your shot across three stunning battlefields. Customize a duel or practice your aim.", MinPlayers: 2, MaxPlayers: 2},
 	{
 		ID:      "pong",
 		Name:    "Neon Pong",

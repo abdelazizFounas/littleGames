@@ -254,7 +254,7 @@ export async function resolveInvitation(
   // The link carries the password: the host chose to let this person in, so
   // asking them for it separately would defeat the invitation.
   return {
-    game: typeof payload['game'] === 'string' && ['pong', 'arena', 'battleship'].includes(payload['game']) ? payload['game'] : 'pong',
+    game: typeof payload['game'] === 'string' && ['pong', 'arena', 'battleship', 'artillery'].includes(payload['game']) ? payload['game'] : 'pong',
     matchId: payload['matchId'],
     password: typeof payload['password'] === 'string' ? payload['password'] : '',
   };

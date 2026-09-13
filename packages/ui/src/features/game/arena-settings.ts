@@ -14,7 +14,15 @@
  */
 
 /** Everything a player can ask the game to do. */
-export type ArenaAction = 'forward' | 'back' | 'left' | 'right' | 'jump' | 'crouch' | 'fire' | 'zoom';
+export type ArenaAction =
+  | 'forward'
+  | 'back'
+  | 'left'
+  | 'right'
+  | 'jump'
+  | 'crouch'
+  | 'fire'
+  | 'zoom';
 
 export const ARENA_ACTIONS: readonly ArenaAction[] = [
   'forward',
@@ -39,6 +47,7 @@ export interface LookSettings {
 }
 
 export interface TouchSettings {
+  readonly lookMode: 'joystick' | 'touchpad';
   /**
    * Radians a second the view turns at full deflection.
    *
@@ -91,6 +100,7 @@ export const DEFAULT_ARENA_SETTINGS: ArenaSettings = {
     zoom: 'KeyQ',
   },
   touch: {
+    lookMode: 'joystick',
     sensitivity: 2.6,
     invertY: false,
     swapHalves: false,
@@ -184,6 +194,7 @@ export function readArenaSettings(stored: unknown): ArenaSettings {
     },
     keys: bound,
     touch: {
+      lookMode: touch['lookMode'] === 'touchpad' ? 'touchpad' : 'joystick',
       sensitivity: number(
         touch,
         'sensitivity',
@@ -323,4 +334,24 @@ export function labelForCode(code: string): string {
     return code.slice(5);
   }
   return code;
+}
+
+export function loadLocalArenaSettings(): ArenaSettings {
+  try {
+    return readArenaSettings(
+      JSON.parse(localStorage.getItem('littlegames.arena.settings') ?? 'null'),
+    );
+  } catch {
+    return DEFAULT_ARENA_SETTINGS;
+  }
+}
+export function saveLocalArenaSettings(settings: ArenaSettings): void {
+  try {
+    localStorage.setItem(
+      'littlegames.arena.settings',
+      JSON.stringify({ ...writeArenaSettings(settings), updatedAt: Date.now() }),
+    );
+  } catch {
+    /* Controls remain usable when storage is unavailable. */
+  }
 }

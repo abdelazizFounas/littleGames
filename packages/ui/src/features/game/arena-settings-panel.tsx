@@ -143,6 +143,15 @@ export function ArenaSettingsPanel({
     };
   }, [capturing, onChange, settings]);
 
+  useEffect(() => {
+    const close = (event: KeyboardEvent) => {
+      if (capturing || event.defaultPrevented || (event.code !== 'Escape' && event.code !== 'KeyP')) return;
+      if (event.code === 'KeyP' && event.target instanceof HTMLElement && event.target.closest('input, select, textarea')) return;
+      event.preventDefault(); event.stopPropagation(); onClose();
+    };
+    document.addEventListener('keydown', close);
+    return () => document.removeEventListener('keydown', close);
+  }, [capturing, onClose]);
   const setLook = useCallback(
     (patch: Partial<ArenaSettings['look']>) => {
       onChange({ ...settings, look: { ...settings.look, ...patch } });
@@ -177,6 +186,31 @@ export function ArenaSettingsPanel({
           </p>
         )}
 
+        {touchLayout && (
+          <section className="arena-settings__group">
+            <h3>Mobile aiming</h3>
+            <label className="arena-settings__row">
+              <span>View control</span>
+              <select
+                aria-label="View control"
+                value={settings.touch.lookMode}
+                onChange={(event) =>
+                  setTouch({
+                    lookMode: event.target.value === 'touchpad' ? 'touchpad' : 'joystick',
+                  })
+                }
+              >
+                <option value="joystick">Joystick</option>
+                <option value="touchpad">Touchpad</option>
+              </select>
+            </label>
+            <p className="hint">
+              {settings.touch.lookMode === 'joystick'
+                ? 'Hold your thumb away from its starting point to keep turning.'
+                : 'Swipe to look. Hold still to stop. Lift and swipe again, like a mouse pad.'}
+            </p>
+          </section>
+        )}
         <section className="arena-settings__group">
           <h3>Look</h3>
           <Slider
@@ -251,7 +285,9 @@ export function ArenaSettingsPanel({
                 }}
               >
                 <span className="arena-settings__label">{ACTION_LABELS[action]}</span>
-                <kbd>{capturing === action ? 'Press a key…' : labelForCode(settings.keys[action])}</kbd>
+                <kbd>
+                  {capturing === action ? 'Press a key…' : labelForCode(settings.keys[action])}
+                </kbd>
               </button>
             ))}
           </div>
@@ -265,47 +301,47 @@ export function ArenaSettingsPanel({
         {touchLayout && (
           <section className="arena-settings__group">
             <h3>Touch</h3>
-          <p className="hint">
-            Each half of the screen is a stick with no fixed place: where your thumb lands is the
-            middle. The left half moves you and the right half turns the view — swap them below if
-            that is the wrong way round for you.
-          </p>
-          <Slider
-            label="Turn speed"
-            value={settings.touch.sensitivity}
-            min={0.6}
-            max={6}
-            step={0.2}
-            format={(value) => `${value.toFixed(1)}×`}
-            onChange={(sensitivity) => {
-              setTouch({ sensitivity });
-            }}
-          />
-          <Slider
-            label="Thumb travel"
-            value={settings.touch.stickReach}
-            min={0.06}
-            max={0.3}
-            step={0.01}
-            format={(value) => `${String(Math.round(value * 100))}%`}
-            onChange={(stickReach) => {
-              setTouch({ stickReach });
-            }}
-          />
-          <Toggle
-            label="Invert vertical"
-            checked={settings.touch.invertY}
-            onChange={(invertY) => {
-              setTouch({ invertY });
-            }}
-          />
-          <Toggle
-            label="Swap the halves"
-            checked={settings.touch.swapHalves}
-            onChange={(swapHalves) => {
-              setTouch({ swapHalves });
-            }}
-          />
+            <p className="hint">
+              Each half of the screen is a stick with no fixed place: where your thumb lands is the
+              middle. The left half moves you and the right half turns the view — swap them below if
+              that is the wrong way round for you.
+            </p>
+            <Slider
+              label="Turn speed"
+              value={settings.touch.sensitivity}
+              min={0.6}
+              max={6}
+              step={0.2}
+              format={(value) => `${value.toFixed(1)}×`}
+              onChange={(sensitivity) => {
+                setTouch({ sensitivity });
+              }}
+            />
+            <Slider
+              label="Thumb travel"
+              value={settings.touch.stickReach}
+              min={0.06}
+              max={0.3}
+              step={0.01}
+              format={(value) => `${String(Math.round(value * 100))}%`}
+              onChange={(stickReach) => {
+                setTouch({ stickReach });
+              }}
+            />
+            <Toggle
+              label="Invert vertical"
+              checked={settings.touch.invertY}
+              onChange={(invertY) => {
+                setTouch({ invertY });
+              }}
+            />
+            <Toggle
+              label="Swap the halves"
+              checked={settings.touch.swapHalves}
+              onChange={(swapHalves) => {
+                setTouch({ swapHalves });
+              }}
+            />
           </section>
         )}
 
@@ -323,12 +359,15 @@ export function ArenaSettingsPanel({
             className="button"
             onClick={() => {
               setRefusal(null);
+              setCapturing(null);
               onChange(DEFAULT_ARENA_SETTINGS);
             }}
           >
             Reset to defaults
           </button>
-          <p className="hint">Settings follow your account, not this browser.</p>
+          <p className="hint">
+            Settings are saved on this device. Online play also syncs them to your account.
+          </p>
         </footer>
       </div>
     </div>
