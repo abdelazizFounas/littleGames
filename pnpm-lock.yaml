@@ -70,6 +70,8 @@ importers:
         specifier: 8.19.0
         version: 8.19.0
 
+  packages/games/hockey/logic: {}
+
   packages/games/pong/logic: {}
 
   packages/games/pong/renderer-pixi:
@@ -98,6 +100,9 @@ importers:
       '@littlegames/core':
         specifier: workspace:*
         version: link:../core
+      '@littlegames/hockey-logic':
+        specifier: workspace:*
+        version: link:../games/hockey/logic
 
   packages/renderer-headless:
     dependencies:
@@ -132,6 +137,9 @@ importers:
       '@littlegames/core':
         specifier: workspace:*
         version: link:../core
+      '@littlegames/hockey-logic':
+        specifier: workspace:*
+        version: link:../games/hockey/logic
       '@littlegames/net':
         specifier: workspace:*
         version: link:../net
@@ -141,6 +149,9 @@ importers:
       '@littlegames/pong-renderer-pixi':
         specifier: workspace:*
         version: link:../games/pong/renderer-pixi
+      peerjs:
+        specifier: 1.5.5
+        version: 1.5.5
       react:
         specifier: 19.2.8
         version: 19.2.8
@@ -760,6 +771,10 @@ packages:
 
   '@jridgewell/trace-mapping@0.3.31':
     resolution: {integrity: sha512-zzNR+SdQSDJzc8joaeP8QQoCQr8NuYx2dIIytl1QeBEZHJ9uW6hebsrYgbz8hJwUQao3TWCMtmfV8Nu1twOLAw==}
+
+  '@msgpack/msgpack@2.8.0':
+    resolution: {integrity: sha512-h9u4u/jiIRKbq25PM+zymTyW6bhTzELvOoUd+AvYriWOAKpLGnIamaET3pnHYoI5iYphAHBI4ayx0MehR+VVPQ==}
+    engines: {node: '>= 10'}
 
   '@napi-rs/lzma-linux-x64-gnu@1.5.1':
     resolution: {integrity: sha512-oTXEIha4SsuXdTA4Iyskj0kpdx2yVXdhd75c2v3xGrHFfVMsbhTPZU/nMPL4sWKo4pBHm3aucLaqGlF696dTyQ==}
@@ -1659,6 +1674,9 @@ packages:
     resolution: {integrity: sha512-lW6is4T1NFOYnmqGZIfvixqj7A7sSvScF+DN8EK6K58xI5MZ5UvYe0GjopxOXQtZvUn4eDdVuZ8XSoYWTMEKwA==}
     engines: {node: '>=20'}
 
+  eventemitter3@4.0.7:
+    resolution: {integrity: sha512-8guHBZCwKnFhYdHr2ysuRWErTwhoN2X8XELRlrRwpmfeY2jjuUN4taQMsULKUVo1K4DvZl+0pgfyoysHxvmvEw==}
+
   eventemitter3@5.0.4:
     resolution: {integrity: sha512-mlsTRyGaPBjPedk6Bvw+aqbsXDtoAyAzm5MO7JgU+yVRyMQ5O8bD4Kcci7BS85f93veegeCPkL8R4GLClnjLFw==}
 
@@ -2122,6 +2140,14 @@ packages:
   pathe@2.0.3:
     resolution: {integrity: sha512-WUjGcAqP1gQacoQe+OBJsFA7Ld4DyXuUIjZ5cc75cLHvJ7dtNsTugphxIADwspS+AraAUePCKrSVtPLFj/F88w==}
 
+  peerjs-js-binarypack@2.1.0:
+    resolution: {integrity: sha512-YIwCC+pTzp3Bi8jPI9UFKO0t0SLo6xALnHkiNt/iUFmUUZG0fEEmEyFKvjsDKweiFitzHRyhuh6NvyJZ4nNxMg==}
+    engines: {node: '>= 14.0.0'}
+
+  peerjs@1.5.5:
+    resolution: {integrity: sha512-viMUCPDL6CSfOu0ZqVcFqbWRXNHIbv2lPqNbrBIjbFYrflebOjItJ4hPfhjnuUCstqciHVu9vVJ7jFqqKi/EuQ==}
+    engines: {node: '>= 14'}
+
   picocolors@1.1.1:
     resolution: {integrity: sha512-xceH2snhtb5M9liqDsmEw56le376mTZkEX/jEb/RxNFyegNul7eNslCXP9FDj/Lcu0X8KEyMceP2ntpaHrDEVA==}
 
@@ -2240,6 +2266,9 @@ packages:
 
   scheduler@0.27.0:
     resolution: {integrity: sha512-eNv+WrVbKu1f3vbYJT/xtiF5syA5HPIMtf9IgY/nKg0sWqzAUEvqY/xm7OcZc/qafLx/iO9FgOmeSAp4v5ti/Q==}
+
+  sdp@3.2.2:
+    resolution: {integrity: sha512-xZocWwfyp4hkbN4hLWxMjmv2Q8aNa9MhmOZ7L9aCZPT+dZsgRr6wZRrSYE3HTdyk/2pZKPSgqI7ns7Een1xMSA==}
 
   semver@6.3.1:
     resolution: {integrity: sha512-BR7VvDCVHO+q2xBEWskxS6DJE1qRnb7DxzUrogb71CWoSficBxYsiAGd+Kl0mmq/MprG9yArRkyrQxTO6XjMzA==}
@@ -2552,6 +2581,10 @@ packages:
         optional: true
       jsdom:
         optional: true
+
+  webrtc-adapter@9.0.6:
+    resolution: {integrity: sha512-CHbl2ZQbxx164IgWRgzJno4hWtM4tFbRam1QfI3Yxhs3w/DvqluVxVWeXs3oL5/fbGkSNLKo0Ty5MgUWceNhog==}
+    engines: {node: '>=6.0.0', npm: '>=3.10.0'}
 
   whatwg-fetch@3.6.20:
     resolution: {integrity: sha512-EqhiFU6daOA8kpjOWTL0olhVOF3i7OrFzSYiGsEMB8GcXS+RrzauAERX65xMeNWVqxA6HXH2m69Z9LaKKdisfg==}
@@ -3373,6 +3406,8 @@ snapshots:
       '@jridgewell/resolve-uri': 3.1.2
       '@jridgewell/sourcemap-codec': 1.6.0
 
+  '@msgpack/msgpack@2.8.0': {}
+
   '@napi-rs/lzma-linux-x64-gnu@1.5.1':
     optional: true
 
@@ -4060,6 +4095,8 @@ snapshots:
 
   eta@4.6.0: {}
 
+  eventemitter3@4.0.7: {}
+
   eventemitter3@5.0.4: {}
 
   expect-type@1.4.0: {}
@@ -4494,6 +4531,15 @@ snapshots:
 
   pathe@2.0.3: {}
 
+  peerjs-js-binarypack@2.1.0: {}
+
+  peerjs@1.5.5:
+    dependencies:
+      '@msgpack/msgpack': 2.8.0
+      eventemitter3: 4.0.7
+      peerjs-js-binarypack: 2.1.0
+      webrtc-adapter: 9.0.6
+
   picocolors@1.1.1: {}
 
   picomatch@4.0.5: {}
@@ -4669,6 +4715,8 @@ snapshots:
       is-regex: 1.2.1
 
   scheduler@0.27.0: {}
+
+  sdp@3.2.2: {}
 
   semver@6.3.1: {}
 
@@ -4991,6 +5039,10 @@ snapshots:
       '@types/node': 26.1.2
     transitivePeerDependencies:
       - msw
+
+  webrtc-adapter@9.0.6:
+    dependencies:
+      sdp: 3.2.2
 
   whatwg-fetch@3.6.20: {}
 

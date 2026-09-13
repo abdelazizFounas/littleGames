@@ -99,11 +99,7 @@ function matchIdOf(payload: unknown): string {
 }
 
 /** Joins the first open lobby with room, or opens one when there is none. */
-export async function autoLobby(
-  client: Client,
-  session: Session,
-  game: string,
-): Promise<string> {
+export async function autoLobby(client: Client, session: Session, game: string): Promise<string> {
   return matchIdOf((await client.rpc(session, 'lobby.auto', { game })).payload);
 }
 
@@ -219,7 +215,11 @@ export async function createInvitation(
   session: Session,
   matchId?: string,
 ): Promise<Invitation> {
-  const response = await client.rpc(session, 'invite.create', matchId === undefined ? {} : { matchId });
+  const response = await client.rpc(
+    session,
+    'invite.create',
+    matchId === undefined ? {} : { matchId },
+  );
   const payload: unknown = response.payload;
 
   if (
@@ -254,7 +254,11 @@ export async function resolveInvitation(
   // The link carries the password: the host chose to let this person in, so
   // asking them for it separately would defeat the invitation.
   return {
-    game: typeof payload['game'] === 'string' && ['pong', 'arena', 'battleship', 'artillery'].includes(payload['game']) ? payload['game'] : 'pong',
+    game:
+      typeof payload['game'] === 'string' &&
+      ['pong', 'arena', 'battleship', 'artillery', 'hockey'].includes(payload['game'])
+        ? payload['game']
+        : 'pong',
     matchId: payload['matchId'],
     password: typeof payload['password'] === 'string' ? payload['password'] : '',
   };

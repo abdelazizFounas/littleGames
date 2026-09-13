@@ -45,8 +45,8 @@
 		X-Content-Type-Options nosniff
 		Referrer-Policy strict-origin-when-cross-origin
 		X-Frame-Options DENY
-		Permissions-Policy "camera=(), microphone=(), geolocation=()"
-		Content-Security-Policy "default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self'; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'"
+		Permissions-Policy "camera=(), microphone=(self), geolocation=()"
+		Content-Security-Policy "default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; media-src 'self' blob:; connect-src 'self'; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'"
 		Strict-Transport-Security "max-age=31536000; includeSubDomains"
 		-Server
 	}
@@ -63,6 +63,10 @@
 	@nakama path /v2/* /ws /healthcheck
 	handle @nakama {
 		reverse_proxy nakama:7350
+	}
+
+	handle /peerjs* {
+		reverse_proxy peerjs:9000
 	}
 
 	# Everything else is the web client.

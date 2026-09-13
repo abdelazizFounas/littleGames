@@ -10,6 +10,9 @@ const codeInternal = 13
 
 // Register wires the custom functions into the server.
 func Register(initializer runtime.Initializer) error {
+	if err := initializer.RegisterRpc("voice_room", voiceRoom); err != nil {
+		return err
+	}
 	if err := registerLobbies(initializer); err != nil {
 		return err
 	}

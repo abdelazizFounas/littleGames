@@ -232,6 +232,15 @@ func (m *ArtilleryMatch) MatchTerminate(_ context.Context, _ runtime.Logger, _ *
 }
 func (m *ArtilleryMatch) MatchSignal(_ context.Context, _ runtime.Logger, _ *sql.DB, _ runtime.NakamaModule, _ runtime.MatchDispatcher, _ int64, state interface{}, data string) (interface{}, string) {
 	s := state.(*artilleryMatchState)
+	roster := map[string]string{}
+	for _, player := range s.players {
+		if player != nil && player.presence != nil {
+			roster[player.id] = player.name
+		}
+	}
+	if answer, handled := voiceSignal(data, s.matchID, roster); handled {
+		return s, answer
+	}
 	if s.sim.Phase != "setup" || s.players[0] != nil && s.players[1] != nil || s.password != "" && data != s.password {
 		return s, SignalRefused
 	}

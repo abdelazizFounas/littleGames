@@ -70,6 +70,7 @@ export async function createPractice(
         listeners.onPause();
       }
     },
+    onPause: () => pause(),
     onOpenSettings: () => {
       active = false;
       input.setEnabled(false);
@@ -78,6 +79,7 @@ export async function createPractice(
     },
   });
   input.start();
+  input.setEnabled(false);
   input.faceSeat('north');
   const resize = () => renderer.resize(container.clientWidth, container.clientHeight);
   const observer = new ResizeObserver(resize);

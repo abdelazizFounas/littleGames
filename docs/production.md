@@ -1,8 +1,8 @@
 # Production validation and deployment
 
 All application code, documentation, and interface text use English. The public
-catalog has three games: Rift Arena (3D), Neon Pong (2D), and Fleet Command (2D).
-All three games include local practice against bots, with Easy, Hard, and Extra Hard settings. Fleet Command uses a responsive DOM/SVG console for both practice and online play. Online games use Nakama's
+catalog has five games: Rift Arena (3D), Neon Pong, Fleet Command, Pocket Artillery, and Ice Clash (2D).
+All five games include local practice against bots, with Easy, Hard, and Extra Hard settings. Fleet Command uses a responsive DOM/SVG console for both practice and online play. Online games use Nakama's
 authoritative Go simulation, with matching TypeScript rules on the client.
 
 ## Local development
@@ -28,7 +28,7 @@ pnpm audit
 `pnpm check` runs TypeScript checking, lint, unit tests, and the PWA production
 build. Browser tests cover desktop and mobile catalog layouts, filtering,
 sign-in routing, help pages, practice lifecycle, and independent touch pointers.
-`pnpm test:production` builds the app and verifies all three practice games
+`pnpm test:production` builds the app and verifies all five practice games
 offline under the exact Content Security Policy from the production Caddyfile.
 Set `PLAYWRIGHT_CHROMIUM_EXECUTABLE` to use an existing Chromium installation.
 
@@ -53,7 +53,7 @@ match. Pong checks shared lobbies, two players, and rejection of a third player.
 
 ## Deployment configuration
 
-The production Compose overlay builds the frontend and the Go plugin. Set these
+The production Compose stack builds the frontend, the Go plugin, and a self-hosted PeerJS signaling service. Caddy waits for Nakama and PeerServer health checks. `/peerjs` shares the application origin and needs no extra public port. Set these
 values in the server's existing `.env` before building:
 
 - `CADDY_SITE_ADDRESS`: the canonical public hostname, without a scheme.
@@ -67,7 +67,7 @@ values in the server's existing `.env` before building:
 Only the Nakama socket server key is intentionally public. Never place a private
 key in a `VITE_` variable. The browser and API must share an origin under the
 production Content Security Policy. Pixi's static shader binding module allows
-both 2D games to run without allowing JavaScript string evaluation.
+Pong to run without allowing JavaScript string evaluation.
 
 Point the two hostnames at the host and allow ports 80 and 443. Preserve the
 PostgreSQL and Caddy certificate volumes across releases. Keep a tested database
@@ -110,16 +110,16 @@ player-capacity limit.
 
 ## Validation recorded for this change
 
-- 620 TypeScript unit tests across 45 files passed.
-- 25 desktop/mobile browser tests and the production/offline test cover all nine game/difficulty combinations.
+- 653 TypeScript unit tests across 50 files passed.
+- 46 desktop/mobile browser tests and the production/offline test cover all fifteen game/difficulty combinations, mobile fullscreen, real P2P voice, and match reconnects.
 - Type checking, lint, production build, and all Go package tests passed.
 - Go's race detector passed for the match handlers and RPC package.
 - Live Pong, Fleet Command, and Arena verification scripts completed successfully.
 - Two isolated browser profiles joined private Arena and Fleet Command invitations;
   Arena also rejoined its seat after reload without browser errors.
-- The dependency audit reported zero known advisories at validation time.
+- The frontend and signaling dependency audits reported zero known advisories at validation time. PeerServer overrides `qs` to 6.16.0 to avoid the vulnerable Express transitive version.
 
-Build output includes a size warning for the dynamically loaded 3D engine chunk.
+Build output includes a size warning for the dynamically loaded 3D engine chunk. PeerJS is loaded only after joining voice.
 The initial page does not load that renderer; the PWA intentionally precaches
 practice assets to support offline play.
 
@@ -168,3 +168,7 @@ afloat ships stay private, verifies both flight directions and sinking effects,
 and reloads the attacking client to check the retained wreck. All Go package
 tests, type checking, lint, the production build, and production CSP/offline
 validation passed for this update.
+
+## Voice and new games
+
+See [voice, Ice Clash, Pocket Artillery, and Arena settings](voice-and-hockey.md) for rules, controls, the Google STUN network limitation, signaling deployment, and integration checks. The microphone Permissions Policy permits the same origin; voice is opt-in and has no recordings.

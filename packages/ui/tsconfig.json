@@ -47,6 +47,9 @@
     },
     {
       "path": "../games/artillery/logic"
+    },
+    {
+      "path": "../games/hockey/logic"
     }
   ]
 }

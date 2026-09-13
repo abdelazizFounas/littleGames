@@ -371,6 +371,14 @@ func (m *ArenaMatch) MatchSignal(
 	if !ok {
 		return state, SignalRefused
 	}
+	roster := map[string]string{}
+	for id, player := range current.players {
+		roster[id] = player.presence.GetUsername()
+	}
+	if answer, handled := voiceSignal(data, current.matchID, roster); handled {
+		return current, answer
+	}
+
 	if current.sim.Phase == arena.PhaseFinished || len(current.players) >= Capacity {
 		return current, SignalRefused
 	}

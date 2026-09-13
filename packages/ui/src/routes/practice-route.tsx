@@ -7,6 +7,7 @@ import {
   saveLocalArenaSettings,
   hasCoarsePointer,
 } from '../features/game/arena-settings';
+import { HockeyGame } from '../features/hockey/hockey-game';
 import { ArtilleryPractice } from '../features/artillery/artillery-practice';
 import { FleetPractice } from '../features/practice/fleet-practice';
 import {
@@ -37,29 +38,35 @@ export function PracticeRoute() {
       </section>
     );
   const descriptions =
-    game.id === 'artillery'
+    game.id === 'hockey'
       ? [
-          'Room to learn the arc.',
-          'Accurate shots. Smarter weapons.',
-          'Precise ballistics. Little mercy.',
+          'A forgiving first skate.',
+          'Faster pursuit. Sharper shots.',
+          'Aggressive interceptions and shots.',
         ]
-      : game.id === 'battleship'
+      : game.id === 'artillery'
         ? [
-            'A relaxed, random search.',
-            'Hunts for ships and follows hits.',
-            'Maps likely ship positions.',
+            'Room to learn the arc.',
+            'Accurate shots. Smarter weapons.',
+            'Precise ballistics. Little mercy.',
           ]
-        : game.id === 'arena'
+        : game.id === 'battleship'
           ? [
-              'Slower reactions. Room to learn.',
-              'Faster movement and sharper aim.',
-              'Precise aim. Relentless pressure.',
+              'A relaxed, random search.',
+              'Hunts for ships and follows hits.',
+              'Maps likely ship positions.',
             ]
-          : [
-              'Forgiving rallies. Time to react.',
-              'Predicts bounces and returns faster.',
-              'Quick reactions and precise returns.',
-            ];
+          : game.id === 'arena'
+            ? [
+                'Slower reactions. Room to learn.',
+                'Faster movement and sharper aim.',
+                'Precise aim. Relentless pressure.',
+              ]
+            : [
+                'Forgiving rallies. Time to react.',
+                'Predicts bounces and returns faster.',
+                'Quick reactions and precise returns.',
+              ];
   return (
     <section className="practice-page">
       <div className="practice-heading">
@@ -113,7 +120,9 @@ export function PracticeRoute() {
           Changing difficulty starts a fresh round. Practice results stay on this device.
         </p>
       </fieldset>
-      {game.id === 'artillery' ? (
+      {game.id === 'hockey' ? (
+        <HockeyGame key={`${game.id}:${difficulty}`} practice difficulty={difficulty} />
+      ) : game.id === 'artillery' ? (
         <ArtilleryPractice key={`${game.id}:${difficulty}`} difficulty={difficulty} />
       ) : game.id === 'battleship' ? (
         <FleetPractice key={`${game.id}:${difficulty}`} difficulty={difficulty} />
@@ -233,7 +242,7 @@ function PracticeGame({
       <div ref={frame} className="practice-frame">
         <div
           ref={container}
-          inert={settingsOpen || status !== 'playing'}
+          inert={settingsOpen}
           className={`stage__surface${gameId === 'arena' ? ' stage__surface--arena' : ''}`}
         />
         {gameId === 'arena' && !settingsOpen && (

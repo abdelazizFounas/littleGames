@@ -7,16 +7,18 @@ authoritative match logic in Go.
 The whole repository — code, identifiers, comments, UI strings, commit
 messages — is written in English.
 
-The public arcade includes **Rift Arena**, **Neon Pong**, and **Fleet Command**,
+The public arcade includes **Rift Arena**, **Neon Pong**, **Fleet Command**, **Pocket Artillery**, and **Ice Clash**,
 with searchable game cards, account and guest play, private invitations, profiles,
-and a rules guide. All three games have Easy, Hard, and Extra Hard local bot
+and a rules guide. All five games have Easy, Hard, and Extra Hard local bot
 practice with no account or server connection required after the app has been
 cached. Fleet Command shares a responsive DOM/SVG command console between
 online and practice games, with torpedo flights, impact effects, and revealed wrecks.
 Only fully sunk enemy placements are disclosed by the server.
 
 Future game ideas and optional Fleet Command abilities are recorded in the
-[game and Fleet proposals](docs/game-and-fleet-proposals.md); these are proposals only.
+[game and Fleet proposals](docs/game-and-fleet-proposals.md); the remaining games and Fleet abilities are proposals only.
+
+Match voice uses self-hosted PeerJS signaling and Google STUN, with explicit microphone consent, local mute, and individual player mute. See [voice, hockey, and artillery](docs/voice-and-hockey.md) for implementation details and network limits.
 
 The current redesign and multiplayer fixes have been validated locally. See
 [production validation and deployment](docs/production.md) for commands,
@@ -67,10 +69,7 @@ Versions are re-checked at the start of each phase with `pnpm outdated` and
 | @babylonjs/core | `9.20.0` | `npm view @babylonjs/core dist-tags` |
 | @heroiclabs/nakama-js | `2.8.0` | `npm view @heroiclabs/nakama-js version` |
 
-Two engines, and they never meet: PixiJS draws the two flat games, Babylon draws
-the arena, and each is confined to the one package that implements the rendering
-contract with it. Both are reached by dynamic import, so a page that shows
-neither downloads neither.
+PixiJS draws Pong, Babylon draws Arena, DOM/SVG draws Fleet Command and Pocket Artillery, and Canvas 2D draws Ice Clash. The larger engines are reached by dynamic import. Game rules remain independent of rendering.
 
 ### Quality and build
 

@@ -12,6 +12,9 @@
 	@nakama path /v2/* /ws /healthcheck
 	reverse_proxy @nakama nakama:7350
 
+	@voice path /peerjs*
+	reverse_proxy @voice peerjs:9000
+
 	# Everything else is the web client. Unmatched paths reach its SPA fallback,
 	# so client-side routes such as /profile survive a reload.
 	reverse_proxy {$WEB_UPSTREAM}

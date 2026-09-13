@@ -1,6 +1,9 @@
 import type {
   ArtilleryConnection,
   ArtilleryMatchListeners,
+  HockeyConnection,
+  HockeyListeners,
+  VoiceMember,
   ArenaConnection,
   ArenaMatchListeners,
   BattleshipConnection,
@@ -48,6 +51,11 @@ export interface SessionContextValue {
   readonly changeDisplayName: (displayName: string) => Promise<void>;
   readonly signOutPlayer: () => Promise<void>;
   /** Loads the playable games. Requires a signed-in player. */
+  readonly voiceRoom: (
+    matchId: string,
+    action: 'join' | 'poll' | 'leave',
+    peerId: string,
+  ) => Promise<VoiceMember[]>;
   readonly loadCatalog: () => Promise<GameSummary[]>;
   /**
    * Finds a match with room to spare and joins it.
@@ -83,7 +91,16 @@ export interface SessionContextValue {
    * A third protocol over the same socket: quantised intent up, whole bodies
    * down, and a trailing window of the shots the server resolved.
    */
-  readonly joinArtillery: (listeners: ArtilleryMatchListeners, matchId: string, password?: string) => Promise<ArtilleryConnection>;
+  readonly joinHockey: (
+    listeners: HockeyListeners,
+    matchId: string,
+    password?: string,
+  ) => Promise<HockeyConnection>;
+  readonly joinArtillery: (
+    listeners: ArtilleryMatchListeners,
+    matchId: string,
+    password?: string,
+  ) => Promise<ArtilleryConnection>;
   readonly joinArena: (
     listeners: ArenaMatchListeners,
     matchId: string,

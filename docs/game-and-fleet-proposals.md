@@ -1,6 +1,6 @@
 # Next games and Fleet Command upgrades
 
-Status: proposals only. No game or ability in this document is implemented. All names are working titles.
+Status: Pocket Artillery was subsequently requested and implemented. All other games and all Fleet Command abilities below remain proposals only. Names for unimplemented games are working titles.
 
 ## Direction
 

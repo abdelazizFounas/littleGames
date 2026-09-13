@@ -1,4 +1,7 @@
 import {
+  joinHockeyMatch,
+  type HockeyListeners,
+  updateVoiceRoom,
   authenticateEmail,
   authenticateGuest,
   createBrowserKeyValueStore,
@@ -51,7 +54,11 @@ import { SessionContext, type SessionContextValue, type SessionState } from './s
 type InternalState =
   | { readonly status: 'loading' }
   | { readonly status: 'signed-out' }
-  | { readonly status: 'signed-in'; readonly session: PlayerSession; readonly profile: PlayerProfile };
+  | {
+      readonly status: 'signed-in';
+      readonly session: PlayerSession;
+      readonly profile: PlayerProfile;
+    };
 
 export function SessionProvider({ children }: { readonly children: ReactNode }): ReactNode {
   // Both are built once and never rebuilt: a new client would drop in-flight
@@ -194,10 +201,31 @@ export function SessionProvider({ children }: { readonly children: ReactNode }):
     [client, config, internal],
   );
 
-  const joinArtillery = useCallback(async (listeners: ArtilleryMatchListeners, matchId: string, password?: string): Promise<ArtilleryConnection> => {
-    if (internal.status !== 'signed-in') throw new Error('Sign in before joining a match.');
-    return joinArtilleryMatch(client, config, internal.session, matchId, listeners, password ?? '');
-  }, [client, config, internal]);
+  const joinHockey = useCallback(
+    async (listeners: HockeyListeners, matchId: string, password?: string) => {
+      if (internal.status !== 'signed-in') throw new Error('Sign in before joining a match.');
+      return joinHockeyMatch(client, config, internal.session, matchId, listeners, password ?? '');
+    },
+    [client, config, internal],
+  );
+  const joinArtillery = useCallback(
+    async (
+      listeners: ArtilleryMatchListeners,
+      matchId: string,
+      password?: string,
+    ): Promise<ArtilleryConnection> => {
+      if (internal.status !== 'signed-in') throw new Error('Sign in before joining a match.');
+      return joinArtilleryMatch(
+        client,
+        config,
+        internal.session,
+        matchId,
+        listeners,
+        password ?? '',
+      );
+    },
+    [client, config, internal],
+  );
   const joinArena = useCallback(
     async (
       listeners: ArenaMatchListeners,
@@ -270,7 +298,9 @@ export function SessionProvider({ children }: { readonly children: ReactNode }):
   );
 
   const resolveInvitation = useCallback(
-    async (code: string): Promise<{ readonly matchId: string; readonly password: string; readonly game: string }> => {
+    async (
+      code: string,
+    ): Promise<{ readonly matchId: string; readonly password: string; readonly game: string }> => {
       if (internal.status !== 'signed-in') {
         throw new Error('Sign in before opening an invitation.');
       }
@@ -310,11 +340,7 @@ export function SessionProvider({ children }: { readonly children: ReactNode }):
   );
 
   const saveGameSettings = useCallback(
-    async (
-      gameId: string,
-      settings: Record<string, unknown>,
-      updatedAt: number,
-    ): Promise<void> => {
+    async (gameId: string, settings: Record<string, unknown>, updatedAt: number): Promise<void> => {
       if (internal.status !== 'signed-in') {
         return;
       }
@@ -339,6 +365,13 @@ export function SessionProvider({ children }: { readonly children: ReactNode }):
     [internal],
   );
 
+  const voiceRoom = useCallback(
+    async (matchId: string, action: 'join' | 'poll' | 'leave', peerId: string) => {
+      if (internal.status !== 'signed-in') throw new Error('Sign in to join match voice.');
+      return updateVoiceRoom(client, internal.session, matchId, action, peerId);
+    },
+    [client, internal],
+  );
   const value = useMemo<SessionContextValue>(
     () => ({
       state,
@@ -349,6 +382,7 @@ export function SessionProvider({ children }: { readonly children: ReactNode }):
       signOutPlayer,
       loadCatalog,
       joinMatch,
+      joinHockey,
       joinArtillery,
       joinBattleship,
       joinArena,
@@ -356,6 +390,7 @@ export function SessionProvider({ children }: { readonly children: ReactNode }):
       resolveInvitation,
       loadStats,
       loadLeaderboard,
+      voiceRoom,
       loadGameSettings,
       saveGameSettings,
       findOpenLobby,
@@ -370,12 +405,14 @@ export function SessionProvider({ children }: { readonly children: ReactNode }):
       createInvitation,
       findOpenLobby,
       joinArena,
+      joinHockey,
       joinArtillery,
       joinBattleship,
       joinMatch,
       listMyMatches,
       listOpenLobbies,
       loadCatalog,
+      voiceRoom,
       loadGameSettings,
       loadLeaderboard,
       loadStats,

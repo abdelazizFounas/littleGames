@@ -37,7 +37,7 @@ type quickLobby struct {
 }
 
 var quickLobbies = map[string]*quickLobby{
-	match.ArtilleryName: {}, match.PongName: {}, match.BattleshipName: {}, match.ArenaName: {},
+	match.HockeyName: {}, match.ArtilleryName: {}, match.PongName: {}, match.BattleshipName: {}, match.ArenaName: {},
 }
 
 // KnownGames are the match handlers a lobby may be opened for.
@@ -45,6 +45,7 @@ var quickLobbies = map[string]*quickLobby{
 // Checked rather than trusted: the game id names a registered handler and goes
 // into a search query, and neither is somewhere to put whatever a client sent.
 var KnownGames = map[string]bool{
+	match.HockeyName:     true,
 	match.ArtilleryName:  true,
 	match.PongName:       true,
 	match.BattleshipName: true,

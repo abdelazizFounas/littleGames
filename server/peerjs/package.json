@@ -1,0 +1,11 @@
+{
+  "name": "littlegames-voice-signaling",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "peer": "1.0.2"
+  },
+  "overrides": {
+    "qs": "6.16.0"
+  }
+}

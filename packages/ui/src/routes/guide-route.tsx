@@ -1,19 +1,154 @@
 import { Link } from 'react-router';
 import { GAMES } from '../features/catalog/games';
 export function GuideRoute() {
-  return <div className="content-page"><p className="eyebrow">THE PLAYER’S HANDBOOK</p><h1>Easy to pick up.<br/><span className="lime">Hard to put down.</span></h1><p className="lede">Everything you need before your first friendly rivalry.</p>
-    <div className="guide-games">{GAMES.map(game => <article className="panel" key={game.id}><p className="eyebrow">{game.label}</p><h2>{game.name}</h2><p>{game.id === 'artillery' ? 'Choose an angle, power, and weapon to hit the rival tank. Wind bends the flight, and the moon has lower gravity. A hit ends your turn. Each round gives you two heavy rockets, two scatter shells, and a shield that costs a turn. The first player to the selected round target wins.' : game.id === 'arena' ? 'First to 7 eliminations wins. A tied final trade goes to sudden death. Move around your side, use crates as cover, and shoot across the ravine. One headshot, two torso hits, or three limb hits eliminate your opponent.' : game.id === 'pong' ? 'Move your paddle to return the ball. Change the angle of each bounce to catch your rival off guard. The first player to 11 points wins.' : 'Place your ships without overlapping, then take turns firing at the enemy grid. Sink your opponent’s entire fleet to win.'}</p><Link className="text-link" to={`/games/${game.id}`}>Open game →</Link></article>)}</div>
-    <section className="panel controls-guide"><h2>Know your controls</h2><div className="controls-table"><div><strong>Rift Arena</strong><span><kbd>WASD</kbd> (physical <kbd>ZQSD</kbd> on AZERTY) Move · Mouse to aim</span><span><kbd>Left click</kbd> Fire · <kbd>Right click</kbd> Scope</span><span><kbd>Space</kbd> Jump · <kbd>Shift</kbd> Crouch · <kbd>P</kbd> Settings · <kbd>Esc</kbd> Release the mouse</span></div><div><strong>Neon Pong</strong><span><kbd>↑</kbd> <kbd>↓</kbd> or <kbd>W</kbd> <kbd>S</kbd> Move your paddle</span><span>On a touchscreen, drag across the court to move.</span></div><div><strong>Fleet Command</strong><span>Select a ship, then a position. Press <kbd>R</kbd> to rotate. Select a target and choose “Fire torpedo”. Arrow keys navigate each grid.</span></div></div><p className="hint">Arena has two touch zones and dedicated buttons on mobile. Choose joystick or touchpad aiming. Customize controls and sensitivity in the in-game settings.</p></section>
-    <section className="faq"><h2>A few good questions.</h2>{[
-      ['Do I need an account?', 'Practice works without an account or a game server. For online duels, guest mode creates your player identity in one click. You can add an email address from your profile later.'],
-      ['How does practice difficulty work?', 'Every game has Easy, Hard, and Extra Hard bots. Arena changes reaction time, movement, and accuracy. Pong changes prediction, speed, and reaction time. Fleet Command progresses from random searching to probability-based targeting. Pocket Artillery changes ballistic precision and weapon selection. Fleet bots only know the results of their own shots. Changing difficulty starts a new round.'],
-      ['How do I play with a friend?', 'Open a game and choose “Create lobby”, then share the invitation link from your lobby. In Arena, both players must mark themselves ready to start the countdown.'],
-      ['Why did my shot miss?', 'Walls, crates, and pillars block bullets. Hip fire spreads when moving or jumping; the scope gives precise aim. The center hit marker confirms a registered hit. An unstable connection can still affect an online duel.'],
-      ['How do I get my mouse back?', 'Press Escape to release the mouse, then click the game to resume. Your browser may ask for permission to capture the pointer or enter fullscreen.'],
-      ['What if online games are unavailable?', 'Check your connection and try again. Practice for every game remains available without a game server. Online matches require a working connection to the multiplayer service.'],
-    ].map(([title, answer]) => <details key={title}><summary>{title}<span aria-hidden="true">+</span></summary><p>{answer}</p></details>)}</section>
-  </div>;
+  return (
+    <div className="content-page">
+      <p className="eyebrow">THE PLAYER’S HANDBOOK</p>
+      <h1>
+        Easy to pick up.
+        <br />
+        <span className="lime">Hard to put down.</span>
+      </h1>
+      <p className="lede">Everything you need before your first friendly rivalry.</p>
+      <div className="guide-games">
+        {GAMES.map((game) => (
+          <article className="panel" key={game.id}>
+            <p className="eyebrow">{game.label}</p>
+            <h2>{game.name}</h2>
+            <p>
+              {game.id === 'hockey'
+                ? 'First to five goals wins. Skate with WASD, ZQSD, or arrows and press Space to shoot. On mobile, drag the movement pad and tap Shoot. Cross the puck carrier closely to steal it. Goalkeepers move automatically; find the corners or use a rebound.'
+                : game.id === 'artillery'
+                  ? 'Choose an angle, power, and weapon to hit the rival tank. Wind bends the flight, and the moon has lower gravity. A hit ends your turn. Each round gives you two heavy rockets, two scatter shells, and a shield that costs a turn. The first player to the selected round target wins.'
+                  : game.id === 'arena'
+                    ? 'First to 7 eliminations wins. A tied final trade goes to sudden death. Move around your side, use crates as cover, and shoot across the ravine. One headshot, two torso hits, or three limb hits eliminate your opponent.'
+                    : game.id === 'pong'
+                      ? 'Move your paddle to return the ball. Change the angle of each bounce to catch your rival off guard. The first player to 11 points wins.'
+                      : 'Place your ships without overlapping, then take turns firing at the enemy grid. Sink your opponent’s entire fleet to win.'}
+            </p>
+            <Link className="text-link" to={`/games/${game.id}`}>
+              Open game →
+            </Link>
+          </article>
+        ))}
+      </div>
+      <section className="panel controls-guide">
+        <h2>Know your controls</h2>
+        <div className="controls-table">
+          <div>
+            <strong>Rift Arena</strong>
+            <span>
+              <kbd>WASD</kbd> (physical <kbd>ZQSD</kbd> on AZERTY) Move · Mouse to aim
+            </span>
+            <span>
+              <kbd>Left click</kbd> Fire · <kbd>Right click</kbd> Scope
+            </span>
+            <span>
+              <kbd>Space</kbd> Jump · <kbd>Shift</kbd> Crouch · <kbd>P</kbd> Settings ·{' '}
+              <kbd>Esc</kbd> Release the mouse
+            </span>
+          </div>
+          <div>
+            <strong>Neon Pong</strong>
+            <span>
+              <kbd>↑</kbd> <kbd>↓</kbd> or <kbd>W</kbd> <kbd>S</kbd> Move your paddle
+            </span>
+            <span>On a touchscreen, drag across the court to move.</span>
+          </div>
+          <div>
+            <strong>Fleet Command</strong>
+            <span>
+              Select a ship, then a position. Press <kbd>R</kbd> to rotate. Select a target and
+              choose “Fire torpedo”. Arrow keys navigate each grid.
+            </span>
+          </div>
+        </div>
+        <p className="hint">
+          Arena has two touch zones and dedicated buttons on mobile. Choose joystick or touchpad
+          aiming. Customize controls and sensitivity in the in-game settings.
+        </p>
+      </section>
+      <section className="faq">
+        <h2>A few good questions.</h2>
+        {[
+          [
+            'Do I need an account?',
+            'Practice works without an account or a game server. For online duels, guest mode creates your player identity in one click. You can add an email address from your profile later.',
+          ],
+          [
+            'How does practice difficulty work?',
+            'Every game has Easy, Hard, and Extra Hard bots. Arena changes reaction time, movement, and accuracy. Pong changes prediction, speed, and reaction time. Fleet Command progresses from random searching to probability-based targeting. Ice Clash changes pursuit speed, interceptions, and shooting. Pocket Artillery changes ballistic precision and weapon selection. Fleet bots only know the results of their own shots. Changing difficulty starts a new round.',
+          ],
+          [
+            'How do I play with a friend?',
+            'Open a game and choose “Create lobby”, then share the invitation link from your lobby. In Arena, both players must mark themselves ready to start the countdown.',
+          ],
+          [
+            'Why did my shot miss?',
+            'Walls, crates, and pillars block bullets. Hip fire spreads when moving or jumping; the scope gives precise aim. The center hit marker confirms a registered hit. An unstable connection can still affect an online duel.',
+          ],
+          [
+            'How do I get my mouse back?',
+            'Press Escape to release the mouse, then click the game to resume. Your browser may ask for permission to capture the pointer or enter fullscreen.',
+          ],
+          [
+            'What if online games are unavailable?',
+            'Check your connection and try again. Practice for every game remains available without a game server. Online matches require a working connection to the multiplayer service.',
+          ],
+        ].map(([title, answer]) => (
+          <details key={title}>
+            <summary>
+              {title}
+              <span aria-hidden="true">+</span>
+            </summary>
+            <p>{answer}</p>
+          </details>
+        ))}
+      </section>
+    </div>
+  );
 }
 export function PrivacyRoute() {
-  return <article className="content-page prose"><p className="eyebrow">YOUR DATA</p><h1>What the game remembers.</h1><p>LittleGames uses browser storage to remember your session, guest identifier, and game preferences.</p><h2>Online games</h2><p>The game server stores your profile, matches, results, and synchronized settings. Your display name may appear in lobbies and leaderboards. An email address is only requested when you choose to secure your account.</p><h2>Practice</h2><p>Practice games run in your browser. Their results are not submitted to multiplayer leaderboards.</p><h2>On this device</h2><p>You can sign out from the site menu. Clearing this site’s data in your browser removes the local session and preferences, but does not delete records already stored on the server. A guest account without an email address may become inaccessible.</p><h2>Offline access</h2><p>Your browser may cache the site and its games to load them faster. Multiplayer matches always require a connection.</p><Link className="button" to="/profile">Manage my profile →</Link></article>;
+  return (
+    <article className="content-page prose">
+      <p className="eyebrow">YOUR DATA</p>
+      <h1>What the game remembers.</h1>
+      <p>
+        LittleGames uses browser storage to remember your session, guest identifier, and game
+        preferences.
+      </p>
+      <h2>Match voice</h2>
+      <p>
+        Voice is optional. Joining asks for microphone permission and establishes direct audio
+        connections with other players in your match. Google STUN helps those connections find a
+        route; PeerJS signaling is hosted with the game. Your voice is not recorded by LittleGames.
+        Leave voice to stop your microphone and close the connections.
+      </p>
+      <h2>Online games</h2>
+      <p>
+        The game server stores your profile, matches, results, and synchronized settings. Your
+        display name may appear in lobbies and leaderboards. An email address is only requested when
+        you choose to secure your account.
+      </p>
+      <h2>Practice</h2>
+      <p>
+        Practice games run in your browser. Their results are not submitted to multiplayer
+        leaderboards.
+      </p>
+      <h2>On this device</h2>
+      <p>
+        You can sign out from the site menu. Clearing this site’s data in your browser removes the
+        local session and preferences, but does not delete records already stored on the server. A
+        guest account without an email address may become inaccessible.
+      </p>
+      <h2>Offline access</h2>
+      <p>
+        Your browser may cache the site and its games to load them faster. Multiplayer matches
+        always require a connection.
+      </p>
+      <Link className="button" to="/profile">
+        Manage my profile →
+      </Link>
+    </article>
+  );
 }

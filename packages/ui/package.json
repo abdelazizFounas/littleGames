@@ -13,16 +13,18 @@
   "dependencies": {
     "@littlegames/arena-logic": "workspace:*",
     "@littlegames/arena-renderer-babylon": "workspace:*",
+    "@littlegames/artillery-logic": "workspace:*",
     "@littlegames/battleship-logic": "workspace:*",
     "@littlegames/battleship-renderer-pixi": "workspace:*",
     "@littlegames/core": "workspace:*",
     "@littlegames/net": "workspace:*",
     "@littlegames/pong-logic": "workspace:*",
     "@littlegames/pong-renderer-pixi": "workspace:*",
+    "peerjs": "1.5.5",
     "react": "19.2.8",
     "react-dom": "19.2.8",
     "react-router": "8.3.0",
-    "@littlegames/artillery-logic": "workspace:*"
+    "@littlegames/hockey-logic": "workspace:*"
   },
   "devDependencies": {
     "@types/react": "19.2.18",

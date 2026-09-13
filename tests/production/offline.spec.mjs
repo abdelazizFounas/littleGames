@@ -1,9 +1,14 @@
 import { test, expect } from '@playwright/test';
 
-test('built games run under production CSP and remain available offline', async ({ page, context }) => {
+test('built games run under production CSP and remain available offline', async ({
+  page,
+  context,
+}) => {
   const errors = [];
-  page.on('pageerror', error => errors.push(error.message));
-  page.on('console', message => { if (message.type() === 'error') errors.push(message.text()); });
+  page.on('pageerror', (error) => errors.push(error.message));
+  page.on('console', (message) => {
+    if (message.type() === 'error') errors.push(message.text());
+  });
   await page.goto('/');
   await page.evaluate(() => navigator.serviceWorker.ready.then(() => true));
   await page.reload();
@@ -33,5 +38,8 @@ test('built games run under production CSP and remain available offline', async 
   await page.getByRole('button', { name: 'Start battle' }).click();
   await page.getByRole('button', { name: 'Fire shell' }).click();
   await expect(page.locator('.artillery-flight-trail')).toBeVisible();
+  await page.goto('/practice/hockey?difficulty=hard');
+  await page.getByRole('button', { name: 'Let’s play' }).click();
+  await expect(page.getByLabel('Ice hockey rink')).toBeVisible();
   expect(errors).toEqual([]);
 });

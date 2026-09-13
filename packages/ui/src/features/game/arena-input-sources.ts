@@ -85,6 +85,7 @@ export interface ArenaInputListeners {
   onLockChange: (locked: boolean, expected: boolean) => void;
   /** The settings key was pressed. */
   onOpenSettings: () => void;
+  onPause?: () => void;
 }
 
 /** Yaw and pitch as a world-space direction, which is all the rules accept. */
@@ -242,7 +243,8 @@ export function createArenaInput(
     }
     if (event.code === SETTINGS_CODE || event.code === 'Escape') {
       event.preventDefault();
-      listeners.onOpenSettings();
+      if (event.code === 'Escape' && listeners.onPause) listeners.onPause();
+      else listeners.onOpenSettings();
       return;
     }
     const bound = Object.values(settings.keys).includes(event.code);
@@ -414,6 +416,7 @@ export function createArenaInput(
       return;
     }
     locked = next;
+    if (next) surface.focus({ preventScroll: true });
     const expected = releasing;
     releasing = false;
     if (!locked) {

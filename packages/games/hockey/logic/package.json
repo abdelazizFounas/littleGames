@@ -1,0 +1,13 @@
+{
+  "name": "@littlegames/hockey-logic",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Fixed-step arcade ice hockey physics.",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --build"
+  }
+}

@@ -35,22 +35,12 @@ export type { GameSummary } from './catalog';
 export { fetchGameCatalog, toGameSummary } from './catalog';
 
 export type { NakamaAccount, PlayerProfile } from './account';
-export {
-  displayNameOf,
-  fetchPlayerProfile,
-  toPlayerProfile,
-  updateDisplayName,
-} from './account';
+export { displayNameOf, fetchPlayerProfile, toPlayerProfile, updateDisplayName } from './account';
 
 export type { ConnectionState, MatchSocket, MatchSocketListeners } from './match-socket';
 export { openMatchSocket } from './match-socket';
 
-export type {
-  LobbySummary,
-  MatchConnection,
-  MatchListeners,
-  ResumableMatch,
-} from './match';
+export type { LobbySummary, MatchConnection, MatchListeners, ResumableMatch } from './match';
 export type { Invitation } from './match';
 export {
   autoLobby,
@@ -80,4 +70,10 @@ export { fetchLeaderboard, fetchPlayerStats } from './stats';
 
 export type { StoredSettings } from './settings';
 export { fetchGameSettings, saveGameSettings } from './settings';
-export { joinArtilleryMatch, type ArtilleryConnection, type ArtilleryMatchListeners } from './artillery-match';
+export {
+  joinArtilleryMatch,
+  type ArtilleryConnection,
+  type ArtilleryMatchListeners,
+} from './artillery-match';
+export { updateVoiceRoom, type VoiceMember } from './voice';
+export { joinHockeyMatch, type HockeyConnection, type HockeyListeners } from './hockey-match';

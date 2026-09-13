@@ -8,6 +8,18 @@ name: littlegames
 # is the answer once this leaves a development machine.
 
 services:
+  peerjs:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.peerjs
+    restart: unless-stopped
+    expose:
+      - '9000'
+    healthcheck:
+      test: ['CMD', 'node', '-e', 'fetch("http://127.0.0.1:9000/peerjs").then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))']
+      interval: 15s
+      timeout: 5s
+      retries: 3
   postgres:
     image: postgres:18.4-trixie
     restart: unless-stopped
@@ -78,6 +90,8 @@ services:
     restart: unless-stopped
     depends_on:
       nakama:
+        condition: service_healthy
+      peerjs:
         condition: service_healthy
     environment:
       CADDY_SITE_ADDRESS: ${CADDY_SITE_ADDRESS:?set CADDY_SITE_ADDRESS in .env, see .env.example}

@@ -36,7 +36,7 @@ export default defineConfig(({ mode }) => {
           // The shell is cached so the app opens without a network. Nothing
           // under the API is: a match is live state, and a cached snapshot of
           // it would be a lie told confidently.
-          navigateFallbackDenylist: [/^\/v2\//, /^\/ws/, /^\/healthcheck/],
+          navigateFallbackDenylist: [/^\/peerjs/, /^\/v2\//, /^\/ws/, /^\/healthcheck/],
           globPatterns: ['**/*.{js,css,html,svg,png}'],
         },
       }),
@@ -56,9 +56,9 @@ export default defineConfig(({ mode }) => {
       // routes the API, and duplicating that routing would give development two
       // sets of rules that can disagree.
       host: true,
+      proxy: { '/peerjs': { target: 'http://127.0.0.1:9000', ws: true } },
       // Vite derives the HMR address from the page origin, so direct localhost
       // development and a Caddy reverse proxy both work without a forced port.
-
     },
   };
 });
