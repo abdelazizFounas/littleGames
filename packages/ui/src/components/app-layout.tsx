@@ -11,7 +11,7 @@ export function AppLayout() {
   const { pathname } = useLocation();
   useEffect(() => {
     window.scrollTo(0, 0);
-    const labels: Record<string, string> = {'/': 'Small games, big rivalries', '/guide': 'How to play', '/login': 'Sign in', '/privacy': 'Your data', '/profile': 'My profile', '/games/arena': 'Rift Arena', '/games/pong': 'Neon Pong', '/games/battleship': 'Fleet Command', '/practice/arena': 'Rift Arena practice', '/practice/pong': 'Neon Pong practice'};
+    const labels: Record<string, string> = {'/': 'Small games, big rivalries', '/guide': 'How to play', '/login': 'Sign in', '/privacy': 'Your data', '/profile': 'My profile', '/games/arena': 'Rift Arena', '/games/pong': 'Neon Pong', '/games/battleship': 'Fleet Command', '/practice/arena': 'Rift Arena practice', '/practice/pong': 'Neon Pong practice', '/practice/battleship': 'Fleet Command practice'};
     document.title = `${labels[pathname] ?? 'Your move'} · LittleGames`;
   }, [pathname]);
   return <>

@@ -2,7 +2,7 @@
 
 All application code, documentation, and interface text use English. The public
 catalog has three games: Rift Arena (3D), Neon Pong (2D), and Fleet Command (2D).
-Arena and Pong include local practice against bots. Online games use Nakama's
+All three games include local practice against bots, with Easy, Hard, and Extra Hard settings. Fleet Command uses a responsive DOM/SVG console for both practice and online play. Online games use Nakama's
 authoritative Go simulation, with matching TypeScript rules on the client.
 
 ## Local development
@@ -28,7 +28,7 @@ pnpm audit
 `pnpm check` runs TypeScript checking, lint, unit tests, and the PWA production
 build. Browser tests cover desktop and mobile catalog layouts, filtering,
 sign-in routing, help pages, practice lifecycle, and independent touch pointers.
-`pnpm test:production` builds the app and verifies both practice renderers
+`pnpm test:production` builds the app and verifies all three practice games
 offline under the exact Content Security Policy from the production Caddyfile.
 Set `PLAYWRIGHT_CHROMIUM_EXECUTABLE` to use an existing Chromium installation.
 
@@ -102,15 +102,16 @@ worker revalidate. PWA installation supports portrait and landscape browsing.
 The redesign was checked locally with Chromium, including software WebGL,
 multiple viewport sizes, real Nakama clients, production CSP, and offline
 navigation. Automated accessibility scans cover the homepage, rules, sign-in,
-Arena lobby, and privacy page; canvas gameplay still needs human usability
-review. Real-device Safari/Firefox testing, public TLS/DNS, the Docker production
-stack, load testing, and an actual deployment were not performed in this
-workspace. Local checks do not establish an unmeasured player-capacity limit.
+Arena lobby, and privacy page; Arena and Pong canvas gameplay still needs human usability
+review. The Docker stack, public HTTPS routing, and production invitations have also
+been checked. Real-device Safari/Firefox testing and load testing remain
+separate acceptance checks. These checks do not establish an unmeasured
+player-capacity limit.
 
 ## Validation recorded for this change
 
-- 607 TypeScript unit tests across 43 files passed.
-- Eight desktop/mobile browser tests and the production/offline test passed.
+- 616 TypeScript unit tests across 44 files passed.
+- 23 desktop/mobile browser tests and the production/offline test cover all nine game/difficulty combinations.
 - Type checking, lint, production build, and all Go package tests passed.
 - Go's race detector passed for the match handlers and RPC package.
 - Live Pong, Fleet Command, and Arena verification scripts completed successfully.
@@ -121,3 +122,29 @@ workspace. Local checks do not establish an unmeasured player-capacity limit.
 Build output includes a size warning for the dynamically loaded 3D engine chunk.
 The initial page does not load that renderer; the PWA intentionally precaches
 practice assets to support offline play.
+
+## Fleet Command and practice difficulty
+
+Fleet Command uses the same accessible DOM/SVG board for online and local play.
+Select a vessel and a grid position; the next unplaced ship is selected
+immediately. R rotates the selected ship. Auto arrange produces a legal fleet.
+Select an enemy coordinate and choose Fire torpedo to commit the shot. Arrow
+keys navigate the grids. The interface never receives the opponent's hidden
+fleet in either mode.
+
+Each practice route accepts `?difficulty=easy`, `hard`, or `extra-hard`.
+Changing the selector starts a new round, and links to other practice games
+preserve the chosen difficulty. Arena changes reaction delay, aiming error,
+firing cadence, and movement. Pong changes reaction delay, movement speed, and
+bounce prediction. Fleet progresses from random search to pursuit and then
+probability scoring using only public shot results. Scores stay off leaderboards.
+
+Run the optional Fleet online browser test against an isolated Nakama server:
+
+```sh
+NAKAMA_INTEGRATION=1 NAKAMA_SOCKET_SERVER_KEY=your-public-test-key pnpm test:e2e
+```
+
+It checks private invitations, deployment before the opponent joins, firing,
+hidden fleets, and reloading an active match. The regular browser suite does not
+require a multiplayer server.

@@ -9,8 +9,10 @@ messages — is written in English.
 
 The public arcade includes **Rift Arena**, **Neon Pong**, and **Fleet Command**,
 with searchable game cards, account and guest play, private invitations, profiles,
-and a rules guide. Arena and Pong also have local bot practice with no account
-or server connection required after the app has been cached.
+and a rules guide. All three games have Easy, Hard, and Extra Hard local bot
+practice with no account or server connection required after the app has been
+cached. Fleet Command shares a responsive DOM/SVG command console between
+online and practice games.
 
 The current redesign and multiplayer fixes have been validated locally. See
 [production validation and deployment](docs/production.md) for commands,

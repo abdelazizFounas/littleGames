@@ -66,7 +66,7 @@ for (const game of ['arena', 'pong']) {
     await expect(page.getByRole('button', { name: 'Resume game' })).toBeVisible();
     await page.getByRole('button', { name: 'Restart', exact: true }).click();
     await expect(play).toBeVisible();
-    await page.getByRole('link', { name: /Try .* practice/ }).click();
+    await page.getByRole('link', { name: /Try .* practice/ }).first().click();
     await expect(page.locator('canvas')).toHaveCount(1);
     expect(errors).toEqual([]);
   });

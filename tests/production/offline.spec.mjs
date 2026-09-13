@@ -24,5 +24,10 @@ test('built games run under production CSP and remain available offline', async 
     await page.keyboard.press('Escape');
     await expect(page.getByRole('button', { name: 'Resume game' })).toBeVisible();
   }
+  await page.goto('/practice/battleship?difficulty=extra-hard');
+  await page.getByRole('button', { name: 'Let’s play' }).click();
+  await page.getByRole('button', { name: 'Auto arrange' }).click();
+  await page.getByRole('button', { name: 'Deploy fleet' }).click();
+  await expect(page.getByRole('heading', { name: 'Your move, commander.' })).toBeVisible();
   expect(errors).toEqual([]);
 });

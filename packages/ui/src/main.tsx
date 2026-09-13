@@ -4,6 +4,7 @@ import { ErrorBoundary } from './components/error-boundary';
 import { App } from './app';
 import './styles/global.css';
 import './styles/arcade.css';
+import './styles/fleet.css';
 
 const container = document.getElementById('root');
 if (container === null) {

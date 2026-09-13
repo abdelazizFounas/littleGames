@@ -202,3 +202,5 @@ kbd { display: inline-block; padding: 2px 6px; font: 11px monospace; background:
 @media (max-width: 760px) { .match-heading { align-items: flex-start; flex-direction: column; gap: 8px; } .match-page .stage__surface--arena { height: 50svh; min-height: 260px; aspect-ratio: auto; } }
 .practice-fullscreen-exit { display: none; }
 .practice-frame:fullscreen .practice-fullscreen-exit { display: block; position: absolute; z-index: 30; right: 14px; bottom: 14px; }
+/* Keep the keyboard skip link clipped until focused, including full-page captures. */
+.skip-link:not(:focus) { clip-path: inset(50%); }
