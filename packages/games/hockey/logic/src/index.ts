@@ -8,6 +8,10 @@ export interface Skater {
   dx: number;
   dy: number;
   cooldown: number;
+  charge: number;
+  down: number;
+  swing: number;
+  swingPower: number;
 }
 export interface Puck {
   x: number;
@@ -32,6 +36,7 @@ export interface HockeyInput {
   x: number;
   y: number;
   shoot: boolean;
+  charging?: boolean;
 }
 export const NO_INPUT: HockeyInput = { x: 0, y: 0, shoot: false };
 export function createHockey(): HockeyState {
@@ -40,8 +45,32 @@ export function createHockey(): HockeyState {
     phase: 'waiting',
     countdown: 90,
     players: [
-      { x: 340, y: 300, vx: 0, vy: 0, dx: 1, dy: 0, cooldown: 0 },
-      { x: 660, y: 300, vx: 0, vy: 0, dx: -1, dy: 0, cooldown: 0 },
+      {
+        x: 340,
+        y: 300,
+        vx: 0,
+        vy: 0,
+        dx: 1,
+        dy: 0,
+        cooldown: 0,
+        charge: 0,
+        down: 0,
+        swing: 0,
+        swingPower: 0,
+      },
+      {
+        x: 660,
+        y: 300,
+        vx: 0,
+        vy: 0,
+        dx: -1,
+        dy: 0,
+        cooldown: 0,
+        charge: 0,
+        down: 0,
+        swing: 0,
+        swingPower: 0,
+      },
     ],
     puck: { x: 500, y: 300, vx: 0, vy: 0, owner: -1, lock: 0 },
     goalies: [300, 300],
@@ -75,7 +104,13 @@ export function step(state: HockeyState, inputs: readonly HockeyInput[]): Hockey
   for (let i = 0; i < 2; i++) {
     const player = next.players[i];
     if (!player) continue;
-    const input = inputs[i] ?? NO_INPUT;
+    const requested = inputs[i] ?? NO_INPUT;
+    player.down = Math.max(0, player.down - 1);
+    player.swing = Math.max(0, player.swing - 1);
+    const input = player.down > 0 ? NO_INPUT : requested;
+    if (input.charging && player.cooldown === 0)
+      player.charge = Math.min(1, player.charge + 1 / 90);
+    if (player.down > 0) player.charge = 0;
     let x = Number.isFinite(input.x) ? clamp(input.x, -1, 1) : 0,
       y = Number.isFinite(input.y) ? clamp(input.y, -1, 1) : 0;
     const length = Math.hypot(x, y);
@@ -113,10 +148,15 @@ export function step(state: HockeyState, inputs: readonly HockeyInput[]): Hockey
     const dx = b.x - a.x,
       dy = b.y - a.y,
       distance = Math.hypot(dx, dy);
-    // Steal before separating bodies: a close physical interception transfers possession.
-    if (distance < 36 && puck.owner >= 0 && puck.lock === 0) {
-      puck.owner = 1 - puck.owner;
-      puck.lock = 25;
+    // The carrier shields the puck with their body: contact from behind cannot steal it.
+    const carrier = next.players[puck.owner];
+    const thief = next.players[1 - puck.owner];
+    if (distance < 39 && carrier && thief && thief.down === 0 && puck.lock === 0) {
+      const front = (thief.x - carrier.x) * carrier.dx + (thief.y - carrier.y) * carrier.dy;
+      if (front > distance * 0.25 && Math.hypot(thief.x - puck.x, thief.y - puck.y) < 44) {
+        puck.owner = 1 - puck.owner;
+        puck.lock = 25;
+      }
     }
     if (distance < 36) {
       const nx = distance > 0.001 ? dx / distance : 1,
@@ -136,8 +176,27 @@ export function step(state: HockeyState, inputs: readonly HockeyInput[]): Hockey
     const player = next.players[i],
       input = inputs[i] ?? NO_INPUT;
     if (!player) continue;
-    if (input.shoot && player.cooldown === 0) {
+    if (input.shoot && player.cooldown === 0 && player.down === 0) {
+      const power = player.charge;
       player.cooldown = 24;
+      player.swingPower = power;
+      player.swing = 12 + Math.round(power * 10);
+      const opponent = next.players[1 - i];
+      if (opponent && opponent.down === 0) {
+        const dx = opponent.x - player.x,
+          dy = opponent.y - player.y;
+        const distance = Math.hypot(dx, dy);
+        if (distance < 53 + power * 10 && dx * player.dx + dy * player.dy > distance * 0.35) {
+          opponent.down = 6 + Math.round(power * 12);
+          opponent.charge = 0;
+          if (puck.owner === 1 - i) {
+            puck.owner = -1;
+            puck.lock = 12;
+            puck.vx = opponent.vx;
+            puck.vy = opponent.vy;
+          }
+        }
+      }
       if (
         puck.owner === i ||
         (puck.owner === -1 && Math.hypot(puck.x - player.x, puck.y - player.y) < 47)
@@ -146,10 +205,13 @@ export function step(state: HockeyState, inputs: readonly HockeyInput[]): Hockey
         puck.lock = 18;
         puck.x = player.x + player.dx * 33;
         puck.y = player.y + player.dy * 33;
-        puck.vx = player.dx * 16 + player.vx * 0.4;
-        puck.vy = player.dy * 16 + player.vy * 0.4;
+        puck.vx = player.dx * (12 + power * 14) + player.vx * 0.4;
+        puck.vy = player.dy * (12 + power * 14) + player.vy * 0.4;
       }
     }
+    if (!input.charging || input.shoot || player.down > 0) player.charge = 0;
+    player.x = clamp(player.x, 58, 942);
+    player.y = clamp(player.y, 68, 532);
   }
   if (puck.owner >= 0) {
     const owner = next.players[puck.owner];
@@ -215,7 +277,7 @@ export function step(state: HockeyState, inputs: readonly HockeyInput[]): Hockey
       const player = next.players[i];
       if (!player) continue;
       const distance = Math.hypot(player.x - puck.x, player.y - puck.y);
-      if (distance < closest) {
+      if (distance < closest && player.down === 0) {
         puck.owner = i;
         closest = distance;
         puck.lock = 15;
@@ -257,10 +319,18 @@ export function botInput(
     return {
       x: (gx / gl) * speed,
       y: (gy / gl) * speed,
-      shoot: state.tick % (difficulty === 'easy' ? 50 : difficulty === 'hard' ? 25 : 12) === 0,
+      charging: state.tick % 100 < (difficulty === 'easy' ? 12 : difficulty === 'hard' ? 28 : 45),
+      shoot: state.tick % 100 === (difficulty === 'easy' ? 12 : difficulty === 'hard' ? 28 : 45),
     };
   }
-  return { x: (dx / length) * speed, y: (dy / length) * speed, shoot: false };
+  const rival = state.players[1 - seat];
+  const checking = !owns && rival && Math.hypot(rival.x - player.x, rival.y - player.y) < 85;
+  return {
+    x: (dx / length) * speed,
+    y: (dy / length) * speed,
+    charging: Boolean(checking && state.tick % 60 < 18),
+    shoot: Boolean(checking && state.tick % 60 === 18),
+  };
 }
 export interface HockeySnapshot {
   version: number;
@@ -277,7 +347,7 @@ export function isHockeySnapshot(value: unknown): value is HockeySnapshot {
     typeof value.state !== 'object' ||
     !value.state ||
     !('version' in value) ||
-    value.version !== 1 ||
+    value.version !== 2 ||
     !('seat' in value) ||
     (value.seat !== 0 && value.seat !== 1)
   )
@@ -292,9 +362,19 @@ export function isHockeySnapshot(value: unknown): value is HockeySnapshot {
       (p) =>
         typeof p === 'object' &&
         p !== null &&
-        ['x', 'y', 'vx', 'vy', 'dx', 'dy', 'cooldown'].every(
-          (key) => typeof p[key] === 'number' && Number.isFinite(p[key]),
-        ),
+        [
+          'x',
+          'y',
+          'vx',
+          'vy',
+          'dx',
+          'dy',
+          'cooldown',
+          'charge',
+          'down',
+          'swing',
+          'swingPower',
+        ].every((key) => typeof p[key] === 'number' && Number.isFinite(p[key])),
     ) &&
     'puck' in s &&
     typeof s.puck === 'object' &&

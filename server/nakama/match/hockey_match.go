@@ -132,7 +132,7 @@ func (s *hockeyMatchState) broadcast(d runtime.MatchDispatcher) {
 			Seat      int          `json:"seat"`
 			Names     []string     `json:"names"`
 			Connected []bool       `json:"connected"`
-		}{1, s.sim, i, names, connected})
+		}{2, s.sim, i, names, connected})
 		_ = d.BroadcastMessage(3, payload, []runtime.Presence{p.presence}, nil, false)
 	}
 }
@@ -144,18 +144,19 @@ func (m *HockeyMatch) MatchLoop(ctx context.Context, logger runtime.Logger, _ *s
 			continue
 		}
 		var in struct {
-			Version int     `json:"version"`
-			Seq     int     `json:"seq"`
-			X       float64 `json:"x"`
-			Y       float64 `json:"y"`
-			Shots   int     `json:"shots"`
+			Version  int     `json:"version"`
+			Seq      int     `json:"seq"`
+			X        float64 `json:"x"`
+			Y        float64 `json:"y"`
+			Shots    int     `json:"shots"`
+			Charging bool    `json:"charging"`
 		}
-		if json.Unmarshal(message.GetData(), &in) != nil || in.Version != 1 || in.Seq <= s.players[seat].seq || math.IsNaN(in.X) || math.IsNaN(in.Y) || math.IsInf(in.X, 0) || math.IsInf(in.Y, 0) || in.Shots < 0 {
+		if json.Unmarshal(message.GetData(), &in) != nil || in.Version != 2 || in.Seq <= s.players[seat].seq || math.IsNaN(in.X) || math.IsNaN(in.Y) || math.IsInf(in.X, 0) || math.IsInf(in.Y, 0) || in.Shots < 0 {
 			continue
 		}
 		p := s.players[seat]
 		p.seq = in.Seq
-		p.input = hockey.Input{X: in.X, Y: in.Y, Shoot: p.input.Shoot || in.Shots > p.shots}
+		p.input = hockey.Input{X: in.X, Y: in.Y, Shoot: p.input.Shoot || in.Shots > p.shots, Charging: in.Charging}
 		p.shots = max(p.shots, in.Shots)
 		p.lastInput = tick
 	}

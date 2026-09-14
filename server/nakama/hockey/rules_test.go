@@ -26,7 +26,7 @@ func TestSharedPhysicsVectors(t *testing.T) {
 			t.Fatalf("physics mismatch at vector %d", i)
 		}
 		for seat, p := range next.Players {
-			if math.Abs(p.X-v.After.Players[seat].X) > 1e-7 || math.Abs(p.Y-v.After.Players[seat].Y) > 1e-7 {
+			if p.Down != v.After.Players[seat].Down || p.Swing != v.After.Players[seat].Swing || math.Abs(p.Charge-v.After.Players[seat].Charge) > 1e-7 || math.Abs(p.SwingPower-v.After.Players[seat].SwingPower) > 1e-7 || math.Abs(p.X-v.After.Players[seat].X) > 1e-7 || math.Abs(p.Y-v.After.Players[seat].Y) > 1e-7 {
 				t.Fatalf("skater mismatch at vector %d", i)
 			}
 		}

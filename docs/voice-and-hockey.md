@@ -22,13 +22,15 @@ References: [PeerJS Peer API](https://peerjs.com/client/api/peer), [media calls]
 
 ## Ice Clash
 
-Ice Clash is a one-on-one arcade hockey game with automatic goalkeepers. Use WASD, ZQSD, or the arrow keys to skate; Space shoots in the direction the player faces. On touchscreens, drag the skate control and tap Shoot. The first player to five goals wins. Each goal returns the players and puck to a center faceoff.
+Ice Clash is a one-on-one arcade hockey game with automatic goalkeepers. Use WASD, ZQSD, or the arrow keys to skate; Hold Space for up to 1.5 seconds, then release to strike in the direction the player faces. On touchscreens, the transparent skate and Strike controls sit over the rink; hold and release Strike to charge. A tap produces a quick shot, while a full charge more than doubles its speed. The first player to five goals wins. Each goal returns the players and puck to a center faceoff.
 
-The simulation advances in fixed 1/60-second steps. Skater acceleration is gradual, velocity retains 0.96 per step, and reversing direction takes time. Free pucks retain 0.99 velocity and rebound from the boards with 0.85 restitution. Possession follows a spring-like offset in front of the skater. Physical overlap transfers possession, with a short protection interval to prevent repeated stealing during the same collision. Goalkeepers track the puck along a fixed vertical axis.
+The simulation advances in fixed 1/60-second steps. Skater acceleration is gradual, velocity retains 0.96 per step, and reversing direction takes time. Free pucks retain 0.99 velocity and rebound from the boards with 0.85 restitution. Possession follows a spring-like offset in front of the skater. A close interception transfers possession only from the puck side of the carrier. Contact through their back or protected side cannot steal it. A short protection interval prevents repeated transfers during one collision. A directional strike can knock a nearby opponent down for 0.1–0.3 seconds according to charge. Downed players cannot steer, shoot, or collect the puck; they slide with their existing momentum and friction, and drop possession. Charge rings, stick wind-up, swing trails, and the prone pose show these actions. Goalkeepers track the puck along a fixed vertical axis.
 
 Practice bots differ in pursuit speed, interception prediction, and shot cadence. Online games simulate authoritatively in Go at 60 ticks per second and broadcast 30 snapshots per second. The canvas renders with `requestAnimationFrame` and interpolates received positions. Rendering targets 60 FPS; actual frame rate depends on the device and browser. A disconnected seat is reserved for sixty seconds; the opponent then wins by forfeit. Practice can pause, restart, and change difficulty without a server.
 
-Rules live in `packages/games/hockey/logic` and `server/nakama/hockey`. Shared test vectors compare the two implementations, including full-match scoring, movement, possession, and faceoff transitions.
+The 2.5D renderer projects the ice in perspective, draws raised boards and glass, builds cages with elevated posts and netting, and sorts skaters, puck, and goalkeepers by depth. Goalkeepers share the articulated player rendering with extra pads and masks. Online protocol version 2 carries charge and strike state; deploy the browser and server together.
+
+Regenerate conformance fixtures with `node tools/scripts/generate-hockey-vectors.mjs`. Rules live in `packages/games/hockey/logic` and `server/nakama/hockey`. Shared test vectors compare the two implementations, including full-match scoring, movement, possession, and faceoff transitions.
 
 ## Pocket Artillery and Rift Arena
 

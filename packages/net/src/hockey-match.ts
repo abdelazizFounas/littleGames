@@ -4,7 +4,7 @@ import { openMatchSocket, type ConnectionState } from './match-socket';
 import type { NakamaConfig } from './config';
 export interface HockeyConnection {
   matchId: string;
-  send: (seq: number, x: number, y: number, shots: number) => Promise<void>;
+  send: (seq: number, x: number, y: number, shots: number, charging: boolean) => Promise<void>;
   leave: () => Promise<void>;
 }
 export interface HockeyListeners {
@@ -45,7 +45,10 @@ export async function joinHockeyMatch(
   return {
     matchId: socket.matchId,
     leave: socket.leave,
-    send: (seq, x, y, shots) =>
-      socket.send(1, new TextEncoder().encode(JSON.stringify({ version: 1, seq, x, y, shots }))),
+    send: (seq, x, y, shots, charging) =>
+      socket.send(
+        1,
+        new TextEncoder().encode(JSON.stringify({ version: 2, seq, x, y, shots, charging })),
+      ),
   };
 }

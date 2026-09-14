@@ -110,8 +110,8 @@ player-capacity limit.
 
 ## Validation recorded for this change
 
-- 653 TypeScript unit tests across 50 files passed.
-- 46 desktop/mobile browser tests and the production/offline test cover all fifteen game/difficulty combinations, mobile fullscreen, real P2P voice, and match reconnects.
+- 661 TypeScript unit tests across 50 files passed.
+- 48 desktop/mobile browser tests and the production/offline test cover all fifteen game/difficulty combinations, mobile fullscreen, real P2P voice, and match reconnects.
 - Type checking, lint, production build, and all Go package tests passed.
 - Go's race detector passed for the match handlers and RPC package.
 - Live Pong, Fleet Command, and Arena verification scripts completed successfully.
@@ -172,3 +172,9 @@ validation passed for this update.
 ## Voice and new games
 
 See [voice, Ice Clash, Pocket Artillery, and Arena settings](voice-and-hockey.md) for rules, controls, the Google STUN network limitation, signaling deployment, and integration checks. The microphone Permissions Policy permits the same origin; voice is opt-in and has no recordings.
+
+## Ice Clash: depth, charged strikes, and body shielding
+
+The hockey renderer now uses perspective, raised boards, glass, three-dimensional goal frames, and articulated players and goalkeepers. Translucent touch controls sit inside the rink, including in portrait and landscape fullscreen. Hold Space or Strike for up to 1.5 seconds, then release. A charged strike increases puck speed and can knock a nearby opponent down for 0.1–0.3 seconds. A downed skater retains their existing momentum and slows with the ice friction. Contact from behind cannot steal possession.
+
+Protocol version 2 synchronizes charge, strike animations, and knock state. Deploy both the frontend and Nakama plugin. The conformance fixtures cover these states in both TypeScript and Go and can be regenerated with `node tools/scripts/generate-hockey-vectors.mjs`. Browser checks exercise holding, releasing outside the touch button, simultaneous skating and charging, pausing, fullscreen, authoritative online charge, and seat restoration. A local Chromium drawing benchmark averaged about 1.5 ms per frame at 2000×1200; this is a renderer measurement on the test machine, not a guarantee for every mobile device.

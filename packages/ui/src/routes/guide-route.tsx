@@ -17,7 +17,7 @@ export function GuideRoute() {
             <h2>{game.name}</h2>
             <p>
               {game.id === 'hockey'
-                ? 'First to five goals wins. Skate with WASD, ZQSD, or arrows and press Space to shoot. On mobile, drag the movement pad and tap Shoot. Cross the puck carrier closely to steal it. Goalkeepers move automatically; find the corners or use a rebound.'
+                ? 'First to five goals wins. Skate with WASD, ZQSD, or arrows. Hold Space or the transparent mobile Strike button for up to 1.5 seconds, then release to shoot or knock a nearby rival. A knock lasts up to 0.3 seconds while the player slides. Intercept from the puck side; the carrier’s back protects possession. Goalkeepers move automatically; aim for corners or rebounds.'
                 : game.id === 'artillery'
                   ? 'Choose an angle, power, and weapon to hit the rival tank. Wind bends the flight, and the moon has lower gravity. A hit ends your turn. Each round gives you two heavy rockets, two scatter shells, and a shield that costs a turn. The first player to the selected round target wins.'
                   : game.id === 'arena'

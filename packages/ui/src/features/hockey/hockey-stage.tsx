@@ -67,7 +67,7 @@ export function HockeyStage({
     if (!connection.current) return;
     if (value.shoot) shots.current++;
     void connection.current
-      .send(++seq.current, value.x, value.y, shots.current)
+      .send(++seq.current, value.x, value.y, shots.current, Boolean(value.charging))
       .catch(() => setNotice('Your connection is interrupted. Reconnecting…'));
   }, []);
   return <HockeyGame snapshot={snapshot} onInput={input} notice={notice} />;

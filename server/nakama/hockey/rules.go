@@ -6,13 +6,17 @@ const TickRate = 60
 const WinScore = 5
 
 type Skater struct {
-	X        float64 `json:"x"`
-	Y        float64 `json:"y"`
-	VX       float64 `json:"vx"`
-	VY       float64 `json:"vy"`
-	DX       float64 `json:"dx"`
-	DY       float64 `json:"dy"`
-	Cooldown int     `json:"cooldown"`
+	X          float64 `json:"x"`
+	Y          float64 `json:"y"`
+	VX         float64 `json:"vx"`
+	VY         float64 `json:"vy"`
+	DX         float64 `json:"dx"`
+	DY         float64 `json:"dy"`
+	Cooldown   int     `json:"cooldown"`
+	Charge     float64 `json:"charge"`
+	Down       int     `json:"down"`
+	Swing      int     `json:"swing"`
+	SwingPower float64 `json:"swingPower"`
 }
 type Puck struct {
 	X     float64 `json:"x"`
@@ -34,9 +38,10 @@ type State struct {
 	Goal      int       `json:"goal"`
 }
 type Input struct {
-	X     float64 `json:"x"`
-	Y     float64 `json:"y"`
-	Shoot bool    `json:"shoot"`
+	X        float64 `json:"x"`
+	Y        float64 `json:"y"`
+	Shoot    bool    `json:"shoot"`
+	Charging bool    `json:"charging"`
 }
 
 func New() State {
@@ -63,6 +68,15 @@ func Step(state State, inputs [2]Input) State {
 	for i := 0; i < 2; i++ {
 		p := &s.Players[i]
 		in := inputs[i]
+		p.Down = max(0, p.Down-1)
+		p.Swing = max(0, p.Swing-1)
+		if p.Down > 0 {
+			in = Input{}
+			p.Charge = 0
+		}
+		if in.Charging && p.Cooldown == 0 {
+			p.Charge = math.Min(1, p.Charge+1.0/90)
+		}
 		x, y := clamp(in.X, -1, 1), clamp(in.Y, -1, 1)
 		if math.IsNaN(x) || math.IsInf(x, 0) {
 			x = 0
@@ -106,9 +120,13 @@ func Step(state State, inputs [2]Input) State {
 	a, b := &s.Players[0], &s.Players[1]
 	dx, dy := b.X-a.X, b.Y-a.Y
 	distance := math.Hypot(dx, dy)
-	if distance < 36 && puck.Owner >= 0 && puck.Lock == 0 {
-		puck.Owner = 1 - puck.Owner
-		puck.Lock = 25
+	if distance < 39 && puck.Owner >= 0 && puck.Lock == 0 {
+		carrier, thief := s.Players[puck.Owner], s.Players[1-puck.Owner]
+		front := (thief.X-carrier.X)*carrier.DX + (thief.Y-carrier.Y)*carrier.DY
+		if thief.Down == 0 && front > distance*.25 && math.Hypot(thief.X-puck.X, thief.Y-puck.Y) < 44 {
+			puck.Owner = 1 - puck.Owner
+			puck.Lock = 25
+		}
 	}
 	if distance < 36 {
 		nx, ny := 1., 0.
@@ -128,17 +146,38 @@ func Step(state State, inputs [2]Input) State {
 	}
 	for i := 0; i < 2; i++ {
 		p := &s.Players[i]
-		if inputs[i].Shoot && p.Cooldown == 0 {
+		if inputs[i].Shoot && p.Cooldown == 0 && p.Down == 0 {
+			power := p.Charge
 			p.Cooldown = 24
+			p.SwingPower = power
+			p.Swing = 12 + int(math.Round(power*10))
+			opponent := &s.Players[1-i]
+			dx, dy := opponent.X-p.X, opponent.Y-p.Y
+			distance := math.Hypot(dx, dy)
+			if opponent.Down == 0 && distance < 53+power*10 && dx*p.DX+dy*p.DY > distance*.35 {
+				opponent.Down = 6 + int(math.Round(power*12))
+				opponent.Charge = 0
+				if puck.Owner == 1-i {
+					puck.Owner = -1
+					puck.Lock = 12
+					puck.VX = opponent.VX
+					puck.VY = opponent.VY
+				}
+			}
 			if puck.Owner == i || puck.Owner == -1 && math.Hypot(puck.X-p.X, puck.Y-p.Y) < 47 {
 				puck.Owner = -1
 				puck.Lock = 18
 				puck.X = p.X + p.DX*33
 				puck.Y = p.Y + p.DY*33
-				puck.VX = p.DX*16 + p.VX*.4
-				puck.VY = p.DY*16 + p.VY*.4
+				puck.VX = p.DX*(12+power*14) + p.VX*.4
+				puck.VY = p.DY*(12+power*14) + p.VY*.4
 			}
 		}
+		if !inputs[i].Charging || inputs[i].Shoot || p.Down > 0 {
+			p.Charge = 0
+		}
+		p.X = clamp(p.X, 58, 942)
+		p.Y = clamp(p.Y, 68, 532)
 	}
 	if puck.Owner >= 0 {
 		owner := s.Players[puck.Owner]
@@ -211,7 +250,7 @@ func Step(state State, inputs [2]Input) State {
 		closest := 31.
 		for i, p := range s.Players {
 			distance := math.Hypot(p.X-puck.X, p.Y-puck.Y)
-			if distance < closest {
+			if distance < closest && p.Down == 0 {
 				puck.Owner = i
 				closest = distance
 				puck.Lock = 15

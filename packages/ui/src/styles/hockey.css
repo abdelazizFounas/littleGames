@@ -177,46 +177,154 @@
 .hockey-footer .link-button {
   font-size: 12px;
 }
+
+.hockey-rink {
+  isolation: isolate;
+}
+.hockey-overlay {
+  z-index: 4;
+}
+.hockey-touch {
+  position: absolute;
+  inset: 0;
+  padding: 14px 24px;
+  align-items: flex-end;
+  pointer-events: none;
+  z-index: 3;
+}
+.hockey-touch > p {
+  display: none;
+}
+.hockey-stick,
+.hockey-shoot {
+  pointer-events: auto;
+  flex-shrink: 0;
+  opacity: 0.72;
+  width: clamp(68px, 13vw, 104px);
+  height: clamp(68px, 13vw, 104px);
+  border: 1px solid #e6fcff80;
+  color: #eaffff;
+  background: #14374d30;
+  backdrop-filter: blur(2px);
+  box-shadow:
+    inset 0 0 24px #d6f9ff18,
+    0 2px 15px #08253720;
+}
+.hockey-stick:active,
+.hockey-shoot:active {
+  opacity: 1;
+}
+.hockey-stick span {
+  transform: translate(var(--stick-x, 0px), var(--stick-y, 0px));
+  font-size: 28px;
+  text-shadow: 0 1px 5px #113148;
+}
+.hockey-stick small,
+.hockey-shoot small {
+  font: 7px monospace;
+  color: #e4f6fb;
+  text-shadow: 0 1px 4px #16364c;
+}
+.hockey-shoot {
+  font-size: 10px;
+  text-shadow: 0 1px 5px #132939;
+}
+.hockey-shoot span {
+  font-size: 23px;
+}
+.hockey-shoot:disabled {
+  opacity: 0.2;
+}
+.hockey-charge {
+  position: relative;
+  height: 27px;
+  background: #0f2535;
+  overflow: hidden;
+}
+.hockey-charge > span {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 22px;
+  font: 8px monospace;
+  letter-spacing: 0.08em;
+  color: #bbd7dc;
+  z-index: 1;
+}
+.hockey-charge > i {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, #569caf77, #e6b270aa);
+  transition: width 0.08s linear;
+}
 .hockey-game:fullscreen {
   border: 0;
   border-radius: 0;
-  overflow: auto;
   width: 100%;
   height: 100%;
+  display: flex;
+  flex-direction: column;
   background: #122536;
 }
+.hockey-game:fullscreen .hockey-header {
+  padding: 6px 16px;
+  flex-wrap: nowrap;
+}
+.hockey-game:fullscreen .hockey-header .eyebrow {
+  display: none;
+}
+.hockey-game:fullscreen .hockey-header h2 {
+  font-size: 18px;
+}
+.hockey-game:fullscreen .hockey-score {
+  padding: 5px 20px;
+}
+.hockey-game:fullscreen .hockey-score strong {
+  font-size: 26px;
+}
+.hockey-game:fullscreen .hockey-score p {
+  margin: 0;
+}
+.hockey-game:fullscreen .hockey-score p b {
+  display: inline;
+  font-size: 14px;
+}
 .hockey-game:fullscreen .hockey-rink {
-  max-width: calc((100dvh - 235px) * 5 / 3);
+  flex: 0 1 auto;
+  min-height: 0;
+  aspect-ratio: 5 / 3;
+  width: min(100%, calc((100dvh - 153px) * 5 / 3));
   margin: auto;
 }
 .hockey-game:fullscreen .hockey-rink canvas {
-  max-height: calc(100dvh - 235px);
+  width: 100%;
+  height: auto;
+  aspect-ratio: 5 / 3;
 }
-@media (pointer: coarse) {
+.hockey-game:fullscreen .hockey-footer {
+  padding: 8px 20px;
+}
+@media (pointer: coarse), (max-width: 600px) {
   .hockey-touch {
     display: flex;
   }
-  .hockey-game:fullscreen .hockey-rink {
-    max-width: calc((100dvh - 360px) * 5 / 3);
-  }
 }
 @media (max-width: 600px) {
-  .hockey-game {
-    border-radius: 16px;
-  }
   .hockey-header {
-    padding: 18px 15px;
+    padding: 15px;
     flex-wrap: wrap;
   }
   .hockey-header h2 {
-    font-size: 24px;
+    font-size: 23px;
   }
   .hockey-score {
-    gap: 15px;
+    gap: 12px;
     padding: 14px;
   }
   .hockey-score strong {
-    font-size: 32px;
+    font-size: 30px;
   }
   .hockey-score span {
     font-size: 10px;
@@ -228,11 +336,11 @@
     font-size: 16px;
   }
   .hockey-overlay {
-    padding: 12px;
-    gap: 7px;
+    padding: 10px;
+    gap: 6px;
   }
   .hockey-overlay h3 {
-    font-size: 18px;
+    font-size: 17px;
   }
   .hockey-overlay p {
     font-size: 9px;
@@ -245,90 +353,46 @@
     font-size: 11px;
   }
   .hockey-touch {
-    display: flex;
+    padding: 10px 12px;
   }
   .hockey-footer {
     font-size: 8px;
     padding: 14px;
   }
+}
+@media (max-height: 500px) and (orientation: landscape) {
   .hockey-game:fullscreen .hockey-rink {
-    max-width: none;
+    width: min(100%, calc((100dvh - 119px) * 5 / 3));
   }
-  .hockey-game:fullscreen .hockey-rink canvas {
-    max-height: none;
-  }
-}
-
-/* Keep the rink usable in both portrait and short landscape fullscreen. */
-.hockey-game:fullscreen {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-}
-.hockey-game:fullscreen .hockey-header {
-  padding: 8px 16px;
-  flex-wrap: nowrap;
-}
-.hockey-game:fullscreen .hockey-header .eyebrow {
-  display: none;
-}
-.hockey-game:fullscreen .hockey-header h2 {
-  font-size: 20px;
-}
-.hockey-game:fullscreen .hockey-score {
-  padding: 5px 20px;
-}
-.hockey-game:fullscreen .hockey-score strong {
-  font-size: 28px;
-}
-.hockey-game:fullscreen .hockey-score p {
-  margin: 0;
-}
-.hockey-game:fullscreen .hockey-score p b {
-  display: inline;
-  font-size: 16px;
-}
-.hockey-game:fullscreen .hockey-rink {
-  flex: 1;
-  min-height: 0;
-  width: 100%;
-  max-width: calc((100dvh - 172px) * 5 / 3);
-  display: flex;
-  align-items: center;
-}
-.hockey-game:fullscreen .hockey-rink canvas {
-  max-height: 100%;
-  object-fit: contain;
-}
-@media (pointer: coarse), (max-width: 600px) {
-  .hockey-game:fullscreen .hockey-rink {
-    max-width: min(100%, calc((100dvh - 300px) * 5 / 3));
-  }
-  .hockey-game:fullscreen .hockey-touch {
-    padding: 8px 20px;
-  }
-}
-@media (pointer: coarse) and (orientation: landscape) {
-  .hockey-game:fullscreen .hockey-rink {
-    max-width: min(calc(100vw - 236px), calc((100dvh - 112px) * 5 / 3));
+  .hockey-game:fullscreen .hockey-header {
+    padding: 2px 12px;
   }
   .hockey-game:fullscreen .hockey-header h2 {
-    font-size: 16px;
+    font-size: 15px;
+  }
+  .hockey-game:fullscreen .hockey-score {
+    padding: 2px 16px;
   }
   .hockey-game:fullscreen .hockey-footer {
     display: none;
   }
-  .hockey-game:fullscreen .hockey-touch {
-    position: absolute;
-    inset: auto 0 12px;
-    pointer-events: none;
-    padding: 0 8px;
+  .hockey-game:fullscreen .hockey-stick,
+  .hockey-game:fullscreen .hockey-shoot {
+    width: 80px;
+    height: 80px;
   }
-  .hockey-game:fullscreen .hockey-touch > p {
-    display: none;
-  }
-  .hockey-game:fullscreen .hockey-touch button,
-  .hockey-game:fullscreen .hockey-stick {
-    pointer-events: auto;
-  }
+}
+
+.hockey-shoot {
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+}
+.hockey-shoot small {
+  white-space: nowrap;
+  font-size: 6px;
+  letter-spacing: 0;
 }

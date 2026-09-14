@@ -20,6 +20,19 @@ test('Ice Clash online exchanges movement and restores the same seat', async ({ 
     await a.keyboard.up('ArrowRight');
     const after = await b.getByLabel('Ice hockey rink').evaluate((canvas) => canvas.toDataURL());
     expect(after).not.toBe(before);
+    await a.keyboard.down('ArrowDown');
+    await a.waitForTimeout(650);
+    await a.keyboard.up('ArrowDown');
+    await a.keyboard.down('Space');
+    await expect(a.getByRole('progressbar', { name: 'Shot power' })).toHaveAttribute(
+      'aria-valuenow',
+      '100',
+    );
+    await a.keyboard.up('Space');
+    await expect(a.getByRole('progressbar', { name: 'Shot power' })).toHaveAttribute(
+      'aria-valuenow',
+      '0',
+    );
     await a.reload();
     await expect(a.locator('.hockey-overlay')).toHaveCount(0);
     await expect(b.locator('.hockey-overlay')).toHaveCount(0);
@@ -102,9 +115,9 @@ test('Match voice establishes real P2P audio, mutes tracks and individual peers,
         a.evaluate(async () => {
           // PeerJS also creates and closes a feature-detection connection.
           const reports = await Promise.all(
-            window.voiceTestConnections.map(async (connection) => [
-              ...(await connection.getStats()).values(),
-            ]),
+            window.voiceTestConnections.map(async (connection) =>
+              Array.from((await connection.getStats()).values()),
+            ),
           );
           return reports
             .flat()

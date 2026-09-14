@@ -40,6 +40,8 @@ export function HockeyGame({
   const held = useRef(new Set<string>()),
     move = useRef({ x: 0, y: 0 }),
     shoot = useRef(false),
+    charging = useRef(false),
+    shotPointer = useRef<number | null>(null),
     stick = useRef<{ id: number; x: number; y: number } | null>(null);
   const seat = snapshot?.seat ?? 0;
   useEffect(() => {
@@ -70,6 +72,8 @@ export function HockeyGame({
       held.current.clear();
       move.current = { x: 0, y: 0 };
       shoot.current = false;
+      charging.current = false;
+      shotPointer.current = null;
       stick.current = null;
     };
     const keydown = (event: KeyboardEvent) => {
@@ -100,10 +104,16 @@ export function HockeyGame({
       ) {
         event.preventDefault();
         held.current.add(event.code);
-        if (event.code === 'Space' && !event.repeat) shoot.current = true;
+        if (event.code === 'Space' && !event.repeat && !pauseRef.current) charging.current = true;
       }
     };
-    const keyup = (event: KeyboardEvent) => held.current.delete(event.code);
+    const keyup = (event: KeyboardEvent) => {
+      held.current.delete(event.code);
+      if (event.code === 'Space' && charging.current) {
+        charging.current = false;
+        if (!pauseRef.current) shoot.current = true;
+      }
+    };
     const blur = () => {
       release();
       if (practice) setPaused(true);
@@ -128,6 +138,7 @@ export function HockeyGame({
           (keys.has('KeyS') || keys.has('ArrowDown') ? 1 : 0) -
           (keys.has('KeyW') || keys.has('KeyZ') || keys.has('ArrowUp') ? 1 : 0),
         shoot: shoot.current,
+        charging: charging.current,
       };
     }
     const draw = (now: number) => {
@@ -213,6 +224,8 @@ export function HockeyGame({
                 move.current = { x: 0, y: 0 };
                 stick.current = null;
                 shoot.current = false;
+                charging.current = false;
+                shotPointer.current = null;
               }}
             >
               Pause
@@ -268,8 +281,9 @@ export function HockeyGame({
                   : 'The rink can wait.'}
             </h3>
             <p>
-              Move with WASD, ZQSD, or arrows. Space shoots. Skate into the carrier to steal the
-              puck.
+              Skate with WASD, ZQSD, or arrows. Hold Space or Strike to charge for up to 1.5s;
+              release to shoot or knock a nearby rival. Steal from the puck side, not through their
+              back.
             </p>
             <button className="button button--primary" onClick={start}>
               {finished ? 'Play again' : state.phase === 'waiting' ? 'Let’s play' : 'Resume game'}{' '}
@@ -293,53 +307,107 @@ export function HockeyGame({
             </p>
           </div>
         )}
-      </div>
-      <div className="hockey-touch">
-        <div
-          className="hockey-stick"
-          aria-label="Movement joystick"
-          onPointerDown={(event) => {
-            if (stick.current) return;
-            event.currentTarget.setPointerCapture(event.pointerId);
-            stick.current = { id: event.pointerId, x: event.clientX, y: event.clientY };
-          }}
-          onPointerMove={(event) => {
-            const origin = stick.current;
-            if (!origin || origin.id !== event.pointerId) return;
-            const x = (event.clientX - origin.x) / 42,
-              y = (event.clientY - origin.y) / 42,
-              length = Math.max(1, Math.hypot(x, y));
-            move.current = { x: x / length, y: y / length };
-          }}
-          onPointerUp={(event) => {
-            if (stick.current?.id === event.pointerId) {
+        <div className="hockey-touch">
+          <div
+            className="hockey-stick"
+            aria-label="Movement joystick"
+            onPointerDown={(event) => {
+              if (stick.current || paused || finished) return;
+              event.currentTarget.setPointerCapture(event.pointerId);
+              stick.current = { id: event.pointerId, x: event.clientX, y: event.clientY };
+            }}
+            onPointerMove={(event) => {
+              const origin = stick.current;
+              if (!origin || origin.id !== event.pointerId) return;
+              const x = (event.clientX - origin.x) / 42,
+                y = (event.clientY - origin.y) / 42,
+                length = Math.max(1, Math.hypot(x, y));
+              move.current = { x: x / length, y: y / length };
+              event.currentTarget.style.setProperty('--stick-x', `${(x / length) * 18}px`);
+              event.currentTarget.style.setProperty('--stick-y', `${(y / length) * 18}px`);
+            }}
+            onPointerUp={(event) => {
+              if (stick.current?.id === event.pointerId) {
+                event.currentTarget.style.setProperty('--stick-x', '0px');
+                event.currentTarget.style.setProperty('--stick-y', '0px');
+                stick.current = null;
+                move.current = { x: 0, y: 0 };
+              }
+            }}
+            onPointerCancel={(event) => {
+              if (stick.current?.id !== event.pointerId) return;
               stick.current = null;
               move.current = { x: 0, y: 0 };
-            }
-          }}
-          onPointerCancel={() => {
-            stick.current = null;
-            move.current = { x: 0, y: 0 };
-          }}
-        >
-          <span>✥</span>
-          <small>DRAG TO SKATE</small>
+              event.currentTarget.style.setProperty('--stick-x', '0px');
+              event.currentTarget.style.setProperty('--stick-y', '0px');
+            }}
+            onLostPointerCapture={(event) => {
+              if (stick.current?.id !== event.pointerId) return;
+              stick.current = null;
+              move.current = { x: 0, y: 0 };
+              event.currentTarget.style.setProperty('--stick-x', '0px');
+              event.currentTarget.style.setProperty('--stick-y', '0px');
+            }}
+          >
+            <span>✥</span>
+            <small>DRAG TO SKATE</small>
+          </div>
+          <p>
+            Carry the puck.
+            <br />
+            Find the corner.
+          </p>
+          <button
+            className="hockey-shoot"
+            aria-label="Hold to charge, release to strike"
+            data-charging={charging.current}
+            style={{
+              background: `conic-gradient(from 180deg, #ffd49755 ${(state.players[seat]?.charge ?? 0) * 360}deg, #193a4d44 0deg)`,
+            }}
+            disabled={paused || finished}
+            onPointerDown={(event) => {
+              event.preventDefault();
+              if (shotPointer.current !== null) return;
+              shotPointer.current = event.pointerId;
+              event.currentTarget.setPointerCapture(event.pointerId);
+              charging.current = true;
+            }}
+            onPointerUp={(event) => {
+              if (shotPointer.current !== event.pointerId) return;
+              shotPointer.current = null;
+              charging.current = false;
+              if (!paused && !finished) shoot.current = true;
+            }}
+            onPointerCancel={(event) => {
+              if (shotPointer.current === event.pointerId) {
+                shotPointer.current = null;
+                charging.current = false;
+              }
+            }}
+            onLostPointerCapture={(event) => {
+              if (shotPointer.current === event.pointerId) {
+                shotPointer.current = null;
+                charging.current = false;
+              }
+            }}
+          >
+            STRIKE <span>↗</span>
+            <small>HOLD · RELEASE</small>
+          </button>
         </div>
-        <p>
-          Carry the puck.
-          <br />
-          Find the corner.
-        </p>
-        <button
-          className="hockey-shoot"
-          disabled={paused || finished}
-          onPointerDown={(event) => {
-            event.preventDefault();
-            shoot.current = true;
-          }}
-        >
-          SHOOT <span>↗</span>
-        </button>
+      </div>
+      <div
+        className="hockey-charge"
+        role="progressbar"
+        aria-label="Shot power"
+        aria-valuemin={0}
+        aria-valuemax={100}
+        aria-valuenow={Math.round((state.players[seat]?.charge ?? 0) * 100)}
+      >
+        <span>
+          HOLD TO CHARGE <b>{Math.round((state.players[seat]?.charge ?? 0) * 100)}%</b>
+        </span>
+        <i style={{ width: `${(state.players[seat]?.charge ?? 0) * 100}%` }} />
       </div>
       <footer className="hockey-footer">
         <span>
@@ -357,6 +425,11 @@ export function HockeyGame({
               local.current = createHockey();
               setState(local.current);
               setPaused(true);
+              charging.current = false;
+              shoot.current = false;
+              move.current = { x: 0, y: 0 };
+              stick.current = null;
+              shotPointer.current = null;
             }}
           >
             Restart
